@@ -6,6 +6,8 @@ Apart from serving files, she is capable of tracking site visits (site counters)
 
 Her design is light and stable, and an extensive block-based memory management system ensures all her key operations use memory in a sustained and reliable manner. 
 
+Version: 3.00.9240
+
 Features:
 * Browser based administration panel
 * HTTP/1 web server (default port 1080)
