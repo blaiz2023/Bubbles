@@ -28,9 +28,9 @@ uses
 //##
 //## ==========================================================================================================================================================================================================================
 //## App...................... Bubbles - Multi-Function Server (bubbles1.pas)
-//## Version.................. 3.00.9220
-//## Last Updated ............ 02may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
-//## Lines of Code............ 9,300+
+//## Version.................. 3.00.9240
+//## Last Updated ............ 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
+//## Lines of Code............ 9,200+
 //## Languages Supported...... English (ANSI)
 //## File Support............. 64bit
 //##
@@ -335,8 +335,8 @@ try
 xname:=strlow(xname);
 
 //get
-if      (xname='ver')                 then result:='3.00.9220'
-else if (xname='date')                then result:='02may2024'
+if      (xname='ver')                 then result:='3.00.9240'
+else if (xname='date')                then result:='03may2024'
 else if (xname='name')                then result:='Bubbles'
 else if (xname='des')                 then result:='Multi-Function Server'
 else if (xname='infoline')            then result:='Bubbles Multi-Function Server v'+app__info('ver')+' (c) 1997-'+low__yearstr(2024)+' Blaiz Enterprises'

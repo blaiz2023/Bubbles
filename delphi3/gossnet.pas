@@ -28,9 +28,9 @@ uses
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. Network (gossnet.pas)
-//## Version.................. 4.00.753
+//## Version.................. 4.00.773
 //## Items.................... 5
-//## Last Updated ............ 23apr2024
+//## Last Updated ............ 04may2024, 23apr2024
 //## Lines of Code............ 2,100+
 //##
 //## gossroot.pas ............ App hub / core program execution
@@ -43,7 +43,7 @@ uses
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
 //## |------------------------|-------------------|-----------|-------------|--------------------------------------------------------
 //## | net__*                 | family of procs   | 1.00.400  | 09apr2024   | Create and maintain tcp server and inbound client connections, 01par2024: added ssPert support in net__encodeurl(), 06mar2024: queue size fo servers, 30jan2024: Created
-//## | ipsec__*               | family of procs   | 1.00.200  | 07jan2024   | Track client IP hits, errors and current ban status
+//## | ipsec__*               | family of procs   | 1.00.220  | 03may2024   | Track client IP hits, errors and current ban status, 03may2024: fixed scanfor/banfor range oversight in ipsec__update(), 07jan2024: created
 //## | log__*                 | family of procs   | 1.00.080  | 03apr2024   | Web traffic log for server traffic, 03apr2024: using filterstr, 01apr2024: optional "__" in "date__logname" only when logname present, 07mar2024: fixed alternative folder, 07jan2024: created
 //## | tnetmore               | tobject           | 1.00.002  | 23dec2023   | Helper object for app level net task/data management
 //## | tnetbasic              | tnetmore          | 1.00.071  | 23apr2024   | Helper object for server connection servicing, 13apr2024: added vmustlog, 23dec2023: created
@@ -283,7 +283,6 @@ function net__ismultipart(xcontenttype:string;var boundary:string):boolean;
 function ipsec__limit:longint;//maximum number of records for the system
 function ipsec__count:longint;//number of records in use, does not shrink automatically
 function ipsec__findcount:longint;//find new "ipsec__count" and update it
-function ipsec__close(xslot:longint):boolean;
 function ipsec__newslot:longint;
 function ipsec__findaddr(var xaddr:string;var xslot:longint):boolean;
 //.vals
@@ -305,9 +304,9 @@ function ipsec__incPost(xslot:longint):boolean;
 function ipsec__incConn(xslot:longint;xinc:boolean):boolean;//sim. connection tracking
 function ipsec__incBytes(xslot:longint;xbytes:comp):boolean;
 function ipsec__banned(xslot:longint):boolean;
-function ipsec__update(xslot:longint):boolean;
+function ipsec__update(xslot:longint):boolean;//03may2024
 function ipsec__clearall:boolean;
-function ipsec__clearslot(xslot:longint):boolean;
+function ipsec__clearslot(xslot:longint):boolean;//03may2024
 function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xbad,xhits:longint;var xbytes:comp;var xbanned:boolean):boolean;
 
 //log procs --------------------------------------------------------------------
@@ -333,11 +332,8 @@ if system_started then exit else system_started:=true;
 //network support
 for p:=0 to (system_net_limit-1) do net__initrec(@system_net_slot[p]);
 
-//ip security support
-for p:=low(system_ipsec_slot) to (system_ipsec_limit-1) do
-begin
-system_ipsec_slot[p].alen:=0;
-end;//p
+//ip security support - 03may2024
+for p:=low(system_ipsec_slot) to (system_ipsec_limit-1) do ipsec__clearslot(p);
 except;end;
 end;
 
@@ -373,8 +369,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossnet.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.753'
-else if (xname='date')       then result:='23apr2024'
+if      (xname='ver')        then result:='4.00.773'
+else if (xname='date')       then result:='03may2024'
 else if (xname='name')       then result:='Network'
 else
    begin
@@ -1446,20 +1442,10 @@ var
 begin
 //defaults
 result:=system_ipsec_count;
-try
 //find
 for p:=0 to (system_ipsec_limit-1) do if (system_ipsec_slot[p].alen>=1) then result:=p+1;
 //set
 system_ipsec_count:=result;
-except;end;
-end;
-//## ipsec__close ##
-function ipsec__close(xslot:longint):boolean;
-begin
-//pass-thru
-result:=true;
-//get
-if (xslot>=0) and (xslot<system_ipsec_limit) then system_ipsec_slot[xslot].alen:=0;
 end;
 //## ipsec__newslot ##
 function ipsec__newslot:longint;
@@ -1467,31 +1453,6 @@ var
    xageslot1,xageslot2,p:longint;
    xage1,xage2:longint;
    bol1:boolean;
-   //## xclearslot ##
-   procedure xclearslot(x:longint);
-   var
-      p:longint;
-   begin
-   try
-   with system_ipsec_slot[x] do
-   begin
-   alen:=0;
-   aref:=0;
-   aref2:=0;
-   for p:=0 to high(addr) do addr[p]:=0;
-   //.counters
-   hits:=0;
-   bad:=0;
-   post:=0;
-   conn:=0;
-   //.bandwidth consumed
-   bytes:=0;
-   //.reference
-   age32:=mn32;//mark the slot's creation time in minutes
-   ban:=false;
-   end;
-   except;end;
-   end;
 begin
 //defaults
 result:=0;
@@ -1501,13 +1462,13 @@ bol1:=false;
 //find free slot
 for p:=0 to (system_ipsec_limit-1) do if (system_ipsec_slot[p].alen=0) then
    begin
-   xclearslot(p);
+   ipsec__clearslot(p);
    result:=p;
    bol1:=true;
    break;
    end;
 
-//find oldest slot and reuse it (even if it's locked -> retain lockcount)
+//find oldest slot and reuse it
 if not bol1 then
    begin
    //init
@@ -1539,8 +1500,8 @@ if not bol1 then
    if (xageslot1>=0)      then result:=xageslot1//oldest non-banned slot
    else if (xageslot2>=0) then result:=xageslot2//oldest banned slot
    else                        result:=0;//emergency fallback -> should never happen
-   //set
-   xclearslot(result);//keep the lockcount -> may result in another connection writing wrong data to our record, but it won't cause a failure
+   //clear the slot
+   ipsec__clearslot(result);
    end;
 except;end;
 end;
@@ -1594,9 +1555,9 @@ begin
 result:=true;
 try
 //get
-system_ipsec_scanfor   :=frcrange32(xscanfor,60,30*24*60);//1hr to 30dy
+system_ipsec_scanfor   :=frcrange32(xscanfor,60,30*24*60);//1hr to 30dy in minutes
 //.banfor -> must equal or greater than "scanfor"
-system_ipsec_banfor    :=frcrange32( frcmin32(xbanfor,system_ipsec_scanfor) ,60,365*24*60);//1hr to 1yr
+system_ipsec_banfor    :=frcrange32( frcmin32(xbanfor,system_ipsec_scanfor) ,60 ,365*24*60);//1hr to 1yr in minutes
 //.xconnlimit
 system_ipsec_connlimit:=frcrange32(xconnlimit,0,max32);//0=off, otherwise in the range 1..N
 //.xpostlimit
@@ -1750,7 +1711,7 @@ begin
 result:=ipsec__slotok(xslot) and system_ipsec_slot[xslot].ban;
 end;
 //## ipsec__update ##
-function ipsec__update(xslot:longint):boolean;
+function ipsec__update(xslot:longint):boolean;//03may2024
 label
    skipend;
 var
@@ -1762,16 +1723,18 @@ try
 //get
 if ipsec__slotok(xslot) then
    begin
-   //.slot is NOT banned and more than 1 day old -> ok to delete
-   if (not system_ipsec_slot[xslot].ban) and (mn32>(system_ipsec_slot[xslot].age32+(24*60) )) then
+   //.slot is NOT banned and more than "system_ipsec_scanfor" old (e.g. more than 1 day old) -> OK to delete
+   if (not system_ipsec_slot[xslot].ban) and (mn32> (system_ipsec_slot[xslot].age32+system_ipsec_scanfor) ) then
       begin
-      system_ipsec_slot[xslot].alen:=0;
+      //was: system_ipsec_slot[xslot].alen:=0;
+      ipsec__clearslot(xslot);//03may2024
       goto skipend;
       end;
-   //.slot IS banned and has been banned more than 1 week -> ok to delete
-   if system_ipsec_slot[xslot].ban and (mn32>(system_ipsec_slot[xslot].age32+(7*24*60) )) then
+   //.slot IS banned and has been banned more than "system_ipsec_banfor" (e.g. more than 1 week) -> ok to delete
+   if system_ipsec_slot[xslot].ban and (mn32> (system_ipsec_slot[xslot].age32+system_ipsec_banfor) ) then
       begin
-      system_ipsec_slot[xslot].alen:=0;
+      //was: system_ipsec_slot[xslot].alen:=0;
+      ipsec__clearslot(xslot);//03may2024
       goto skipend;
       end;
    //.check slot stats to see if it needs to be upgraded to banned
@@ -1800,13 +1763,35 @@ var
    p:longint;
 begin
 result:=true;
-for p:=0 to (system_ipsec_limit-1) do system_ipsec_slot[p].alen:=0;
+//was: for p:=0 to (system_ipsec_limit-1) do system_ipsec_slot[p].alen:=0;
+for p:=low(system_ipsec_slot) to (system_ipsec_limit-1) do ipsec__clearslot(p);//03may2024
 end;
 //## ipsec__clearslot ##
-function ipsec__clearslot(xslot:longint):boolean;
+function ipsec__clearslot(xslot:longint):boolean;//03may2024
+var
+   p:longint;
 begin
-result:=true;
-if ipsec__slotok(xslot) then system_ipsec_slot[xslot].alen:=0;
+result:=true;//pass-thru
+if (xslot>=low(system_ipsec_slot)) and (xslot<system_ipsec_limit) then
+   begin
+   with system_ipsec_slot[xslot] do
+   begin
+   alen:=0;
+   aref:=0;
+   aref2:=0;
+   for p:=0 to high(addr) do addr[p]:=0;
+   //.counters
+   hits:=0;
+   bad:=0;
+   post:=0;
+   conn:=0;
+   //.bandwidth consumed
+   bytes:=0;
+   //.reference
+   age32:=mn32;//mark the slot's creation time in minutes
+   ban:=false;
+   end;//with
+   end;//if
 end;
 //## ipsec__slot ##
 function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xbad,xhits:longint;var xbytes:comp;var xbanned:boolean):boolean;
