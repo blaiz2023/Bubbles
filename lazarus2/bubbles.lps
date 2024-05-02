@@ -8,53 +8,46 @@
       <Unit>
         <Filename Value="bubbles.lpr"/>
         <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
         <CursorPos X="64" Y="9"/>
         <UsageCount Value="231"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="bubbles1.pas"/>
         <IsPartOfProject Value="True"/>
-        <IsVisibleTab Value="True"/>
-        <EditorIndex Value="1"/>
-        <TopLine Value="9225"/>
-        <CursorPos X="5" Y="9267"/>
+        <EditorIndex Value="-1"/>
         <UsageCount Value="231"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="gossnet.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="3"/>
-        <TopLine Value="2095"/>
-        <CursorPos X="5" Y="2137"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2080"/>
+        <CursorPos X="5" Y="2122"/>
         <UsageCount Value="22"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="gossimg.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="4"/>
+        <EditorIndex Value="-1"/>
         <UsageCount Value="22"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="gossroot.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="5"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="16966"/>
         <CursorPos X="5" Y="17008"/>
         <UsageCount Value="22"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="gossio.pas"/>
         <IsPartOfProject Value="True"/>
-        <EditorIndex Value="6"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="3450"/>
         <CursorPos X="5" Y="3492"/>
         <UsageCount Value="22"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="gosscon.pas"/>
@@ -64,11 +57,10 @@
       </Unit>
       <Unit>
         <Filename Value="gosswin.pas"/>
-        <EditorIndex Value="2"/>
+        <EditorIndex Value="-1"/>
         <TopLine Value="2153"/>
         <CursorPos Y="2195"/>
         <UsageCount Value="117"/>
-        <Loaded Value="True"/>
       </Unit>
       <Unit>
         <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zdeflate.pas"/>
@@ -91,126 +83,10 @@
         <UsageCount Value="31"/>
       </Unit>
     </Units>
-    <JumpHistory HistoryIndex="29">
-      <Position>
-        <Filename Value="gossroot.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gossio.pas"/>
-        <Caret Line="9"/>
-      </Position>
-      <Position>
-        <Filename Value="gossio.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="1730" Column="23" TopLine="1709"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="2171" TopLine="2129"/>
-      </Position>
-      <Position>
-        <Filename Value="gossroot.pas"/>
-        <Caret Line="11" Column="8" TopLine="3"/>
-      </Position>
-      <Position>
-        <Filename Value="gossroot.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gossimg.pas"/>
-        <Caret Line="11498" TopLine="11456"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="2171" TopLine="2129"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="23" Column="39"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="9316" Column="5" TopLine="9274"/>
-      </Position>
-      <Position>
-        <Filename Value="gossimg.pas"/>
-      </Position>
-      <Position>
-        <Filename Value="gossimg.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gossimg.pas"/>
-        <Caret Line="11531" TopLine="11489"/>
-      </Position>
-      <Position>
-        <Filename Value="gossio.pas"/>
-        <Caret Line="3465" TopLine="3423"/>
-      </Position>
-      <Position>
-        <Filename Value="gossio.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gossroot.pas"/>
-        <Caret Line="13485" TopLine="13443"/>
-      </Position>
-      <Position>
-        <Filename Value="gossroot.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="8" Column="14"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="gosswin.pas"/>
-        <Caret Line="2195" TopLine="2153"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles.lpr"/>
-        <Caret Line="9" Column="64"/>
-      </Position>
-      <Position>
-        <Filename Value="gossnet.pas"/>
-        <Caret Line="290" Column="62" TopLine="278"/>
-      </Position>
-      <Position>
-        <Filename Value="gossnet.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="2"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="9231" Column="33" TopLine="9225"/>
-      </Position>
-      <Position>
-        <Filename Value="bubbles1.pas"/>
-        <Caret Line="2"/>
-      </Position>
-    </JumpHistory>
+    <General>
+      <ActiveWindowIndexAtStart Value="-1"/>
+    </General>
+    <JumpHistory HistoryIndex="-1"/>
     <RunParams>
       <FormatVersion Value="2"/>
       <Modes ActiveMode=""/>
