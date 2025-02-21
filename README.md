@@ -6,7 +6,7 @@ Apart from serving files, she is capable of tracking site visits (site counters)
 
 Her design is light and stable, and an extensive block-based memory management system ensures all her key operations use memory in a sustained and reliable manner. 
 
-Version: 3.00.9240
+Version: 3.00.9930
 
 Features:
 * Browser based administration panel
@@ -19,6 +19,8 @@ Features:
 * Inbox and Trash panels (view emails + contact form messages)
 * Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
 * Hit Counters with digital display (png image) for site specific / overall hit reporting
+* Live Daily Status - realtime bandwidth, visitors, requests, hits, emails and contact form subsmissions (resets each day) updated every 30 minutes
+* Built-in Tool: Icon Maker
 * Command line support for basic settings (support for multiple commands at once)
 * Run as a Windows Service (native install and uninstall options, requires Admin command prompt)
 * Website Management panel (upload files, list files, delete files and reload files for one or more websites)
