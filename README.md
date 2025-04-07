@@ -38,7 +38,7 @@ Features:
 * Power Level (CPU usage) throttle to tweak performance on low power, shared, or weak CPU / v-core environments
 * Backend server support for use with frontend servers like Caddy (e.g. for HTTPS)
 * Built-in help (view offline without the need for internet)
-* Compact binary (under 1 MB)
+* Compact binary ~1 MB
 * Easy to use
 * 32 bit codebase for wide deployment
 * Smart source code (MIT license) supports both Delphi 3 and Lazarus 2
