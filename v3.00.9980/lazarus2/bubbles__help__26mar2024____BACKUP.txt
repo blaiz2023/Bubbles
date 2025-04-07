@@ -1,0 +1,698 @@
+[t]What is Bubbles, and what does she do?
+She is a simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
+
+Her GUI administration panel is accessed through your web browser (e.g. "http://localhost:1080/admin/" + default password of "admin"), which controls all her settings and vital functions, all in realtime.
+
+Apart from serving files, she is capable of tracking site visits (site counters), receiving emails, accepting contact form submissions with support for Spam Guard, and recording site activity as date stamped traffic logs.  She also includes a built-in log analyser for making sense of her traffic logs.  These and other features make her more than capable of running multiple websites with little to no headache.
+
+Her design is light and stable, and an extensive block-based memory management system ensures all her key operations use memory in a sustained and reliable manner.
+
+
+[t]Features
+* Browser based administration panel
+* HTTP/1 web server (default port 1080)
+* SMTP email server (port 25)
+* RAM Cache (static file server / diskless operation)
+* Traffic Logs (date stamped filenames)
+* Log Counter (analyse raw traffic logs)
+* IP ban list + automatic add / remove functions (maintenance free operation)
+* Inbox and Trash panels (view emails + contact form messages)
+* Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
+* Hit Counters with digital display (png image) for site specific / overall hit reporting
+* Command line support for basic settings (support for multiple commands at once)
+* Run as a Windows Service (native install and uninstall options, requires Admin command prompt)
+* Website Management panel (upload files, list files, delete files and reload files for one or more websites)
+* Redirection panel (redirect to a file / url, or randomly from a list of files / urls)
+* Host multiple domains / websites
+* Map panel (reroute / map one domain to another)
+* Proxy request support (test multiple domains / websites offline in your browser without the need for DNS)
+* Block based memory handling for stable memory management
+* Daily summary notices, boot notices, reload notices and security notices
+* Mime Type panel (manage custom mime types / override defaults)
+* Console panel (realtime statistics for bandwidth in, out, hits, connections etc)
+* Threadless server design keeps things light
+* Adjust all settings in your browser in realtime with no need to restart
+* Optional 404.html page support (display this page for 404 File Not Found errors)
+* Power Level (CPU usage) throttle to tweak performance on low power, shared, or weak CPU / v-core environments
+* Backend server support for use with frontend servers like Caddy (e.g. for HTTPS)
+* Built-in help (view without internet)
+* Compact binary (under 1 MB)
+* Easy to use
+* 32 bit codebase for wide deployment
+* Portable (when not installed as a service)
+
+
+[t]Running Bubbles for the first time
+If you intend to run Bubbles facing the internet, you should change the default password (admin) before starting her.  To do this, run Bubbles from the command line like so, and replace <new password> with a unique password of your choice:
+[k]bubbles --password <new password>[/]
+
+Or from PowerShell:
+[k].\bubbles --password <new password>[/]
+
+[t]Command Line Support
+For detailed help type:
+[k]bubbles --help[/]
+
+This will list every command option Bubbles supports along with help.  Scroll to the top of your console window to view the first help topic.
+
+To list the commands Bubbles supports type:
+[k]bubbles --commands[/]
+
+For an information summary type:
+[k]bubbles --info[/]
+
+For help on a specific command type:
+[k]bubbles --help:<command name>[/]
+
+Example:
+[k]bubbles --help:port[/]
+This displays help on how to set the port number for the HTTP server.
+
+Commands may be 'stacked' to execute more than one in a single go.
+
+Examples:
+[k]bubbles --port 80 --password abcde --cachesize 1100 --filesize 500,000 --info
+bubbles --port 80 --password abcde --cachesize 1100 --filesize 500,000 --info --run
+bubbles --port 80 --password abcde --run --cachesize 1100 --filesize 500,000 --info[/]
+
+Example 1 sets the HTTP broadcast port to 80, the password to abcde, cachesize to 1.1 GB, file size to 500 KB and finally lists an information summary. Example 2 performs the same operations, but the last command then instructs the server to run and begin broadcasting. Example 3 sets the port and password, then runs the server, ignoring all commands after --run.
+
+
+[t]How to access the administration panel with your browser
+Make sure Bubbles is running.  With your browser navigate to http://localhost:1080/admin/ (or the port your Bubbles is listening on).
+
+A login window will prompt for a password.  Enter your password (default is "admin") and click the login button.  The administration panel will display.
+
+Security Notice:
+To login successfully and remain logged in, Bubbles requires your browser to support cookies with a constant (unchanging) user agent.  Should either of these parameters fluctuate you'll be logged out and a security notice deposited in your Inbox warning of unauthorised activity.
+
+
+[t]Web Administration - Overview
+The overview tab has four summary tables.
+
+The first, Daily Summary, displays the hits and bandwidth consumed per domain (website) for the last 24 hours, resetting at midnight.
+
+Next is Server Stats, a table of critical information about the server's current state, such as last load time, uptime and bandwidth consumed, as well as the number of active connections.
+
+The third table, Site Stats, lists each domain (website) along with the total hits, files and memory usage.  Lastly, the About table provides information pertaining to Bubbles, such as version number and size on disk.
+
+At the top and bottom of the page are three buttons:
+* Refresh - Reloads the page and its details
+* Reload Site(s) - Rebuilds the RAM Cache from disk, implements any file changes (new, deleted or modified) and sites (new or deleted)
+* Logout All - Forcibly logs out all Admin sessions (including your own)
+
+
+[t]Web Administration - Inbox
+Your Inbox is where all inbound emails and contact form submissions are deposited.  The panel defaults to a left column with the date, subject and options, and the email body on the right.  Narrowing the browser switches the view to top and bottom.
+
+Click the subject line of the message to view.  To download the email, click the "EML" link.  Message downloads in the standard email format ".eml", including the message and any attachments and additional information.
+
+To move the email to the Trash folder, click the "Del" link.  On the right a confirmation message will display.  To undelete the email, click the "Restore to Inbox" button in the message on the right.
+
+The 500 most recent emails are displayed from top (most recent) to bottom (least recent) order.  Older emails are stored on page 2, 3 etc.  Each new page can hold an additional 500 emails.
+
+To refresh the inbox list, click the "Inbox" tab at the top of the page, or hit the refresh button on your browser.
+
+
+[t]Web Administration - Trash
+The Trash folder is laid out identically to the Inbox with the addition of a "Delete All Messages..." button (top of window).  Clicking this button will prompt for delete confirmation.  Proceeding, deletes all messages from all pages of the Trash folder permanently.
+
+If a message is in your Trash folder but shouldn't be, you can restore it by clicking the "Res" link (restore).  A message will display stating the message has been restored to your inbox.  Again, like the Inbox, this action can be reversed (cancelled) by clicking the "Delete to Trash" button (on the right), which moves the message back to the Trash folder.
+
+To refresh the Trash folder list, click the "Trash" tab at the top of the page, or click the refresh button on your browser.
+
+
+[t]Web Administration - Logs
+If raw traffic logs are enabled (see Settings tab), then a date named entry will appear for each day of traffic logs.
+
+To view a particular day's log, scroll to the day in question and click its link.  A new tab will open in your browser with the day's log.
+
+Each day's log updates regularly on 5 second intervals, when traffic is present.  Reloading the tab on your browser will update the log's display.
+
+Raw traffic logs comprise of lines of text, one line of text per request to either the HTTP server or the SMTP server, from the oldest entry (top) to the most recent entry (bottom).  
+
+An example snippet of a raw traffic log:
+[k]127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/about-animator.png HTTP/1.1" 200 9340 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 28u 2c]
+127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/banner-about.jpg HTTP/1.1" 200 39524 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 4u 6c]
+127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/banner-fun.jpg HTTP/1.1" 200 116013 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [52ms 4u 7c]
+127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/about-ubuntu.jpg HTTP/1.1" 200 122473 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [47ms 12u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/oscar.jpg HTTP/1.1" 200 91071 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [46ms 11u 4c]
+127.0.0.1 - - [29/Mar/2024:01:02:44 +1030] "GET /www_blaizenterprises_com/banner-colors.jpg HTTP/1.1" 200 81544 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [45ms 3u 5c]
+127.0.0.1 - - [29/Mar/2024:01:02:45 +1030] "GET /www_blaizenterprises_com/about-eat.png HTTP/1.1" 200 38690 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 29u 2c]
+127.0.0.1 - - [29/Mar/2024:01:02:45 +1030] "GET /www_blaizenterprises_com/about-dsd.png HTTP/1.1" 200 73460 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [31ms 5u 6c]
+127.0.0.1 - - [29/Mar/2024:01:02:45 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 759 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 12u 4c]
+127.0.0.1 - - [29/Mar/2024:01:02:45 +1030] "GET /www_blaizenterprises_com/about-dougi.jpg HTTP/1.1" 200 185068 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [78ms 13u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/pickzoom.html HTTP/1.1" 200 34741 "http://localhost:1080/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 14u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/sflogo.png HTTP/1.1" 200 14372 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 30u 2c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 759 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 13u 4c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/ghlogo.png HTTP/1.1" 200 2525 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 4u 5c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/pickzoom.png HTTP/1.1" 200 246 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 6u 6c]
+127.0.0.1 - - [29/Mar/2024:01:02:46 +1030] "GET /www_blaizenterprises_com/pickzoom-screenshot.jpg HTTP/1.1" 200 138300 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [32ms 15u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:50 +1030] "GET /www_blaizenterprises_com/pickzoom-screenshot2.jpg HTTP/1.1" 200 178493 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [62ms 16u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:52 +1030] "GET /www_blaizenterprises_com/pickzoom.7z HTTP/1.1" 200 424340 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [174ms 17u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:54 +1030] "GET /www_blaizenterprises_com/pickzoom.zip HTTP/1.1" 200 591587 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [297ms 18u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:55 +1030] "GET /www_blaizenterprises_com/pickzoom.exe HTTP/1.1" 200 1311744 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [646ms 19u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:55 +1030] "GET /www_blaizenterprises_com/index.html HTTP/1.1" 200 89133 "http://localhost:1080/pickzoom.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [32ms 20u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:55 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 752 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 21u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:57 +1030] "GET /www_blaizenterprises_com/harmony.html HTTP/1.1" 200 135533 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [31ms 22u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:57 +1030] "GET /www_blaizenterprises_com/harmony.png HTTP/1.1" 200 362 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 23u 3c]
+127.0.0.1 - - [29/Mar/2024:01:02:57 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 752 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 14u 4c]
+127.0.0.1 - - [29/Mar/2024:01:02:57 +1030] "GET /www_blaizenterprises_com/softpedia.png HTTP/1.1" 200 12066 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 5u 5c]
+127.0.0.1 - - [29/Mar/2024:01:02:57 +1030] "GET /www_blaizenterprises_com/harmony-screenshot.jpg HTTP/1.1" 200 117759 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [80ms 7u 6c]
+127.0.0.1 - - [29/Mar/2024:01:02:59 +1030] "GET /www_blaizenterprises_com/harmony-screenshot2.jpg HTTP/1.1" 200 209164 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [63ms 6u 5c]
+127.0.0.1 - - [29/Mar/2024:01:02:59 +1030] "GET /www_blaizenterprises_com/harmony-screenshot3.jpg HTTP/1.1" 200 213714 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [110ms 7u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:01 +1030] "GET /www_blaizenterprises_com/harmony.exe HTTP/1.1" 200 1448448 "http://localhost:1080/harmony.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [670ms 8u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:03 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 733 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 9u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/blendit-screenshot5.gif HTTP/1.1" 200 16673 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 24u 3c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/blendit.html HTTP/1.1" 200 96034 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [32ms 10u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 733 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [1ms 31u 2c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/blendit.png HTTP/1.1" 200 415 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 25u 3c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/blendit-screenshot.jpg HTTP/1.1" 200 116786 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [32ms 15u 4c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/soft32.jpg HTTP/1.1" 200 1798 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 11u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:12 +1030] "GET /www_blaizenterprises_com/blendit-screenshot2.jpg HTTP/1.1" 200 167664 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [79ms 8u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:14 +1030] "GET /www_blaizenterprises_com/blendit-screenshot3.jpg HTTP/1.1" 200 179967 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [63ms 9u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:16 +1030] "GET /www_blaizenterprises_com/blendit.zip HTTP/1.1" 200 601667 "http://localhost:1080/blendit.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [280ms 10u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:17 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 744 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 11u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:19 +1030] "GET /www_blaizenterprises_com/cursors-yellow.html HTTP/1.1" 200 33858 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 12u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:19 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 744 "http://localhost:1080/cursors-yellow.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 12u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:19 +1030] "GET /www_blaizenterprises_com/cursors-yellow.png HTTP/1.1" 200 1150 "http://localhost:1080/cursors-yellow.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 32u 2c]
+127.0.0.1 - - [29/Mar/2024:01:03:19 +1030] "GET /www_blaizenterprises_com/cursors-yellow-screenshot2.jpg HTTP/1.1" 200 95793 "http://localhost:1080/cursors-yellow.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [31ms 26u 3c]
+127.0.0.1 - - [29/Mar/2024:01:03:19 +1030] "GET /www_blaizenterprises_com/cursors-yellow-screenshot.jpg HTTP/1.1" 200 276213 "http://localhost:1080/cursors-yellow.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [110ms 13u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:21 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 744 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 14u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:23 +1030] "GET /www_blaizenterprises_com/cursors-pink.html HTTP/1.1" 200 34302 "http://localhost:1080/index.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 15u 6c]
+127.0.0.1 - - [29/Mar/2024:01:03:23 +1030] "GET /www_blaizenterprises_com/cursors-pink.png HTTP/1.1" 200 1313 "http://localhost:1080/cursors-pink.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 33u 2c]
+127.0.0.1 - - [29/Mar/2024:01:03:23 +1030] "GET /www_blaizenterprises_com/.hits.png HTTP/1.1" 200 744 "http://localhost:1080/cursors-pink.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 27u 3c]
+127.0.0.1 - - [29/Mar/2024:01:03:23 +1030] "GET /www_blaizenterprises_com/uptodown.jpg HTTP/1.1" 200 5712 "http://localhost:1080/cursors-pink.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [0ms 13u 5c]
+127.0.0.1 - - [29/Mar/2024:01:03:23 +1030] "GET /www_blaizenterprises_com/cursors-pink-screenshot2.jpg HTTP/1.1" 200 153463 "http://localhost:1080/cursors-pink.html" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36" [79ms 16u 4c][/]
+
+A log entry (one line of text) takes the format of:
+* IP address
+* Date and time
+* Method + domain + path + filename + HTTP protocol version
+* Reply code, e.g. 200 (OK) or 404 (File Not Found)
+* Bytes sent to client (downstream)
+* Referrer url
+* User Agent (name of browser, OS etc)
+* Information section "[...]" from left to right: time taken to fulfill request in milliseconds, number of times the connection was used / reused (e.g. during Keep Alive requests), and slot # of connection
+
+
+[t]Web Administration - Ban
+The Banned List panel details the IP addresses currently banned by Bubbles.  The six columns of the table represent client information:
+* IP Address - IP address of client
+* Posts - number of emails / contact form submissions sent
+* Bad Logins - number of failed logins made
+* Requests - number of requests made (e.g. html page, image, binary download etc) by the client
+* Bandwidth - upstream and downstream bandwidth consumed
+* Time - time since Bubbles first starting tracking the client
+
+When a client appears on the banned list they are denied access to all services hosted by Bubbles, e.g. websites / contact form / email server etc.
+
+Clicking the "Unban All" button clears the banned list, and allows all clients in again.
+[k]                    IP Address   Posts  Bad Logins   Requests      Bandwidth       Time
+                    ----------   -----  ----------   --------      ---------       ----
+                       0.0.0.0       0           0        113       4.318 MB        01m
+                           ::1       0           0        128       4.220 MB        00m
+
+2 banned addresses found.[/]
+
+
+[t]Web Administration - Conn
+Lists open connections and associated information.
+
+[k]Conn #   Type  Last Mode    Open Time    Idle Time    Use Count   Recycled     Last IP Address
+------   ----  ---------    ---------    ---------    ---------   --------     ---------------
+     2   HTTP      write          18s          02s            8         22           127.0.0.1
+     3   HTTP      write          15s          14s            9         21             0.0.0.0
+     4   HTTP       read          14s          00s            3         21             0.0.0.0
+     5   HTTP      write          19s          02s           11         20           127.0.0.1
+     7   HTTP      write          19s          02s            2         21           127.0.0.1
+     8   HTTP      write          18s          02s           11         21           127.0.0.1
+     9   HTTP      write          21s          02s            8         20           127.0.0.1
+    10   HTTP      write          21s          02s            8         21           127.0.0.1
+    11   HTTP      write          18s          02s            8         19           127.0.0.1
+    12   HTTP      write          26s          18s            9         17                 ::1
+    13   HTTP      write          18s          02s           13         15           127.0.0.1
+    14   HTTP      write          18s          02s           12         11           127.0.0.1
+    15   HTTP      write          15s          14s           26          6             0.0.0.0
+    16   HTTP      write          27s          02s            8          5           127.0.0.1
+    17   HTTP      write          15s          14s            8          6             0.0.0.0
+    18   HTTP      write          14s          14s            3          4             0.0.0.0
+    19   HTTP      write          14s          14s            2          5             0.0.0.0
+    20   HTTP      write          27s          02s           14          3           127.0.0.1
+    21   HTTP      write          14s          14s            2          4             0.0.0.0
+
+19 open connections found.  Entires marked in red indicate no data in or out.[/]
+
+
+[t]Web Administration - Console
+Displays a command line view of critical realtime information.
+
+The five buttons listed at the top and bottom of the page are from left to right:
+* Refresh - Refresh the display
+* 1s Refresh - Auto. refresh display once per second
+* 5s Refresh - Auto. refresh every 5 seconds
+* 30s Refresh - Refresh every 30 seconds
+* Logout All - Forcibly logout all Admin sessions including your own
+
+
+[t]Web Administration - Settings
+Set and adjust important server settings.
+
+[h]HTTP broadcast port
+This is the port the web server listens on for inbound (client) connections, and is the port your browser uses to access Bubble's websites.
+
+[h]Max. Total Connections
+The maximum number of connections that can be opened to Bubbles at any one time.  The connections are shared amongst all client's viewing your websites.
+
+[h]Max. RAM cache size
+The upper limit of memory to be used in megabytes for storing static files for diskless access.  Diskless access avoids hard disk lag, a potential bottleneck for high volume traffic / frequently requested files. 
+
+[h]Max. file size in bytes to store in RAM cache
+Specifies how large a file can be in bytes (1,000,000 ~ 1 megabyte) before it is excluded from the RAM cache.  Small files are best cached.  Large gigabyte+ files are best left on disk.
+
+[h]Daily Bandwidth Quota (0=none, 10-N Mb)
+Sets the maximum amount of bandwidth (upstream + downstream) that can be consumed in one 24 hour period.  Specified in megabytes (e.g. 1,000 Mb = 1 Gb and 1,000,000 Mb = 1 Tb).  When the quota is reached, all traffic in and out of Bubbles' is disabled, including all hosted websites, contact form, email, and Admin panel.  And her servers are switched off.
+
+At midnight each night the quota is reset automatically and her servers switched back on.  Setting the quota to a value of 0 (zero) disables the quota checking feature, and permits unlimited bandwidth consumption.
+
+[h]Power Level
+Sets an approximate CPU usage level for Bubbles.  The higher the level, the more CPU cycles she's permitted to use to fulfill client requests / stream data.  More CPU means faster turnarounds but at the cost of higher system stress.
+
+If Bubbles is running on a single CPU / core / v-core system, then a high power level can starve other running services / processes of sufficient CPU cycles, especially during heavy loads, with the possible result of overall slower response performance or TTFB (time to first byte).
+
+A power level of 5% uses the least amount of CPU and 100% the most CPU.
+
+[h]Backend server
+Tick this option to use Bubbles as a backend server.  Under this condition, she will scan inbound headers for the client's IP address and other relevant information.
+
+Only use this option when Bubbles is behind a trusted frontend server.  That is, one on the same local network as she is, so that there is no internet between her and the frontend server.  This way, hackers cannot interfere with the unencrypted network packets sent back and forth between the two servers.
+
+Caddy as a frontend server is compatible with Bubbles, and provides easy to setup HTTPS, allowing for secure, encrypted access to Bubbles' hosted websites and contents, as well as offering a secure pathway to her web administration panel.
+
+It should also be noted that running Bubbles as a backend server, typically requires the connections made between the two servers (front and back) to remain open, often for very long periods of time, regardless of the data being transmitted.  In which case the "Shut idle connections (2m)" option must be unticked for her to keep her connections open with the frontend server.
+
+[h]Mark site content as cacheable to browsers (2h)
+When ticked, instructs the browser to keep a copy of the website in its local cache, reducing the total number of requests made to Bubbles as a user traverses a website.
+
+[h]Strict content security policy
+Inserts the following security header when ticked for strict script and object handling:
+Content-Security-Policy: script-src 'none'; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; 
+
+[h]Bubbles daily summary notices (delivered to inbox)
+Sends an email to her Inbox with a 24 hour summary of any website/s activity - hits and bandwidth, with the subject line "Bubbles - Daily Summary".
+
+[h]Bubbles quota notices (delivered to inbox)
+Writes a "Bubbles - Quota Notice" to your Inbox whenever the daily bandwidth quota is reached.  The notice lets you know when exactly your quota was reached.
+
+[h]Bubbles reload notices (boot/reboot/reload - delivered to inbox)
+Issues a boot, reboot or a reload notice when the RAM cache is refreshed by a command from the web administration panel (reload), or Bubbles is started / restarted from a machine boot / reboot.  The boot / reboot notice lets you know when your machine unexpectedly reboots.
+
+[h]Shut idle connections (2m)
+Closes inbound server connections after two minutes of no data transfer.  Connections close immediately if the client closes a connection at its end.
+
+A long delay of two minutes is sometimes required for slower connections where the client's ISP may download a large chunk of data for them and leave Bubbles waiting as the client continues to download from their ISP, before requesting the next chunk in the download stream.
+
+This is especially true with bad connections, and in the case of dial-up level download speeds.
+
+[h]Folders alongside EXE
+By default (not ticked), Bubbles maintains a folder alongside her EXE, e.g. "bubbles.exe_storage".  Subfolders are created within for your Inbox, Trash, Logs and disk sites (folders beginning with "www_").
+
+This option should be used with caution, as changing it will affect all your websites, inbox, trash and log contents.  Though the location may change, nothing is deleted or lost, only the location where data is read from and written to changes.  All settings persist, regardless of this option's state.
+
+[u]Example - Not Ticked (default mode):
+C:\Bubbles\bubbles.exe_storage\inbox
+C:\Bubbles\bubbles.exe_storage\trash
+C:\Bubbles\bubbles.exe_storage\logs
+C:\Bubbles\bubbles.exe_storage\www_
+C:\Bubbles\bubbles.exe_storage\www_blaizenterprises_com
+
+[u]Example - Ticked:
+C:\Bubbles\inbox
+C:\Bubbles\trash
+C:\Bubbles\logs
+C:\Bubbles\www_
+C:\Bubbles\www_blaizenterprises_com
+
+[h]Record raw traffic logs
+Writes an uncompressed plain text raw traffic log to disk for the day's traffic activity.  Each log is streamed to disk in near-realtime, chunk by chunk during the course of the day.  And data written to file is immediately accessible via the Logs panel.
+
+If the server is very busy, a log may consume upwards of hundreds of megabytes.  Though a typical log will be less than ten megabytes for a single small website.
+
+Traffic for all websites hosted by Bubbles is recorded into the same log file, and will contain the domain name of that website.  Emails too are logged, but instead of the HTTP protocol, are listed with the SMTP protocol.
+
+[h]No referrer info sent when downgrading from https to http
+Instructs the client's browser not to send on any referrer url when following a link from your secure (https://) website to an external insecure (http://) website.  This is typical behaviour for a secure website.
+
+[h]Live stats via OS console window
+Displays realtime information in the current Command Prompt / Console window.  This option will not work when Bubbles is running as a service, as Windows disables all GUI display, even text.
+
+The display can always be viewed from the "Console" tab, no matter what mode Bubbles is running in.
+
+
+[t]Web Administration - Limits
+Set specific limits on a client's access, which if exceeded, will result in the client's IP address being banned for a set period of time.
+
+Bubbles handles the banning and unbanning of client IP addresses automatically, for hassle free operation.
+
+[h]Scan for in minutes
+This is the period of time, in minutes, Bubbles spends monitoring each client's IP address.  If any limit is exceeded within this set period of time, then the client's IP address will be marked as banned and all access to Bubbles and her services (websites, email, contact form etc) will be immediately denied with a 403 Access Forbidden error.
+
+[h]Ban for in minutes
+Once a client's IP address is marked as banned (see above), it remains banned for the specified time period in minutes.
+
+An Example:
+Scan for in minutes = 1,440 (1 day)
+Ban for in minutes = 10,080 (1 week)
+
+In this situation, Bubbles will monitor all client IP addresses for 1,440 minutes, and if in that time frame any client exceeds a limit and is banned, they will be denied access to Bubbles and her services for a whole week.
+
+This is just an example.  Both values can be set to wide values.  You could scan for 48 hours (2,880 minutes) and ban for a year (525,600 minutes).
+
+When Bubbles is restarted / rebooted her ban list is reset, along with any and all previously banned IP addresses.
+
+[h]Hit limit
+This differs from the graphical site hit counters.  Where the hit counters count every request to a .html or .htm document, this limit is based on requests to any file type made by the client.  The client's IP address will be banned once the limit is exceeded.
+
+[h]Post limit
+This limits the number of combined emails sent to and contact form submissions made by a client.  If the limit is exceeded, the client's IP address is banned.
+
+Example:
+If the limit is set to 10, and the client sends 8 emails and submits 3 contact form messages, then on the third contact form submission they are banned.
+
+[h]Bandwidth limit in megabytes
+Limits the bandwidth that can be consumed (upstream and downstream combined) before the client is banned.
+
+[h]Bad login limit
+Specifies how many failed attempts at login can be made before the client is banned.  This guards against brute force password attacks.
+
+[h]Max. simultaneous connections
+Restricts the number of connections a client may open to the server at any one time.  If this limit is exceeded, unlike the limits above, the client is not banned, but merely prevented from keeping the excessive connections open.
+
+
+[t]Web Administration - Mime
+Add or modify existing mime types.
+
+Bubbles comes with 40+ predefined common mime types, and the option to override them, or add custom new mime types.  The one exception is the .html "text/html" mime type, which is always at least "text/html" for security and stability reasons.  It however can be appended to, for instance "html: text/html; charset=utf-8" (without quotes) is a valid customisation.
+
+A console view below the text entry box displays the currently active mime types.  Items marked in red indicate a predefined mime type that has been modified, or a custom mime type.
+
+[k]File Type      Mime Type
+---------      ---------
+*              application/octet-stream
+7z             application/x-7z-compressed
+apk            application/vnd.android.package-archive
+bmp            image/bmp
+bwd            application/x-bwd
+bwp            application/x-bwp
+css            text/css
+epub           application/epub+zip
+exe            application/vnd.microsoft.portable-executable
+gif            image/gif
+gtar           application/x-gtar
+gz             application/x-gzip
+htm            text/html; charset=utf-8
+html           text/html; charset=utf-8
+ico            image/x-icon
+jfif           image/jpeg
+jif            image/jpeg
+jpe            image/jpeg
+jpeg           image/jpeg
+jpg            image/jpeg
+js             application/x-javascript
+mid            audio/midi
+midi           audio/midi
+mkv            video/x-matroska
+mocha          application/x-javascript
+mp3            audio/mpeg
+mp4            video/mp4
+pdf            application/pdf
+pl             application/x-perl
+png            image/png
+rtf            application/rtf
+tar            application/x-tar
+text           text/plain
+tgz            application/x-compressed
+tif            image/tiff
+tiff           image/tiff
+txt            text/plain
+wav            audio/wav
+weba           audio/webm
+webm           video/webm
+webp           image/webp
+wma            audio/x-ms-wma
+xhtml          application/xhtml+xml; charset=utf-8
+xml            text/xml; charset=utf-8
+z              application/x-compress
+zip            application/zip
+
+46 mime types found.  Entires marked in red indicate a custom mime type.
+The "*" file type is the fallback mime type used for unknown file types.[/]
+
+
+[t]Web Administration - Contact
+Manages contact form submissions and the SMTP (simple mail transport protocol) email server.
+
+[h]Allow Contact Form Submissions
+Turns on the contact form handler, allowing contact form submissions via the "contact.html" file.  This is the only file permitted to submit a contact form message to Bubbles.  
+
+The form must use the "POST" method when sending its data to Bubbles.  If you intend to use the Spam Guard, use the "((spamguard))" (without quotes) tag to position it within your contact form code, otherwise Bubbles' will insert it at the bottom of your form.  There is an upload limit of 65K, but bear in mind that text entered into a browser form will be encoded and thus increase in size.  So the real upload limit is less than 65K.  Upon receipt of the form's data, the form handler writes the form data to your Inbox as a simple plain text email message, using these common variable names to format it:
+
+"subject" for the email's subject line, uses "(no subject)" if none found.
+"message" or "msg" for the message body.
+"email" for the from field.
+
+All other variable names and values are written at the bottom, below the message body of the email.  If one or all of the above variable names are missing, no error is raised, and the message is written to your Inbox as best as possible.
+
+Once the message has been stored in your Inbox, the form handler looks to modify the "contact.html" page by inserting a small piece of html code in the form of a reply message.  It does this by searching through the source code of the "contact.html" page for the starting comment code "<!--reply-->" (without the quotes) and searches on to the endpoint "<!--endreply-->" (again without quotes).  If this block is found then the html code between the two is omitted and the reply message (html code) is inserted in its place.  If the code block is not found, then Bubbles takes her best guess and inserts the reply code where she deems fit.  The modified "contact.html" page is then sent on back to the client.
+
+There a three possible reply messages:
+1. Thank you for your online message - the message was stored in your Inbox without error
+2. Your online message could not be processed - something went wrong and Bubbles was unable to save the message to your Inbox (disk full / disk error)
+3. Unable to accept messages at this stage - this message is displayed on the "contact.html" page when the "Allow Contact Form Submissions" is not ticked (disabled).
+
+Example code snippet from our website's contact form (contact.html):
+[k]Contact us with the online form below.  All fields are optional.<br>
+<br>
+<form method=post action="contact.html" class="left">
+<div class="window">
+<div class="text">
+<!--reply-->
+<label class="window-label" for="lsubject">Subject</label>
+<input class="window-edit" name="subject" id="lsubject" value="">
+
+<label class="window-label window-vpad" for="lname">Name</label>
+<input class="window-edit" name="name" id="lname" value="">
+
+<label class="window-label window-vpad" for="lemail">Email Address</label>
+<input class="window-edit" name="email" id="lemail" value="">
+
+<label class="window-label window-vpad" for="lmessage">Message &nbsp;<span style="font-size:75%;">(Limited to 500 characters)</span></label>
+<textarea class="window-text" maxlength=500 id="lmessage" rows="8" wrap="yes" name="message"></textarea>
+
+((spamguard))
+
+<div class="center-margin" style="padding-top: 1rem;"><input class="button center-margin" style="width: 100%" type=submit value=" Send Message "></div>
+
+<!--endreply-->
+</div>
+</div>
+</form>[/]
+
+[h]Protect against mass spam with Spam Guard
+A simple maths problem mechanism to protect against mass unsolicited spam.  Spam Guard presents the user interacting with your online contact form a short maths problem which must be solved correctly.  An incorrect or unsolved contact form submission ends up in the Trash folder.  A message with a correct answer is saved to your Inbox.
+
+[h]Allow emails to be received and stored in the inbox
+This turns on the SMTP (simple mail transport protocol) email server, which uses port 25 to receive unencrypted emails.
+
+[h]Max Email Size
+Places a limit on the email size that can be transmitted to Bubbles.  The limit is passed on ahead of email transmission to email clients capable of supporting the limit.  In turn they'll warn their users about the upload limit size.
+
+[h]Mail domain name to report to email senders when receiving emails
+This must be a domain that points to Bubble's static IP address.  For instance, if your site is called "http://www.mysite.net", then your email domain would be "mysite.net" (without the quotes) and all inbound emails would take the form "(some name)@mysite.net".
+
+Unfortunately, the email protocol only supports one domain name per static IP address (the IP address of the machine Bubbles is running on facing the internet).  This is because the email protocol expects the server to tell the client its domain name first, before the client transmits any email information, so it's not possible for an email server to switch between domains as a HTTP web server is able to.
+
+
+[t]Web Administration - Map
+Reroute traffic from one domain to another.  Useful when you have multiple domains or sub-domains you wish to direct at a single website or several websites.
+
+Can be used to redirect traffic from a broken website to a temporary one, or whilst maintenance work is being performed, minimising downtime.
+
+Alterations take affect once the save button is pressed.  A table at the top of the page lists every known domain that is hosted with Bubbles, and it's routing resolution, and whether it successfully mapped.
+
+You may map to bogus / non-existence domains, as long as those domains end up mapping back to a real site (disk site) on Bubbles.  The target site does not need to have an externally registered domain name.  A known disk site (local folder) is enough for Bubbles to map to.
+
+An Example:
+[k]examplesite.com: bogus123.com
+bogus123.com: mysite.net[/]
+
+Assuming that "examplesite.com" is a registered domain name (source domain) and "mysite.net" is at least a known site (disk site) on Bubbles and "bogus123.com" is a made up domain, then the mapping "examplesite.com > bogus123.com > mysite.net" still works.  All traffic from "examplesite.com" will be directed to "mysite.net".
+
+The order of entries does not matter.  The above example can be reordered as below, and will still work:
+[k]bogus123.com: mysite.net
+examplesite.com: bogus123.com[/]
+
+A domain is considered known to Bubbles when it has a disk site.  A disk site is simply a folder with the "www_" prefix in its name followed by the full domain name (dots to underscores).  The disk site for the domain "mysite.net" would be "www_mysite_net" (without the quotes) and "examplesite.com" would have the disk site "www_examplesite_com" (again with quotes).
+
+The fallback disk site is "www_", and is where traffic is directed for unknown sites.
+
+ 
+[t]Web Administration - Manage
+Manage your websites from this one tab.  Create a site, delete a site, upload files to a site, list files on a site, delete files from a site, set a site's hit counter value, and edit a site's redirect entries.
+
+Important Note:
+Currently there is only support for managing files.  If your website requires sub-folders, then you will need to upload your file structure using a third party software solution, such as a secure FTP server and client.
+
+[h]Create Site / Disk Site
+Type the full name of your domain into the box and click the "Create Site" button.  For example "mysite.net".  A mini console view will report status below.  If your site was successfully created, then a button with your Disk Site name on it will appear above in the "Manage Sites" list (top of page).
+
+[h]Delete Site / Disk Site
+Type the name of the site to be deleted and click the "Delete Site" button.  The site must be empty to be deleted - this is to prevent accidental deletion of an entire website when valuable content is present.  Once your site has been deleted, scroll up to the "Manage Sites" section (top of page) and click the "Reload Site(s)" button to refresh the list and make your changes public.
+
+[h]Manage Sites
+Click the "Reload Site(s)" button to refresh the list of sites (domains / websites) and apply any changes made to one or more sites during any management action, such as the uploading and deleting of files.
+
+To manage a site, click its button from the list of site buttons.  The management tab will change view to now display six sections:
+1. General
+2. Upload Files
+3. List Files
+4. Delete Files
+5. Hit Counters
+6. Redirect Links
+
+[h]General
+Displays RAM used by all sites and the number of files cached.  Click the "Reload Site(s)" button to update any changes made to a site via the "Upload Files" or "Delete Files" sections.
+
+[h]Upload Files
+Upload one or more files to the current website.  Click the "Browse..." button (left) and select a single file, or click down away from the file list and drag to highlight multiple files with your mouse, or hold down the shift key and down arrow using your keyboard.  Click the "Open" button and click "Upload Files".
+
+It can take a few moments to upload and decode your files depending on how much data is being uploaded.  Once complete, a console view will display with an "Upload Log" detailing each file's name, size and status.  If you're satisfied, go ahead and click the "Reload Site(s)" button to make your changes live.
+
+[h]List Files
+Want to know exactly what files you have on your site?  Leave the box empty to list all files, or type a mask (or a complex mask) into the box for a specific set of files, and click the "List Files" button.  A console view will display below with a list of files.  Entries marked in red indicate a file not in the RAM cache, which will be streamed from disk when requested by a client.
+
+A mask can be as simple as "*.zip", which will list all files with the extension ".zip".  A complex mask may have up to 2 asterisks per section, and multiple sections are separated by semicolons ";".
+
+Examples of Complex Masks:
+[k]*doc*.html;*.htm;*a*z.xml
+*.jpg;*.jif;*aab;*.gif
+*.doc;*.txt;*.rtf[/]
+
+[h]Delete Files
+A mask typed into the List Files box will automatically be entered into the Delete Files box, and vice versa.
+
+Type a mask or complex mask and click the "Delete Files..." button.  You will be prompted to either abort with a large red button, or continue on and delete the files permanently.
+
+Deleting the files permanently removes them from disk, but not from the RAM cache.  You must scroll up and click the "Reload Site(s)" button to refresh the RAM cache and make your changes live.
+
+[h]Hit Counter
+Each site (website / domain) has its own hit counter.  You can set it to any number you desire.  Changes take affect as soon as you press the "Save" button.
+
+The hit counter will automatically increment each time a "html" or "htm" document is requested.  To show the counter on your website, use the html image tag to display the digital display (PNG image).
+
+For Example: 
+[k]<img src=".hits.png" alt="Hit Counter">[/]
+
+To display the total hits across all your websites:
+[k]<img src=".totalhits.png" alt="Hit Counter">[/]
+
+The site counter updates after a short delay for optimal performance, and is both font and graphics independent.
+
+[h]Redirect Links
+Bubbles supports both simple 1:1 file redirection and 1:10 random redirection.
+
+For a simple redirect (1:1) type a source filename followed by a destination filename/url in the format "(source filename):(space)(target filename/url)".  One redirect entry per line.
+
+The source filename does not have to exist, but if it does, the redirect takes precedence.  From then on, when a client requests the source filename, they will be redirected to the target filename (local file on website) or a url (any url).
+
+To create a random redirect from a list of up to 10 filenames / urls, type the source filename followed by colon and space and then a comma-space-tab separated list of filenames and / or urls, of which, one will be randomly selected during the redirect process.
+
+There is a combined limit of 1,000 redirect entires across all sites.  That is, all sites and their redirects cannot number more than 1,000 in total.
+
+Example 1:
+[k]test1.html: http://testsite.net/about.html [/]
+test1.html redirects to http://testsite.net/about.html
+
+Example 2:
+[k]test2.html: index.html, contact.html, other.html[/]
+test2.html redirects to index.html, contact.html or other.html at random.
+
+Example 3:
+[k]test3.html: index.html, http://testsite.net, https://mysite.com, other.html[/]
+test3.html redirects to index.html, http://testsite.net, https://mysite.com or other.html randomly.
+
+
+[t]Web Administration - Password
+Change the Administration password.
+
+Type or enter your current password into the first box, and then type your new password into the "Type new password" box.  A password must be at least five characters long.  Retype your new password into the "Confirm new password" box.  When you're sure, click the "Change Password" button.
+
+The new password will take affect the next time you go to login.
+
+[t]Web Administration - Logout
+Click the "Logout" tab to logout of your current Admin session.  Admin sessions automatically logout after 48 hours (2 days) of inactivity.
+
+
+[t]HTTP / SMTP Codes
+[k]200 OK
+206 Partial Content
+221 Closing (SMTP)
+250 OK (SMTP)
+304 Not Modified
+307 Temporary Redirect
+308 Permanent Redirect
+400 Bad Request
+404 Not Found
+403 Forbidden
+412 Precondition Failed
+413 Content Too Large
+429 Too Many Requests
+431 Request Header Fields Too Large
+500 Command Unrecognised (SMTP)
+502 Bad Gateway
+503 Service Unavailable
+507 Insufficient Storage
+509 Bandwidth Limit Exceeded
+554 Transaction Failed (SMTP)[/]
+
+
+[t]Formats, Support and Design
+Bubbles supports the HTTP/1.0 and some of the HTTP/1.1 hyper text transport protocol, and responds to the GET, HEAD and POST methods.
+
+She supports resume and partial downloads (http code 206) using byte range, and complies with the keep-alive header for persistent connections.
+
+Virtual hosting via the "host" header is supported, allowing her to host multiple websites and domains at once.
+
+She uses Etags to signal file changes, and temporary redirection (http code 307) for redirect links.
+
+Support for SMTP (simple mail transport protocol) on port 25 for receiving unencrypted emails, for both HELO and EHLO modes, the later supporting upload limit notification to client email software.
+
+She does not support https, compression on-the-fly, gzip, chunking, scripts, plug-ins or extension modules.
+
+Her design principle is to keep things light, simple and stable, and remain secure and robust.
+
+
+[t]Command line options and help
+Bubbles supports a small subset of commands via the command prompt, which are designed to clearly and easily set her main settings for broadcasting.  For instance, her default password (admin) must be replaced with your own strong unique password, before making her live to the internet, otherwise you run the very real risk of hackers probing her admin panel and gaining entry.
+
+Modern command line switches are used (--<name>), but support for legacy switching is also provided.  For instance, the two lines below do exactly the same thing:
+[k]bubbles --help
+bubbles /help[/]
+
+Listed below is a complete list of Bubbles' command line support and associated help.  To view this in full at your command prompt, run Bubbles with the "--help" switch.
+[insert:commandline]
+
+
+[t]License
+MIT License
+
+Copyright 2024 Blaiz Enterprises
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+

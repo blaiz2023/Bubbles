@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="bubbles.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="62" Y="10"/>
+        <UsageCount Value="231"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="main.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="2"/>
+        <CursorPos Y="2"/>
+        <UsageCount Value="231"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossnet.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="5"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossimg.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="3"/>
+        <TopLine Value="24601"/>
+        <CursorPos Y="24645"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossroot.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="6"/>
+        <CursorPos X="76" Y="14"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossio.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="4"/>
+        <UsageCount Value="24"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="search.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="24"/>
+        <CursorPos X="28" Y="40"/>
+        <UsageCount Value="21"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gosscon.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="33" Y="8"/>
+        <UsageCount Value="117"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gosswin.pas"/>
+        <EditorIndex Value="7"/>
+        <UsageCount Value="117"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zdeflate.pas"/>
+        <UnitName Value="ZDeflate"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="839"/>
+        <CursorPos X="35" Y="879"/>
+        <UsageCount Value="33"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zbase.pas"/>
+        <UnitName Value="ZBase"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="31"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zinflate.pas"/>
+        <UnitName Value="ZInflate"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="31"/>
+      </Unit>
+      <Unit>
+        <Filename Value="httpsend.pas"/>
+        <EditorIndex Value="8"/>
+        <TopLine Value="60"/>
+        <CursorPos X="3" Y="77"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="blcksock.pas"/>
+        <EditorIndex Value="9"/>
+        <TopLine Value="92"/>
+        <CursorPos X="3" Y="109"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="synafpc.pas"/>
+        <EditorIndex Value="10"/>
+        <TopLine Value="32"/>
+        <CursorPos X="2" Y="49"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="synsock.pas"/>
+        <EditorIndex Value="11"/>
+        <TopLine Value="42"/>
+        <CursorPos X="6" Y="63"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="ssl_openssl.pas"/>
+        <EditorIndex Value="12"/>
+        <TopLine Value="85"/>
+        <CursorPos X="3" Y="102"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tools.pas"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit>
+    </Units>
+    <JumpHistory HistoryIndex="29">
+      <Position>
+        <Filename Value="gossroot.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="3350" Column="22" TopLine="3313"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="11261" Column="12" TopLine="11224"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="11344" Column="12" TopLine="11307"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="11370" Column="12" TopLine="11333"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="214" Column="23" TopLine="177"/>
+      </Position>
+      <Position>
+        <Filename Value="bubbles.lpr"/>
+        <Caret Line="17" Column="29"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="1015" TopLine="993"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="14" Column="84"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="2"/>
+      </Position>
+      <Position>
+        <Filename Value="gossroot.pas"/>
+        <Caret Line="24950" Column="5" TopLine="24906"/>
+      </Position>
+      <Position>
+        <Filename Value="bubbles.lpr"/>
+        <Caret Line="10"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="1015" TopLine="993"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="229" Column="153" TopLine="195"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="260" Column="59" TopLine="226"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="835" Column="29" TopLine="801"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="839" Column="32" TopLine="805"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="840" Column="32" TopLine="806"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="2181" Column="59" TopLine="2147"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="2693" Column="81" TopLine="2659"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="5247" Column="19" TopLine="5213"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="6845" Column="11" TopLine="6811"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="6" Column="9"/>
+      </Position>
+      <Position>
+        <Filename Value="main.pas"/>
+        <Caret Line="340" Column="28" TopLine="335"/>
+      </Position>
+      <Position>
+        <Filename Value="tools.pas"/>
+        <Caret Line="2"/>
+      </Position>
+      <Position>
+        <Filename Value="tools.pas"/>
+        <Caret Line="5857" Column="5" TopLine="5816"/>
+      </Position>
+      <Position>
+        <Filename Value="tools.pas"/>
+      </Position>
+    </JumpHistory>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>
