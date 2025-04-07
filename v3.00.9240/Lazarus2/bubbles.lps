@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="12"/>
+    <BuildModes Active="Default"/>
+    <Units>
+      <Unit>
+        <Filename Value="bubbles.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="64" Y="9"/>
+        <UsageCount Value="231"/>
+      </Unit>
+      <Unit>
+        <Filename Value="bubbles1.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="231"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossnet.pas"/>
+        <IsPartOfProject Value="True"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2080"/>
+        <CursorPos X="5" Y="2122"/>
+        <UsageCount Value="22"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossimg.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="22"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossroot.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="16966"/>
+        <CursorPos X="5" Y="17008"/>
+        <UsageCount Value="22"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gossio.pas"/>
+        <IsPartOfProject Value="True"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="3450"/>
+        <CursorPos X="5" Y="3492"/>
+        <UsageCount Value="22"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gosscon.pas"/>
+        <EditorIndex Value="-1"/>
+        <CursorPos X="33" Y="8"/>
+        <UsageCount Value="117"/>
+      </Unit>
+      <Unit>
+        <Filename Value="gosswin.pas"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="2153"/>
+        <CursorPos Y="2195"/>
+        <UsageCount Value="117"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zdeflate.pas"/>
+        <UnitName Value="ZDeflate"/>
+        <EditorIndex Value="-1"/>
+        <TopLine Value="839"/>
+        <CursorPos X="35" Y="879"/>
+        <UsageCount Value="33"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zbase.pas"/>
+        <UnitName Value="ZBase"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="31"/>
+      </Unit>
+      <Unit>
+        <Filename Value="C:\lazarus\fpc\3.2.2\source\packages\paszlib\src\zinflate.pas"/>
+        <UnitName Value="ZInflate"/>
+        <EditorIndex Value="-1"/>
+        <UsageCount Value="31"/>
+      </Unit>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="-1"/>
+    </General>
+    <JumpHistory HistoryIndex="-1"/>
+    <RunParams>
+      <FormatVersion Value="2"/>
+      <Modes ActiveMode=""/>
+    </RunParams>
+  </ProjectSession>
+</CONFIG>
