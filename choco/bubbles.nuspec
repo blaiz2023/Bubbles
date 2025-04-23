@@ -9,14 +9,14 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://opensource.org/license/mit</licenseUrl>
     <projectUrl>https://www.blaizenterprises.com/bubbles.html</projectUrl>
-    <iconUrl>https://assets.blaizenterprises.com/bubbles-256.png</iconUrl>
+    <iconUrl>https://rawcdn.githack.com/blaiz2023/Bubbles/b6046c39ab42127b0c2fe19092f63d81f42d22b1/images/bubbles-256.png</iconUrl>
     <description>Bubbles the simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
 
 An extensive GUI administration control panel is accessed through your web browser (e.g. "http://localhost:1080/admin/" and login with the default password "admin"), which controls all her settings and vital functions in realtime.
 
 Apart from serving files, Bubbles is capable of tracking site visits (site counters), receiving emails, accepting contact form submissions with support for Spam Guard, and recording site activity as date stamped traffic logs. A built-in log analyser generates realtime overview reports for each traffic log. A light and stable design with an extensive block-based memory management system ensures all key operations use memory in a sustained and reliable manner. These and other features make running multiple static websites maintenance and hassle free.
 
-
+![Bubbles v3.0.10712 Screenshot](https://rawcdn.githack.com/blaiz2023/Bubbles/b6046c39ab42127b0c2fe19092f63d81f42d22b1/images/bubbles-animated.gif)
 
 Features
 * Browser based administration panel
