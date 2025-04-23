@@ -44,3 +44,5 @@ Features:
 * Smart source code (MIT license) supports both Delphi 3 and Lazarus 2
 * Portable (when not installed as a Windows service)
 
+Download
+<a href="src/bubbles.exe">bubbles.exe</a>
