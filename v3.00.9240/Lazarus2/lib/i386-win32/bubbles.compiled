@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="C:\lazarus\fpc\3.2.2\bin\i386-win32\fpc.exe" Date="1449426723"/>
-  <Params Value=" -MDelphi -Scagi -CirotR -O1 -l -vewnhibq -FiC:\123blaiz__public\Bubbles3\Lazarus2\lib\i386-win32 -FuC:\123blaiz__public\Bubbles3\Lazarus2\ -FUC:\123blaiz__public\Bubbles3\Lazarus2\lib\i386-win32\ -FEC:\123blaiz__public\Bubbles3\Lazarus2\ -oC:\123blaiz__public\Bubbles3\Lazarus2\bubbles.exe bubbles.lpr"/>
-</CONFIG>
