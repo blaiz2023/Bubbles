@@ -47,3 +47,36 @@ Features:
 
 # Download
 <a href="src/bubbles.exe">bubbles.exe</a> - windows all
+
+# Images
+<img src="images/bubbles-screenshot2.jpg">
+
+<img src="images/bubbles-screenshot3.jpg">
+
+<img src="images/bubbles-screenshot4.jpg">
+
+<img src="images/bubbles-screenshot5.jpg">
+
+<img src="images/bubbles-screenshot6.jpg">
+
+<img src="images/bubbles-screenshot7.jpg">
+
+<img src="images/bubbles-screenshot8.jpg">
+
+<img src="images/bubbles-screenshot9.jpg">
+
+<img src="images/bubbles-screenshot10.jpg">
+
+<img src="images/bubbles-screenshot11.jpg">
+
+<img src="images/bubbles-screenshot12.jpg">
+
+<img src="images/bubbles-screenshot13.jpg">
+
+<img src="images/bubbles-screenshot14.jpg">
+
+<img src="images/bubbles-screenshot15.jpg">
+
+<img src="images/bubbles-screenshot16.jpg">
+
+<img src="images/bubbles-screenshot17.jpg">
