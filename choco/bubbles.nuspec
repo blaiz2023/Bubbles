@@ -2,12 +2,12 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>bubbles</id>
-    <version>3.0.10712</version>
+    <version>3.0.10750</version>
     <title>Bubbles</title>
     <authors>Blaiz Enterprises</authors>
     <owners>Blaiz Enterprises</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <licenseUrl>https://opensource.org/license/mit</licenseUrl>
+    <licenseUrl>https://www.blaizenterprises.com/bubbles.html#help--mit-license</licenseUrl>
     <projectUrl>https://www.blaizenterprises.com/bubbles.html</projectUrl>
     <iconUrl>https://rawcdn.githack.com/blaiz2023/Bubbles/b6046c39ab42127b0c2fe19092f63d81f42d22b1/images/bubbles-256.png</iconUrl>
     <description>Bubbles the simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
@@ -16,7 +16,7 @@ An extensive GUI administration control panel is accessed through your web brows
 
 Apart from serving files, Bubbles is capable of tracking site visits (site counters), receiving emails, accepting contact form submissions with support for Spam Guard, and recording site activity as date stamped traffic logs. A built-in log analyser generates realtime overview reports for each traffic log. A light and stable design with an extensive block-based memory management system ensures all key operations use memory in a sustained and reliable manner. These and other features make running multiple static websites maintenance and hassle free.
 
-![Bubbles v3.0.10712 Screenshot](https://rawcdn.githack.com/blaiz2023/Bubbles/b6046c39ab42127b0c2fe19092f63d81f42d22b1/images/bubbles-animated.gif)
+![Bubbles v3.0.10750 Screenshot](https://rawcdn.githack.com/blaiz2023/Bubbles/b6046c39ab42127b0c2fe19092f63d81f42d22b1/images/bubbles-animated.gif)
 
 Features
 * Browser based administration panel
@@ -27,6 +27,7 @@ Features
 * Log Counter (analyse raw traffic logs)
 * IP ban list + automatic add / remove functions (maintenance free operation)
 * Inbox and Trash panels (view emails + contact form messages)
+* Send mail (compose)
 * Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
 * Hit Counters with digital display (png image) for site specific / overall hit reporting
 * Live Daily Status - realtime bandwidth, visitors, requests, hits, emails and contact form subsmissions (resets each day) updated every 30 minutes
