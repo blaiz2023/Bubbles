@@ -6,7 +6,7 @@ Apart from serving files, she is capable of tracking site visits (site counters)
 
 Her design is light and stable, and an extensive block-based memory management system ensures all her key operations use memory in a sustained and reliable manner. 
 
-<img src="images/bubbles-animated.gif">
+<img src="images/bubbles-screenshot.jpg">
 
 Features:
 * Browser based administration panel
