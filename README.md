@@ -17,6 +17,7 @@ Features:
 * Log Counter (analyse raw traffic logs)
 * IP ban list + automatic add / remove functions (maintenance free operation)
 * Inbox and Trash panels (view emails + contact form messages)
+* Send mail (compose)
 * Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
 * Hit Counters with digital display (png image) for site specific / overall hit reporting
 * Live Daily Status - realtime bandwidth, visitors, requests, hits, emails and contact form subsmissions (resets each day) updated every 30 minutes
