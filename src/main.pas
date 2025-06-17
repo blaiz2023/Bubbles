@@ -30,7 +30,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. app code (main.pas) -> Bubbles - Multi-Function Server
-//## Version.................. 3.00.10750
+//## Version.................. 3.00.10751
 //## Items.................... 5
 //## Last Updated ............ 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
 //## Lines of Code............ 11,700+
@@ -45,7 +45,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version    | Date        | Update history / brief description of function
 //## |------------------------|-------------------|------------|-------------|--------------------------------------------------------
-//## | Bubbles                | family of procs   | 1.00.10145 | 17jun2025   | Bubbles - 07apr2025
+//## | Bubbles                | family of procs   | 1.00.10146 | 17jun2025   | Bubbles - 07apr2025
 //## | tmailsender            | tobjectex         | 1.00.530   | 07apr2025   | DNS lookup and STMP mail sender
 //## | tshortdnscache         | tobjectex         | 1.00.030   | 06apr2025   | DNS A/MX record cache
 //## | tshortlist             | tobjectex         | 1.00.020   | 06apr2025   | Simple list
@@ -588,7 +588,7 @@ try
 xname:=strlow(xname);
 
 //get
-if      (xname='ver')                 then result:='3.00.10750'
+if      (xname='ver')                 then result:='3.00.10751'
 else if (xname='date')                then result:='17jun2025'
 else if (xname='name')                then result:='Bubbles'
 else if (xname='des')                 then result:='Multi-Function Server'
@@ -10380,6 +10380,9 @@ if not m.writing then
                if imail_banbaddomain and (m.hreferer<>'') and (imail_domain<>'') then
                   begin
                   low__splitstr(m.hreferer,ssAt,str1,str2);//str2=mail domain name (after the "@" symbol) - 17jun2025
+
+                  //trim trailing ">"
+                  if (strlast(str2)='>') then strdel1(str2,low__len(str2),1);
 
                   //mail.domain.name does NOT match our server -> discard email AND ban the sender
                   if not strmatch(imail_domain,str2) then
