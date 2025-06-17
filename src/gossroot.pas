@@ -12601,11 +12601,6 @@ begin
 result:='';try;result:=strcopy1(x,low__len(x),1);except;end;
 end;
 
-function strlastb(x:string):string;//returns last char of string or nil if string is empty
-begin
-result:='';try;result:=strlast(x);except;end;
-end;
-
 function strdel0(var x:string;xpos,xlen:longint):boolean;//0based
 begin
 result:=true;

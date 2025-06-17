@@ -20,7 +20,6 @@ uses
   { you can add units after this }
 
 
-//{$R *.RES}
 
 //include multi-format icon - Delphi 3 can't compile an of 256x256 @ 32 bit -> resource error/out of memory error - 19nov2024
 {$R bubbles-16-256.res}
