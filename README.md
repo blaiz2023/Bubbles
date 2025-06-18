@@ -1,3 +1,4 @@
+# Bubbles v3.00.10800
 Bubbles the simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
 
 A GUI administration panel is accessed through your web browser (e.g. "http://localhost:1080/admin/" + default password of "admin"), which controls all her settings and vital functions, all in realtime.
