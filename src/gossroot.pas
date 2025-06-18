@@ -50,7 +50,7 @@ uses {$ifdef laz}classes,{$endif} gosswin;
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. root (gossroot.pas)
-//## Version.................. 4.00.5201 (+330)
+//## Version.................. 4.00.5211 (+330)
 //## Items.................... 41
 //## Last Updated ............ 19jun2025, 11jun2025, 28may2025, 26apr2025, 11apr2025, 31mar2025, 21mar2025, 08mar2025, 20feb2025, 29jan2025, 11jan2025, 17dec2024, 06dec2024, 27nov2024, 15nov2024, 11nov2024, 01nov2024, 31oct2024, 12oct2024, 24aug2024: images extensions fix, 26jul2024: str__write, 20jul2024: zip_* procs updated, 18jun2024: GUI support added, 02may2024: low__ref256/U, 28apr2024: low__uptime(), 17apr2024
 //## Lines of Code............ 28,300+
@@ -70,7 +70,7 @@ uses {$ifdef laz}classes,{$endif} gosswin;
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
 //## |------------------------|-------------------|-----------|-------------|--------------------------------------------------------
-//## | app__*                 | family of procs   | 1.00.372  | 17jun2025   | App related procs - 18feb2025, 29jan2025, 27nov2024
+//## | app__*                 | family of procs   | 1.00.382  | 19jun2025   | App related procs - 18feb2025, 29jan2025, 27nov2024
 //## | printer__*             | family of procs   | 1.00.050  | 26apr2025   | Printer related procs
 //## | font__*                | family of procs   | 1.00.070  | 26apr2025   | Font related procs
 //## | mail__*                | family of procs   | 1.00.172  | 07apr2025   | Mail related procs (email) - 21nov2024
@@ -3714,7 +3714,7 @@ function app__settingsfile(xname:string):string;
 //..load+save
 function app__loadsettings:boolean;
 function app__savesettings:boolean;
-procedure app__filtersettings;
+procedure app__filtersettings;//19jun2025
 //..register -> filters settings data so only registered values persist
 procedure app__breg(xname:string;xdefval:boolean);//register boolean for settings
 procedure app__ireg(xname:string;xdefval,xmin,xmax:longint);//32bit register integer for settings
@@ -4836,7 +4836,7 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,9)='gossroot.') then strdel1(xname,1,9) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.5201'
+if      (xname='ver')        then result:='4.00.5211'
 else if (xname='date')       then result:='19jun2025'
 else if (xname='name')       then result:='Root'
 else if (xname='mode.int')   then result:=intstr32(info__mode)
@@ -13605,7 +13605,7 @@ except;end;
 try;str__free(@b);except;end;
 end;
 
-procedure app__filtersettings;
+procedure app__filtersettings;//19jun2025
 label
    redo;
 var
@@ -13613,17 +13613,21 @@ var
    c,xpos:longint;
    str1,n:string;
 begin
-try
 //defaults
 a:=nil;
+
+try
 //check
 if (system_settings=nil) or (system_settings_ref=nil) then exit;
 if system_settings_filt then exit else system_settings_filt:=true;
+
 //init
 a:=tvars8.create;
+
 //get
 xpos:=0;
 redo:
+
 if system_settings_ref.xnextname(xpos,str1) then
    begin
    if strmatch(strcopy1(str1,1,4),'nam.') then
@@ -13633,21 +13637,23 @@ if system_settings_ref.xnextname(xpos,str1) then
       //get
       if (n<>'') then
          begin
-         c:=system_settings_ref.i['cla.'+n];//class - 0=boolean, 1=integer, 2=string
+         c:=system_settings_ref.i['cla.'+n];//class - 0=boolean, 1=longint(32bit), 2=string, 3=comp(64bit)
          case c of
-         0:if system_settings.found(n) then a.b[n]:=system_settings.b[n]                                                                                     else a.b[n]:=system_settings_ref.b['def.'+n];//boolean
-         1:if system_settings.found(n) then a.i[n]:=frcrange32(system_settings.i[n],system_settings_ref.i['min.'+n],system_settings_ref.i['max.'+n])           else a.i[n]:=frcrange32(system_settings_ref.i['def.'+n],system_settings_ref.i['min.'+n],system_settings_ref.i['max.'+n]);//integer
-         2:if system_settings.found(n) then a.s[n]:=strdefb(system_settings.s[n],system_settings_ref.s['def.'+n]);
-         3:if system_settings.found(n) then a.i64[n]:=frcrange64(system_settings.i64[n],system_settings_ref.i64['min.'+n],system_settings_ref.i64['max.'+n]) else a.i64[n]:=frcrange64(system_settings_ref.i64['def.'+n],system_settings_ref.i64['min.'+n],system_settings_ref.i64['max.'+n]);//comp
+         0:if system_settings.found(n) then a.b[n]   :=system_settings.b[n]                                                                                     else a.b[n]   :=system_settings_ref.b['def.'+n];//boolean
+         1:if system_settings.found(n) then a.i[n]   :=frcrange32(system_settings.i[n],system_settings_ref.i['min.'+n],system_settings_ref.i['max.'+n])         else a.i[n]   :=frcrange32(system_settings_ref.i['def.'+n],system_settings_ref.i['min.'+n],system_settings_ref.i['max.'+n]);//integer
+         2:if system_settings.found(n) then a.s[n]   :=strdefb(system_settings.s[n],system_settings_ref.s['def.'+n])                                            else a.s[n]   :=system_settings_ref.s['def.'+n];//19jun2025: fixed, was missing
+         3:if system_settings.found(n) then a.i64[n] :=frcrange64(system_settings.i64[n],system_settings_ref.i64['min.'+n],system_settings_ref.i64['max.'+n])   else a.i64[n] :=frcrange64(system_settings_ref.i64['def.'+n],system_settings_ref.i64['min.'+n],system_settings_ref.i64['max.'+n]);//comp
          end;//case
          end;
       end;
    goto redo;
    end;
+
 //set
 system_settings.data:=a.data;
 except;end;
-try;freeobj(@a);except;end;
+//free
+freeobj(@a);
 end;
 
 function app__bval(xname:string):boolean;//self-filtering
