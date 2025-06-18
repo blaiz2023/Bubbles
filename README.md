@@ -9,7 +9,7 @@ Her design is light and stable, and an extensive block-based memory management s
 
 <img src="images/bubbles-screenshot.jpg">
 
-Features:
+# Features:
 * Browser based administration panel
 * HTTP/1 web server (default port 1080)
 * SMTP email server (port 25)
