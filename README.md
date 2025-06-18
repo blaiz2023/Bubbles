@@ -19,6 +19,7 @@ Her design is light and stable, and an extensive block-based memory management s
 * IP ban list + automatic add / remove functions (maintenance free operation)
 * Inbox and Trash panels (view emails + contact form messages)
 * Send mail (compose)
+* Mail mask (filter acceptable inbound email addresses via one or more complex address masks)
 * Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
 * Hit Counters with digital display (png image) for site specific / overall hit reporting
 * Live Daily Status - realtime bandwidth, visitors, requests, hits, emails and contact form subsmissions (resets each day) updated every 30 minutes
