@@ -7,7 +7,7 @@ interface
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
 {$ifdef con2} {$define jpeg} {$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gossio, gossimg, gossnet;
+uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gossio, gossimg, gossnet {$ifdef laz} {$ifdef search}, httpsend, ssl_openssl{$endif}{$endif};
 {$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
 //## ==========================================================================================================================================================================================================================
 //##
@@ -29,10 +29,11 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. Built-in modules for Bubbles
-//## Version.................. 1.00.1895
+//## Version.................. 1.00.1904 (+5)
 //## Items.................... 8
-//## Last Updated ............ 21feb2025, 16aug2024
-//## Lines of Code............ 5,200+
+//## Last Updated ............ 19jun2025, 21feb2025, 16aug2024
+//## Lines of Code............ 5,800+
+//## Notes ................... to enable tgeturl for tsearch (search engine), define the "search" compiler flag under Lazarus
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -47,8 +48,8 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
 //## |------------------------|-------------------|-----------|-------------|--------------------------------------------------------
-//## | tbubblesmodule         | tobject           | 1.00.010  | 17aug2024   | Base object for a Bubbles module
-//## | tsearch                | tbubblesmodule    | 1.00.1020 | 16aug2024   | Search Engine module for Bubbles -> currently not finished
+//## | tbubblesmodule         | tobject           | 1.00.012  | 18jun2025   | Base object for a Bubbles module - 17aug2024
+//## | tsearch                | tbubblesmodule    | 1.00.1022 | 19jun2025   | Search Engine module for Bubbles -> currently not finished - 16aug2024
 //## | tgeturl                | tthread           | 1.00.040  | 12aug2024   | Http and https document fetcher
 //## | turlcache              | tobject           | 1.00.120  | 12aug2024   | Url crawl cache
 //## | turlpool               | tobject           | 1.00.035  | 12aug2024   | Raw url cache for push add and trickle pull
@@ -67,7 +68,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 type
    tsearch=class;
    turlcache=class;
-   {$ifdef laz}tgeturl=class;{$endif}
+   {$ifdef seaarch}tgeturl=class;{$endif}
    turlpool=class;
    tdomainlist=class;
    tkeywordlist=class;
@@ -367,7 +368,7 @@ type
    end;
 
 //tgeturl
-{$ifdef laz}
+{$ifdef seaarch}
    tgeturl=class(tthread)
    private
      iurl,itext:string;
@@ -1062,8 +1063,9 @@ result:=not irundone;
 if result then irundone:=true;
 end;
 
-function tbubblesmodule.xrundone(xgetvals:boolean):boolean;
+function tbubblesmodule.xrundone(xgetvals:boolean):boolean;//18jun2025
 begin
+result  :=true;
 irundone:=true;
 irunning:=true;
 if xgetvals then getvals;
@@ -1686,8 +1688,8 @@ end;
 
 function tsearch.info(n:string):string;
 begin
-if      (n='ver')                 then result:='1.00.1305'
-else if (n='date')                then result:='16aug2024'
+if      (n='ver')                 then result:='1.00.1307'
+else if (n='date')                then result:='19jun2025'
 else if (n='name')                then result:='Search'
 else if (n='rambytes')            then result:=intstr64( add64( add64(irambytes,icrawlcache.rambytes) ,icrawlpool.rambytes) )
 else if (n='diskbytes')           then result:=intstr64( add64(idiskbytes,icrawlcache.diskbytes) )
@@ -2518,7 +2520,7 @@ end;
 
 function tsearch.crawler__pushUrl(xurl:string):boolean;
 begin
-{$ifdef laz}
+{$ifdef seaarch}
 if (xurl<>'') then
    begin
    low__roll64(icrawler_outhits,1);
@@ -3473,7 +3475,7 @@ var
    xin,xout:comp;
 begin
 
-{$ifdef laz}
+{$ifdef seaarch}
 if (sender is tgeturl) then
    begin
    //approximate bandwidth consumption -> e.g. 5K per outbound request AND 5K + text.length per inbound response => 10K + text.length total
@@ -3997,7 +3999,7 @@ end;
 
 //tgeturl ----------------------------------------------------------------------
 
-{$ifdef laz}
+{$ifdef seaarch}
 constructor tgeturl.create(xurl:string;xondone:tnotifyevent);
 begin
 iurl:=xurl;

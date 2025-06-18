@@ -38,10 +38,10 @@ uses gossroot {$ifdef laz}{$ifdef jpeg},windows, sysutils, classes, graphics, Jc
 //## Source: jpeglib.h+jpegint.h
 //##
 //## ==========================================================================================================================================================================================================================
-//## Library.................. JPEG support (gossjpg.pas)
-//## Version.................. 4.00.250 (+4)
+//## Library.................. Jpeg support (gossjpg.pas)
+//## Version.................. 4.00.251 (+39)
 //## Items.................... 1
-//## Last Updated ............ 16jun2025, 27may2025, 05may2025, 17feb2024
+//## Last Updated ............ 18jun2025, 27may2025, 05may2025, 17feb2024
 //## Lines of Code............ 1,500+
 //##
 //## main.pas ................ app code
@@ -105,9 +105,9 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossjpg.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.250'
-else if (xname='date')       then result:='16jun2025'
-else if (xname='name')       then result:='JPEG'
+if      (xname='ver')        then result:='4.00.251'
+else if (xname='date')       then result:='18jun2025'
+else if (xname='name')       then result:='Jpeg'
 else
    begin
    //nil

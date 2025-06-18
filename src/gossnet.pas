@@ -29,10 +29,10 @@ uses gossroot, gossio, gosswin;
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. network (gossnet.pas)
-//## Version.................. 4.00.905 (+10)
+//## Version.................. 4.00.950 (+10)
 //## Items.................... 6
-//## Last Updated ............ 17jun2025, 07apr2025, 15mar2025, 20feb2025, 18dec2024, 15nov2024, 18aug2024, 04may2024, 23apr2024
-//## Lines of Code............ 2,600+
+//## Last Updated ............ 19jun2025, 07apr2025, 15mar2025, 20feb2025, 18dec2024, 15nov2024, 18aug2024, 04may2024, 23apr2024
+//## Lines of Code............ 2,700+
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -53,8 +53,8 @@ uses gossroot, gossio, gosswin;
 //## | tnetbasic              | tnetmore          | 1.00.081  | 18aug2024   | Helper object for server connection servicing, 13apr2024: added vmustlog, 23dec2023: created
 //## | dns__*                 | family of procs   | 1.00.070  | 05apr2025   | DNS message handlers
 //## | net__*                 | family of procs   | 1.00.420  | 05apr2025   | Create and maintain tcp server and inbound client connections, 15mar2025, 09aug2024, 01par2024: added ssPert support in net__encodeurl(), 06mar2024: queue size fo servers, 30jan2024: Created
-//## | ipsec__*               | family of procs   | 1.00.240  | 17jun2025   | Track client IP hits, errors and current ban status, 07apr2025: notthislink(BadBot) tracking, 20feb2025: added ipsec->post2 support, 18aug2024, 03may2024: fixed scanfor/banfor range oversight in ipsec__update(), 07jan2024: created
-//## | log__*                 | family of procs   | 1.00.081  | 09aug2024   | Web traffic log for server traffic, 03apr2024: using filterstr, 01apr2024: optional "__" in "date__logname" only when logname present, 07mar2024: fixed alternative folder, 07jan2024: created
+//## | ipsec__*               | family of procs   | 1.00.280  | 19jun2025   | Track client IP hits, errors and current ban status, 07apr2025: notthislink(BadBot) tracking, 20feb2025: added ipsec->post2 support, 18aug2024, 03may2024: fixed scanfor/banfor range oversight in ipsec__update(), 07jan2024: created
+//## | log__*                 | family of procs   | 1.00.086  | 18jun2025   | Web traffic log for server traffic, 09aug2024, 03apr2024: using filterstr, 01apr2024: optional "__" in "date__logname" only when logname present, 07mar2024: fixed alternative folder, 07jan2024: created
 //## ==========================================================================================================================================================================================================================
 //## Performance Note:
 //##
@@ -114,7 +114,8 @@ type
     post2:longint;//e.g. number of "tools-*" post requests, e.g. to "tools-iconmaker.html" - 20feb2025
     conn:longint;//number of simultaneous connections
     notthislink:longint;//number of times a Bad Bot attempted to access secret "notthislink" file
-    badmaildomain:boolean;//17jun2025
+    badrequest:longint;//number of times a bad request is made, e.g. a 502 (Bad Gateway) or 400 (Bad Request) - 18jun2025
+    badmail:longint;//19jun2025
     //.bandwidth in bytes consumed both for in and out data transfers
     bytes:comp;
     //.reference
@@ -233,16 +234,18 @@ var
    system_log_gmtoffset:string='';
    system_log_gmtnowstr:string='';//to nearest second
    //.ip security
-   system_ipsec_slot      :array[-1..system_ipsec_limit-1] of tipsecurity;//840 Kb -> Note: the "-1" entry is there ONLY as a catch for when the ipsec procs return "slot=-1" and an app may pass this on to the global system var "system_ipsec_slot[]" instead of using the safe "ipsec__*" procs which handle this value properly without fault - 07jan2024
-   system_ipsec_count     :longint=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 07jan2024
-   system_ipsec_scanfor   :longint=24*60;//1 day in minutes
-   system_ipsec_banfor    :longint=7*24*60;//1 week in minutes
-   system_ipsec_connlimit :longint=0;//no limit -> sim. connections
-   system_ipsec_postlimit :longint=0;//no limit -> hits
-   system_ipsec_postlimit2:longint=0;//no limit -> hits
-   system_ipsec_badlimit  :longint=0;//no limit -> hits
-   system_ipsec_hitlimit  :longint=0;//no limit -> hits
-   system_ipsec_datalimit :comp=0;//no limit -> in bytes (counts for both upload and download bandwidth)
+   system_ipsec_slot        :array[-1..system_ipsec_limit-1] of tipsecurity;//840 Kb -> Note: the "-1" entry is there ONLY as a catch for when the ipsec procs return "slot=-1" and an app may pass this on to the global system var "system_ipsec_slot[]" instead of using the safe "ipsec__*" procs which handle this value properly without fault - 07jan2024
+   system_ipsec_count       :longint=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 07jan2024
+   system_ipsec_scanfor     :longint=24*60;//1 day in minutes
+   system_ipsec_banfor      :longint=7*24*60;//1 week in minutes
+   system_ipsec_connlimit   :longint=0;//no limit -> sim. connections
+   system_ipsec_postlimit   :longint=0;//no limit -> hits
+   system_ipsec_postlimit2  :longint=0;//no limit -> hits
+   system_ipsec_badlimit    :longint=0;//no limit -> hits
+   system_ipsec_hitlimit    :longint=0;//no limit -> hits
+   system_ipsec_badreqlimit :longint=0;//no limit -> hits
+   system_ipsec_badmaillimit:longint=0;//no limit -> hits
+   system_ipsec_datalimit   :comp=0;//no limit -> in bytes (counts for both upload and download bandwidth)
 
 //start-stop procs -------------------------------------------------------------
 procedure gossnet__start;
@@ -335,8 +338,8 @@ function ipsec__findcount:longint;//find new "ipsec__count" and update it
 function ipsec__newslot:longint;
 function ipsec__findaddr(var xaddr:string;var xslot:longint):boolean;
 //.vals
-function ipsec__setvals(xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit:longint;xdatalimit:comp):boolean;
-function ipsec__getvals(var xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit:longint;var xdatalimit:comp):boolean;
+function ipsec__setvals(xscanfor,xbanfor:longint;xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;xdatalimit:comp):boolean;
+function ipsec__getvals(var xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;var xdatalimit:comp):boolean;
 function ipsec__scanfor:longint;
 function ipsec__banfor:longint;
 function ipsec__connlimit:longint;
@@ -344,26 +347,31 @@ function ipsec__postlimit:longint;
 function ipsec__postlimit2:longint;
 function ipsec__badlimit:longint;
 function ipsec__hitlimit:longint;
+function ipsec__badreqlimit:longint;//18jun2025
+function ipsec__badmaillimit:longint;//18jun2025
 function ipsec__datalimit:comp;
 //.query procs
 function ipsec__trackb(xaddr:string;var xnewslot:boolean):longint;
 function ipsec__track(xaddr:string;var xslot:longint;var xnewslot:boolean):boolean;
 function ipsec__incHit(xslot:longint):boolean;
+function ipsec__incBadrequest(xslot:longint):boolean;//18jun2025
+function ipsec__incBadmail(xslot:longint):boolean;//19jun2025
 function ipsec__incBad(xslot:longint):boolean;
 function ipsec__incPost(xslot:longint):boolean;
 function ipsec__incPost2(xslot:longint):boolean;//20feb2025
 function ipsec__incNotThisLink(xslot:longint):boolean;//07apr2025
-function ipsec__Badmaildomain(xslot:longint):boolean;//17jun2025
 function ipsec__incConn(xslot:longint;xinc:boolean):boolean;//sim. connection tracking
 function ipsec__incBytes(xslot:longint;xbytes:comp):boolean;
 function ipsec__banned(xslot:longint):boolean;
 function ipsec__update(xslot:longint):boolean;//03may2024
 function ipsec__clearall:boolean;
 function ipsec__clearslot(xslot:longint):boolean;//03may2024
-function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xpost2,xbad,xhits,xnotthislink:longint;var xbytes:comp;var xbadmaildomain,xbanned:boolean):boolean;
+function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink:longint;var xbytes:comp;var xbanned:boolean):boolean;
 function ipsec__slotBytes(xslot:longint):comp;//18aug2024
 
 //log procs --------------------------------------------------------------------
+function log__code(xrootcode,xaltcode:longint):longint;
+function log__code2(var a:pnetwork;xaltcode:longint):longint;
 function log__addentry(xfolder,xlogname:string;var a:pnetwork;xaltcode:longint):boolean;//03apr2024: using filterstr, 01apr2024: updated "__" optional when logname present (date__logname.txt)
 function log__addmailentry(xfolder,xlogname:string;var a:pnetwork;xcode:longint;xbandwidth:comp):boolean;//03apr2024: using filterstr
 function log__filterstr(x:string):string;
@@ -429,8 +437,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossnet.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.905'
-else if (xname='date')       then result:='17jun2025'
+if      (xname='ver')        then result:='4.00.950'
+else if (xname='date')       then result:='19jun2025'
 else if (xname='name')       then result:='Network'
 else
    begin
@@ -2058,7 +2066,7 @@ for p:=0 to (ipsec__count-1) do if (system_ipsec_slot[p].alen=alen) and (system_
 except;end;
 end;
 
-function ipsec__setvals(xscanfor,xbanfor:longint;xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit:longint;xdatalimit:comp):boolean;
+function ipsec__setvals(xscanfor,xbanfor:longint;xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;xdatalimit:comp):boolean;
 begin
 //pass-thru
 result:=true;
@@ -2080,26 +2088,32 @@ system_ipsec_badlimit:=xbadlimit;
 //.xhitlimit
 if (xhitlimit<=0) then xhitlimit:=0 else xhitlimit:=frcrange32(xhitlimit,100,max32);//0=off, otherwise in the range 100..N
 system_ipsec_hitlimit:=xhitlimit;
+//.xbadreqlimit
+system_ipsec_badreqlimit:=frcrange32(xbadreqlimit,0,max32);//0=off, otherwise in the range 1..N
+//.xbadmaillimit
+system_ipsec_badmaillimit:=frcrange32(xbadmaillimit,0,max32);//0=off, otherwise in the range 1..N
 //.xdatalimit
 if (xdatalimit<=0) then xdatalimit:=0 else xdatalimit:=frcrange64(xdatalimit,100000,max64);//0=off, otherwise in the range 100,000 (100K)..N
 system_ipsec_datalimit:=xdatalimit;
 except;end;
 end;
 
-function ipsec__getvals(var xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit:longint;var xdatalimit:comp):boolean;
+function ipsec__getvals(var xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;var xdatalimit:comp):boolean;
 begin
 //pass-thru
 result:=true;
 
 //get
-xscanfor    :=system_ipsec_scanfor;
-xbanfor     :=system_ipsec_banfor;
-xconnlimit  :=system_ipsec_connlimit;
-xpostlimit  :=system_ipsec_postlimit;
-xpostlimit2 :=system_ipsec_postlimit2;
-xbadlimit   :=system_ipsec_badlimit;
-xhitlimit   :=system_ipsec_hitlimit;
-xdatalimit  :=system_ipsec_datalimit;
+xscanfor      :=system_ipsec_scanfor;
+xbanfor       :=system_ipsec_banfor;
+xconnlimit    :=system_ipsec_connlimit;
+xpostlimit    :=system_ipsec_postlimit;
+xpostlimit2   :=system_ipsec_postlimit2;
+xbadlimit     :=system_ipsec_badlimit;
+xhitlimit     :=system_ipsec_hitlimit;
+xbadreqlimit  :=system_ipsec_badreqlimit;
+xbadmaillimit :=system_ipsec_badmaillimit;
+xdatalimit    :=system_ipsec_datalimit;
 end;
 
 function ipsec__scanfor:longint;
@@ -2135,6 +2149,16 @@ end;
 function ipsec__hitlimit:longint;
 begin
 result:=system_ipsec_hitlimit;
+end;
+
+function ipsec__badreqlimit:longint;//18jun2025
+begin
+result:=system_ipsec_badreqlimit;
+end;
+
+function ipsec__badmaillimit:longint;//19jun2025
+begin
+result:=system_ipsec_badmaillimit;
 end;
 
 function ipsec__datalimit:comp;
@@ -2216,10 +2240,16 @@ result:=true;
 if ipsec__slotok(xslot) and (system_ipsec_slot[xslot].notthislink<max32) then low__iroll(system_ipsec_slot[xslot].notthislink,1);
 end;
 
-function ipsec__Badmaildomain(xslot:longint):boolean;//17jun2025
+function ipsec__incBadrequest(xslot:longint):boolean;//18jun2025
 begin
 result:=true;
-if ipsec__slotok(xslot) then system_ipsec_slot[xslot].badmaildomain:=true;
+if ipsec__slotok(xslot) and (system_ipsec_slot[xslot].badrequest<max32) then low__iroll(system_ipsec_slot[xslot].badrequest,1);
+end;
+
+function ipsec__incBadmail(xslot:longint):boolean;//19jun2025
+begin
+result:=true;
+if ipsec__slotok(xslot) and (system_ipsec_slot[xslot].badmail<max32) then low__iroll(system_ipsec_slot[xslot].badmail,1);
 end;
 
 function ipsec__incConn(xslot:longint;xinc:boolean):boolean;
@@ -2285,12 +2315,14 @@ if ipsec__slotok(xslot) then
       if (system_ipsec_badlimit>=1) and (system_ipsec_slot[xslot].bad>=system_ipsec_badlimit) then bol1:=true;
       //.hit limit
       if (system_ipsec_hitlimit>=1) and (system_ipsec_slot[xslot].hits>=system_ipsec_hitlimit) then bol1:=true;
+      //.badrequest - 18jun2025
+      if (system_ipsec_badreqlimit>=1) and (system_ipsec_slot[xslot].badrequest>=system_ipsec_badreqlimit) then bol1:=true;
+      //.badmail - 19jun2025
+      if (system_ipsec_badmaillimit>=1) and (system_ipsec_slot[xslot].badmail>=system_ipsec_badmaillimit) then bol1:=true;
       //.data limit
       if (system_ipsec_datalimit>=1) and (system_ipsec_slot[xslot].bytes>=system_ipsec_datalimit) then bol1:=true;
       //.notthislink
       if (system_ipsec_slot[xslot].notthislink>=1) then bol1:=true;
-      //.badmaildomain
-      if system_ipsec_slot[xslot].badmaildomain    then bol1:=true;//17jun2025
 
       //set
       if bol1 then system_ipsec_slot[xslot].ban:=true;
@@ -2329,7 +2361,8 @@ if (xslot>=low(system_ipsec_slot)) and (xslot<system_ipsec_limit) then
    post2:=0;
    conn:=0;
    notthislink:=0;
-   badmaildomain:=false;
+   badrequest:=0;
+   badmail:=0;//19jun2025
    //.bandwidth consumed
    bytes:=0;
    //.reference
@@ -2339,7 +2372,7 @@ if (xslot>=low(system_ipsec_slot)) and (xslot<system_ipsec_limit) then
    end;//if
 end;
 
-function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xpost2,xbad,xhits,xnotthislink:longint;var xbytes:comp;var xbadmaildomain,xbanned:boolean):boolean;
+function ipsec__slot(xslot:longint;var xaddress:string;var xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink:longint;var xbytes:comp;var xbanned:boolean):boolean;
 var
    p:longint;
 begin
@@ -2352,8 +2385,9 @@ xpost2:=0;
 xbad:=0;
 xhits:=0;
 xbytes:=0;
+xbadrequest:=0;//18jun2025
+xbadmail:=0;//19jun2025
 xnotthislink:=0;
-xbadmaildomain:=false;//17jun2025
 xbanned:=false;
 
 //get
@@ -2366,12 +2400,13 @@ if ipsec__slotok(xslot) then
    xconn         :=system_ipsec_slot[xslot].conn;//sim. connections (actively happening)
    xpost         :=system_ipsec_slot[xslot].post;
    xpost2        :=system_ipsec_slot[xslot].post2;
+   xbadrequest   :=system_ipsec_slot[xslot].badrequest;//18jun2025
+   xbadmail      :=system_ipsec_slot[xslot].badmail;//19jun2025
    xnotthislink  :=system_ipsec_slot[xslot].notthislink;
    xbad          :=system_ipsec_slot[xslot].bad;
    xhits         :=system_ipsec_slot[xslot].hits;
    xbytes        :=system_ipsec_slot[xslot].bytes;
    xmins         :=frcmin32(mn32-system_ipsec_slot[xslot].age32,0);
-   xbadmaildomain:=system_ipsec_slot[xslot].badmaildomain;
    xbanned       :=system_ipsec_slot[xslot].ban;
    //successful
    result:=true;
@@ -2382,6 +2417,7 @@ function ipsec__slotBytes(xslot:longint):comp;//18aug2024
 begin
 if ipsec__slotok(xslot) then result:=system_ipsec_slot[xslot].bytes else result:=0;
 end;
+
 
 //## tnetmore ##################################################################
 constructor tnetmore.create;
@@ -2499,6 +2535,27 @@ except;end;
 end;
 
 //log procs --------------------------------------------------------------------
+
+function log__code(xrootcode,xaltcode:longint):longint;
+begin
+
+if (xaltcode<>0) then result:=xaltcode
+else                  result:=xrootcode;
+
+end;
+
+function log__code2(var a:pnetwork;xaltcode:longint):longint;
+var
+   m:tnetbasic;
+   buf:pobject;
+begin
+
+if      (xaltcode<>0)          then result:=xaltcode
+else if net__recinfo(a,m,buf)  then result:=m.wcode
+else                                result:=0;
+
+end;
+
 function log__addentry(xfolder,xlogname:string;var a:pnetwork;xaltcode:longint):boolean;//01apr2024: updated "__" optional when logname present (date__logname.txt)
 var//xaltcode=0=has no effect, 1..N=signals that response was interrupted somehow, such as the connection was lost or closed unexpectedly e.g. 502
    m:tnetbasic;//pointer only
@@ -2540,8 +2597,8 @@ var//xaltcode=0=has no effect, 1..N=signals that response was interrupted someho
 begin
 //defaults
 result:=false;
-try
 
+try
 //update fast vars
 log__fastvars;
 
@@ -2563,7 +2620,7 @@ if not net__recinfo(a,m,buf) then exit;
 if (system_log_cache=nil) then system_log_cache:=str__new8;
 
 //add
-system_log_cache.sadd(xip+' - - ['+system_log_gmtnowstr+'] "'+log__filterstr(xmethod+#32+insstr('/'+m.hdiskhost,m.hdiskhost<>'')+xpathname+' HTTP/'+xhttpver)+'" '+intstr32(low__aorb(m.wcode,xaltcode,xaltcode<>0))+#32+intstr64(frcmin64( sub64(m.wsent,m.wheadlen) ,0))+' "'+strdefb(log__filterstr(m.hreferer),'-')+'" "'+log__filterstr(m.hua)+'" ['+k64(low__aorbcomp(0,sub64(ms64,m.vstarttime),m.vstarttime>=1))+'ms '+k64(a.used)+'u '+k64(a.slot)+'c]'+#10);//ms=time taken to read+process+send the request, u=number of times the connection has been reused (e.g. via keep-alive connection), #=connection slot used for request - 19feb2024
+system_log_cache.sadd(xip+' - - ['+system_log_gmtnowstr+'] "'+log__filterstr(xmethod+#32+insstr('/'+m.hdiskhost,m.hdiskhost<>'')+xpathname+' HTTP/'+xhttpver)+'" '+intstr32( log__code(m.wcode,xaltcode) )+#32+intstr64(frcmin64( sub64(m.wsent,m.wheadlen) ,0))+' "'+strdefb(log__filterstr(m.hreferer),'-')+'" "'+log__filterstr(m.hua)+'" ['+k64(low__aorbcomp(0,sub64(ms64,m.vstarttime),m.vstarttime>=1))+'ms '+k64(a.used)+'u '+k64(a.slot)+'c]'+#10);//ms=time taken to read+process+send the request, u=number of times the connection has been reused (e.g. via keep-alive connection), #=connection slot used for request - 19feb2024
 
 //optionally write to disk
 log__writemaybe;

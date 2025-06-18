@@ -16,7 +16,9 @@ uses
   gossio,
   gossimg,
   gossnet,
-  gosswin;
+  gosswin,
+  gossjpg,
+  gosszip;
   { you can add units after this }
 
 

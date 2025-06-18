@@ -30,10 +30,10 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. app code (main.pas) -> Bubbles - Multi-Function Server
-//## Version.................. 3.00.10751
+//## Version.................. 3.00.10800
 //## Items.................... 5
-//## Last Updated ............ 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
-//## Lines of Code............ 11,700+
+//## Last Updated ............ 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
+//## Lines of Code............ 11,800+
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -45,7 +45,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version    | Date        | Update history / brief description of function
 //## |------------------------|-------------------|------------|-------------|--------------------------------------------------------
-//## | Bubbles                | family of procs   | 1.00.10146 | 17jun2025   | Bubbles - 07apr2025
+//## | Bubbles                | family of procs   | 1.00.10195 | 19jun2025   | Bubbles - 07apr2025
 //## | tmailsender            | tobjectex         | 1.00.530   | 07apr2025   | DNS lookup and STMP mail sender
 //## | tshortdnscache         | tobjectex         | 1.00.030   | 06apr2025   | DNS A/MX record cache
 //## | tshortlist             | tobjectex         | 1.00.020   | 06apr2025   | Simple list
@@ -325,10 +325,10 @@ var
    //core vars
    imailport:longint=25;//fixed at 25
    imail_domain:string='';
+   imail_mask:string='';//inbound mail mask -> used to allow only accepted email addresses/domains - optional
    imail_fromaddress:string='';
    imail_sizelimit:longint=10;//in megabytes
    imail_allow:boolean=false;
-   imail_banbaddomain:boolean=false;
    imail_sender:tmailsender=nil;//05apr2025
    inewvisitor:tnewvisitor=nil;//07apr2025
 
@@ -550,6 +550,7 @@ function xhtmlfinish:string;
 function xhtmlfinish2(xbare:boolean):string;
 function xsafewebname(var x:string):boolean;
 function xcontact_html(var a:pnetwork):boolean;
+function xcodeis__badrequest(xcode:longint):boolean;
 function xlogrequest_http(var a:pnetwork;xaltcode:longint):boolean;
 function xlogrequest_smtp(var a:pnetwork;xcode:longint):boolean;
 function xcodedes(xcode:longint):string;
@@ -588,8 +589,8 @@ try
 xname:=strlow(xname);
 
 //get
-if      (xname='ver')                 then result:='3.00.10751'
-else if (xname='date')                then result:='17jun2025'
+if      (xname='ver')                 then result:='3.00.10800'
+else if (xname='date')                then result:='19jun2025'
 else if (xname='name')                then result:='Bubbles'
 else if (xname='des')                 then result:='Multi-Function Server'
 else if (xname='infoline')            then result:='Bubbles Multi-Function Server v'+app__info('ver')+' (c) 1997-'+low__yearstr(2025)+' Blaiz Enterprises'
@@ -968,8 +969,6 @@ end;
 //## tmailsender ###############################################################
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxx//000000000000000000000000
 constructor tmailsender.create;
-var
-   p:longint;
 begin
 //self
 if classnameis('tmaildns') then track__inc(satOther,1);
@@ -1506,7 +1505,6 @@ procedure tmailsender.xtimer;
 label
    redo,skipend;
 var
-   p:longint;
    str1:string;
 
    function xmaildomain:string;
@@ -1962,7 +1960,6 @@ label
    skipend;
 var
    a:tsockaddrin;
-   xarg:u_long;
 begin
 //defaults
 result:=false;
@@ -2356,8 +2353,8 @@ app__sreg('contact.fail','');
 
 //.mail
 app__breg('mail.allow',false);
-app__breg('mail.banbaddomain',false);
 app__sreg('mail.domain','');
+app__sreg('mail.mask','');
 app__sreg('mail.fromaddress','');//03mar2025
 app__sreg('mail.dns','');//05mar2025
 app__ireg('mail.sizelimit',20,1,50);//1..50Mb
@@ -2369,6 +2366,8 @@ app__ireg('postlimit',20,0,max32);//20 submissions
 app__ireg('postlimit2',100,0,max32);//100 submissions - server tools, e.g. Icon Maker
 app__ireg('badlimit',20,0,max32);//20 attempts
 app__ireg('hitlimit',100*1000,0,max32);//100K hits
+app__ireg('badreqlimit',0,0,max32);//0=off
+app__ireg('badmaillimit',0,0,max32);//0=off
 app__creg('datalimit',5000,0,max64);//5Gb
 app__sreg('notthislink','');//07mar2025
 
@@ -2410,15 +2409,15 @@ low__cls(@iquestion__answer,sizeof(iquestion__answer));
 
 //.mail
 imail_allow         :=app__bval('mail.allow');
-imail_banbaddomain  :=app__bval('mail.banbaddomain');
 imail_domain        :=app__sval('mail.domain');
+imail_mask          :=app__sval('mail.mask');
 imail_sender.osenderdomain:=imail_domain;
 imail_sizelimit     :=app__ival('mail.sizelimit');
 imail_fromaddress   :=mail__extractaddress(app__sval('mail.fromaddress'));
 imail_sender.dnslist:=text__fromoneline(app__sval('mail.dns'),';');
 
 //.ipsec
-ipsec__setvals(app__ival('scanfor'),app__ival('banfor'),app__ival('simconnlimit'),app__ival('postlimit'),app__ival('postlimit2'),app__ival('badlimit'),app__ival('hitlimit'),mult64(app__cval('datalimit'),1024000));
+ipsec__setvals(app__ival('scanfor'),app__ival('banfor'),app__ival('simconnlimit'),app__ival('postlimit'),app__ival('postlimit2'),app__ival('badlimit'),app__ival('hitlimit'),app__ival('badreqlimit'),app__ival('badmaillimit'),mult64(app__cval('datalimit'),1024000));
 inotthislink:=stripwhitespace_lt(app__sval('notthislink'));//07apr2025
 
 //.load hit info - 17jun2025: fxied
@@ -2528,8 +2527,8 @@ app__svalset('contact.fail',icontact_fail);
 
 //.mail
 app__bvalset('mail.allow',imail_allow);
-app__bvalset('mail.banbaddomain',imail_banbaddomain);
 app__svalset('mail.domain',imail_domain);
+app__svalset('mail.mask',imail_mask);//19jun2025
 app__ivalset('mail.sizelimit',imail_sizelimit);
 app__svalset('mail.fromaddress',imail_fromaddress);
 app__svalset('mail.dns', text__tooneline(imail_sender.dnslist,';') );
@@ -2542,6 +2541,8 @@ app__ivalset('postlimit',ipsec__postlimit);
 app__ivalset('postlimit2',ipsec__postlimit2);
 app__ivalset('badlimit',ipsec__badlimit);
 app__ivalset('hitlimit',ipsec__hitlimit);
+app__ivalset('badreqlimit',ipsec__badreqlimit);
+app__ivalset('badmaillimit',ipsec__badmaillimit);
 app__cvalset('datalimit',div64(ipsec__datalimit,1024000));
 app__svalset('notthislink',inotthislink);//07apr2025
 
@@ -4911,7 +4912,7 @@ if not atleastone then xaddb('','( there are no logs )','','');
 
 //finish
 b.sadd('</div>'+#10);
-b.sadd('<iframe id="nowrap" class="logsmsg" style="white-space:nowrap; text-wrap:nowrap;" name="msg" title="Log"></iframe>'+#10);
+b.sadd('<iframe id="nowrap" class="logsmsg" style="white-space:nowrap;text-wrap:nowrap;" name="msg" title="Log"></iframe>'+#10);
 b.sadd('</div>'+#10);
 
 //set
@@ -6258,14 +6259,24 @@ var
    xadd2('Name on Disk',app__info('diskname'));
    xadd2('Size on Disk',app__info('size'));
    xadd2('','');
+
    xadd2('Library','Version');
    xadd2(app__info('gossroot.name'),app__info('gossroot.ver'));
    xadd2(app__info('gossio.name'),app__info('gossio.ver'));
    xadd2(app__info('gossimg.name'),app__info('gossimg.ver'));
    xadd2(app__info('gossnet.name'),app__info('gossnet.ver'));
    xadd2(app__info('gosswin.name'),app__info('gosswin.ver'));
+   xadd2(app__info('gosszip.name'),app__info('gosszip.ver'));
+   {$ifdef jpeg}xadd2(app__info('gossjpg.name'),app__info('gossjpg.ver'));{$endif}
+
    //.module names and versions
    for p:=0 to max32 do if tools__vers(p,n,v) then xadd2(n,v) else break;
+
+   //.codebase - 18jun2025
+   xadd2('','');
+   xadd2('Codebase','Version');
+   xadd2('Gossamer (Console)',app__info('gossamer.ver'));
+
    end;
 begin
 //defaults
@@ -6460,8 +6471,8 @@ var
    xmins,xconn,xpost,xpost2,xbad,xhits:longint;
    xaddress:string;
    xbytes:comp;
-   xbadmaildomain,xbanned:boolean;
-   xnotthislink,xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit:longint;
+   xbanned:boolean;
+   xbadrequest,xbadmail,xnotthislink,xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;
    xdatalimit:comp;
 
    function xcolumnRight2RED(x:string;xmaxwidth:longint):string;
@@ -6506,7 +6517,7 @@ var
    xadd(v1+low__rcolumn(xindex,6)+#32+low__rcolumn(xtype,6)+#32+low__rcolumn(xmode,10)+#32+low__rcolumn(xopentime,13)+#32+low__rcolumn(xidletime,13)+#32+low__rcolumn(xreusecount,12)+#32+low__rcolumn(xrecycled,10)+low__rcolumn(xlastip,20)+low__rcolumn(xbandwidth,20)+v2);
    end;
 
-   procedure xadd8(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xnotthislink,xbadmaildomain,xmins:string);
+   procedure xadd10(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xnotthislink,xbadmaildomain,xmins:string);
    begin
    xadd(
     low__rcolumn(xip,30)+#32+
@@ -6515,12 +6526,13 @@ var
     low__rcolumn(xbad,11)+#32+
     low__rcolumn(xrequests,10)+#32+
     low__rcolumn(xbandwidth,14)+#32+
+    low__rcolumn(xbadrequest,6)+#32+
     low__rcolumn(xnotthislink,6)+#32+
     low__rcolumn(xbadmaildomain,7)+#32+
     low__rcolumn(xmins,13));//29apr2024
    end;
 
-   procedure xadd8RED(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xnotthislink,xbadmaildomain,xmins:string);
+   procedure xadd10RED(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xnotthislink,xbadmaildomain,xmins:string);
    begin
    xadd(
     low__rcolumn(xip,30)+#32+
@@ -6529,6 +6541,7 @@ var
     xcolumnRight2RED(xbad,11)+#32+
     xcolumnRight2RED(xrequests,10)+#32+
     xcolumnRight2RED(xbandwidth,14)+#32+
+    xcolumnRight2RED(xbadrequest,6)+#32+
     xcolumnRight2RED(xnotthislink,6)+#32+
     xcolumnRight2RED(xbadmaildomain,7)+#32+
     low__rcolumn(xmins,13));
@@ -6556,7 +6569,7 @@ if (xcmd='bannedips') then
    xadd('------------');
    for p:=0 to (ipsec__count-1) do
    begin
-   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xnotthislink,xbytes,xbadmaildomain,xbanned) and xbanned then
+   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink,xbytes,xbanned) and xbanned then
       begin
       inc(xcount);
       xadd(xaddress);
@@ -6575,28 +6588,29 @@ if (xcmd='bannedips') then
 else if (xcmd='banlist') then
    begin
    //init
-   ipsec__getvals(xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xdatalimit);
+   ipsec__getvals(xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit,xdatalimit);
 
    //get
    xstart;
    xtitle:='Ban List';
 
-   xadd8('IP Address','Posts','Posts2','Bad Logins','Requests','Bandwidth','BadBot','BadMail','Time');
-   xadd8('----------','-----','------','----------','--------','---------','------','-------','----');
+   xadd10('IP Address','Posts','Posts2','Bad Logins','Requests','Bandwidth','BadReq','BadBot','BadMail','Time');
+   xadd10('----------','-----','------','----------','--------','---------','------','------','-------','----');
 
    for p:=0 to (ipsec__count-1) do
    begin
-   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xnotthislink,xbytes,xbadmaildomain,xbanned) and xbanned then
+   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink,xbytes,xbanned) and xbanned then
       begin
       inc(xcount);
-      xadd8RED(xaddress,
+      xadd10RED(xaddress,
        insstr('*',(xpostlimit>=1) and (xpost>=xpostlimit))+k64(xpost),
        insstr('*',(xpostlimit2>=1) and (xpost2>=xpostlimit2))+k64(xpost2),//20feb2025
        insstr('*',(xbadlimit>=1) and (xbad>=xbadlimit))+k64(xbad),
        insstr('*',(xhitlimit>=1) and (xhits>=xhitlimit))+k64(xhits),
        insstr('*',(xdatalimit>=1) and (xbytes>=xdatalimit))+low__mbPLUS(xbytes,true),
+       insstr('*',(xbadreqlimit>=1) and (xbadrequest>=xbadreqlimit))+k64(xbadrequest),
        insstr('*',xnotthislink>=1)+k64(xnotthislink),
-       insstr('*',xbadmaildomain)+insstr('Yes',xbadmaildomain),
+       insstr('*',(xbadmaillimit>=1) and (xbadmail>=xbadmaillimit))+k64(xbadmail),
        low__uptime(mult64(xmins,60000),false,true,true,false,false,''));//compact versions - 500days = 13c
       end;
    end;//p
@@ -7551,7 +7565,6 @@ xhead0+
 '.conbut {background-color:transparent !important;}'+#10+
                                                                                            //note: "pre-wrap" required to force word wrap on <pre> in FireFox
 '.plaintext {display:block; margin:0; font-family:var(--font-mono); font-size:0.92rem; white-space:pre-wrap !important; text-wrap:wrap; word-wrap:anywhere; overflow-x:auto; color:#000;}'+#10+
-//xxxxxxxxxxx'.conwin {display:block; text-align:left; height:50vh; width:fit-content; min-width:min(var(--max-width),100%); max-width:100vw; padding:0; margin:0 auto; font-size:inherit; '+'border:1px #fffe solid; background-color:var(--conback); color:var(--context);}'+#10+
 '.console, .console2, .help-console, .help-console-wrap, .daystats {display:block; white-space:preserve; text-wrap:nowrap; margin:0; padding:.8em; font-family:var(--font-mono); font-size:80%; overflow-x:auto; background-color:var(--conback); '+'color:var(--context); border:#ffff 3px groove; border-radius:var(--radius);}'+#10+
 '.lalign {text-align:left;}'+#10+
 '.ralign {text-align:right;}'+#10+
@@ -7901,6 +7914,11 @@ str__free(@xmsg);
 except;end;
 end;
 
+function xcodeis__badrequest(xcode:longint):boolean;
+begin
+result:=(xcode=400) or (xcode=502);
+end;
+
 function xlogrequest_http(var a:pnetwork;xaltcode:longint):boolean;
 var
    m:tnetbasic;//ptr only
@@ -7919,6 +7937,9 @@ if net__recinfo(a,m,buf) and m.vmustlog then
 
    //init
    v:=add64(m.hread,m.wsent);
+
+   //badrequests - 18jun2025
+   if xcodeis__badrequest( log__code(m.wcode,xaltcode) ) then ipsec__incBadrequest(m.hslot);
 
    //bandwidth per diskhost
    ibytes.cinc2(m.hdiskhost,v);
@@ -8915,6 +8936,21 @@ var
    xsearch__addurls,hname_low,xloginstatus,xpassstatus,xcmd,xcmd2,str1,str2,str3:string;
    xalongsideexe,xmustreload,bol1:boolean;
 
+   function xbold(const x:string):string;
+   begin
+   if (x<>'') then result:='<span class="bold">'+x+'</span>' else result:='';
+   end;
+
+   function xsmall(const x:string):string;
+   begin
+   if (x<>'') then result:='<span style="display:inline;font-size:70%">'+x+'</span>' else result:='';
+   end;
+
+   function xsmall2(const x:string):string;
+   begin
+   if (x<>'') then result:=#32+'<span style="display:inline;font-size:70%">'+x+'</span><br>' else result:='';
+   end;
+
    function xrefreshcookie:string;//periodicially update admin session cookie
    begin
    if m.vsessvalid and (sub64(ms64,isessioncookietime[m.vsessindex])>=icookietimeout) then result:=m.hcookie_k else result:='';
@@ -9256,8 +9292,9 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    //.limits
    if (xcmd='limits') then
       begin
-      ipsec__setvals(ivars.i['scanfor'],ivars.i['banfor'],ivars.i['simconnlimit'],ivars.i['postlimit'],ivars.i['postlimit2'],ivars.i['badlimit'],ivars.i['hitlimit'],mult64(ivars.c['datalimit'],1024000));
-      inotthislink:=stripwhitespace_lt(ivars.s['notthislink']);
+      ipsec__setvals(ivars.i['scanfor'],ivars.i['banfor'],ivars.i['simconnlimit'],ivars.i['postlimit'],ivars.i['postlimit2'],ivars.i['badlimit'],ivars.i['hitlimit'],ivars.i['badreqlimit'],ivars.i['badmaillimit'],mult64(ivars.c['datalimit'],1024000));
+      inotthislink :=stripwhitespace_lt(ivars.s['notthislink']);
+      imail_mask   :=stripwhitespace_lt(ivars.s['mailmask']);//19jun2025
       //.trigger a save event
       imustsavesettings:=true;
       end;
@@ -9292,7 +9329,6 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    if (xcmd='mail') then
       begin
       imail_allow         :=ivars.checked['mail.allow'];
-      imail_banbaddomain  :=ivars.checked['mail.banbaddomain'];//17jun2025
       imail_domain        :=ivars.s['mail.domain'];
       imail_sender.osenderdomain:=imail_domain;
       imail_fromaddress   :=mail__extractaddress(ivars.s['mail.fromaddress']);
@@ -9428,7 +9464,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       '<div class="grid1">'+#10+
       '<div></div>'+#10+
 
-      '<div><input name="alongsideexe" type="checkbox" '+insstr('checked',ialongsideexe)+'>Folders alongside EXE - <span class="bold">use with caution</span> as this option will change the location of your outbox, inbox, trash, logs and disk site(s) folders.<br>'+
+      '<div><input name="alongsideexe" type="checkbox" '+insstr('checked',ialongsideexe)+'>Folders alongside EXE - '+xbold('use with caution')+' as this option will change the location of your outbox, inbox, trash, logs and disk site(s) folders.<br>'+
        '<br>'+
        '<div style="font-size:70%;"><span class="underline">Not Ticked (default mode)</span>:<br>'+
        net__encodeforhtmlstr(app__subfolder2('',false))+'outbox<br>'+
@@ -9480,21 +9516,28 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       xhtmlstart(a,true)+
 
       xh2('limits',xsymbol('limits')+'Client Limits')+
-      'When a client IP exceeds the <span class="bold">hit limit</span>, <span class="bold">bandwidth limit</span>, <span class="bold">post limit</span>, <span class="bold">post limit 2 (server tools)</span> or the <span class="bold">'+'bad login limit</span> within the specified <span class="bold">scan for</span> time period,'+' they are automatically banned and denied access to all site(s) and resources hosted by '+'Bubbles for a time period specified by <span class="bold">ban for</span>.<br><br>When the <span class="bold">ban for</span> time period elapses, they are automatically removed from the "ban list" and again allowed access to the site(s) and resources.  '+'However, a client exceeding the <span class="bold">max. simultaneous connections</span> limit is not banned, but restricted.<br>'+#10+
+      'When a client IP exceeds the '+xbold('hit limit')+', '+xbold('bandwidth limit')+', '+xbold('post limit')+', '+xbold('post 2 limit')+' (server tools), '+xbold('bad login limit')+', '+xbold('bad request limit')+' or the '+xbold('bad mail limit')+' within the specified '+xbold('scan for')+' time period,'+' they are automatically banned and denied access to all site(s) and resources hosted by '+'Bubbles for a time period specified by '+xbold('ban for')+'.<br><br>When the '+xbold('ban for')+' time period elapses, they are automatically removed from the "ban list" and again allowed access to the site(s) and resources.  '+'However, a client exceeding the '+xbold('max. simultaneous connections')+' limit is not banned, but restricted.<br>'+#10+
       '<br>'+#10+
       '<form class="block" method=post action="limits.html">'+
       '<div class="grid2">'+#10+
-      '<div class="inlineblock">Scan for in minutes (60..N, 1,440=day)<br><input class="text" name="scanfor" type="text" value="'+k64(ipsec__scanfor)+'"></div>'+#10+
-      '<div class="inlineblock">Ban for in minutes (60..N, 1,440=day, 10,080=week)<br><input class="text" name="banfor" type="text" value="'+k64(ipsec__banfor)+'"></div>'+#10+
-      '<div class="inlineblock">Hit limit (0=unlimited or 100..N)<br><input class="text" name="hitlimit" type="text" value="'+k64(ipsec__hitlimit)+'"></div>'+#10+
-      '<div class="inlineblock">Bandwidth limit in megabytes (0=unlimited or 1..N)<br><input class="text" name="datalimit" type="text" value="'+k64(div64(ipsec__datalimit,1024000))+insstr(' Mb',ipsec__datalimit>=1)+'"></div>'+#10+
-      '<div class="inlineblock">Post limit (0=unlimited or 1..N, e.g. limit the number of contact form submissions and/or emails sent by an IP address)<br><input class="text" name="postlimit" type="text" value="'+k64(ipsec__postlimit)+'"></div>'+#10+
-      '<div class="inlineblock">Post limit 2 (0=unlimited or 1..N, e.g. limit the number of server tool submisions (e.g. Icon Maker) sent by an IP address)<br><input class="text" name="postlimit2" type="text" value="'+k64(ipsec__postlimit2)+'"></div>'+#10+
-      '<div class="inlineblock">Bad login limit (0=unlimited or 10..N, e.g. limit the number of unsuccessful Admin login attempts)<br><input class="text" name="badlimit" type="text" value="'+k64(ipsec__badlimit)+'"></div>'+#10+
-      '<div class="inlineblock">Max. simultaneous connections (0=unlimited or 1..N)<br><input class="text" name="simconnlimit" type="text" value="'+k64(ipsec__connlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Scan for')+xsmall2('in minutes (60..N, 1,440=day)')+'<input class="text" name="scanfor" type="text" value="'+k64(ipsec__scanfor)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Ban for')+xsmall2('in minutes (60..N, 1,440=day, 10,080=week)')+'<input class="text" name="banfor" type="text" value="'+k64(ipsec__banfor)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Hit limit')+xsmall2('(0=unlimited or 100..N)')+'<input class="text" name="hitlimit" type="text" value="'+k64(ipsec__hitlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Bandwidth limit')+xsmall2('in megabytes (0=unlimited or 1..N)')+'<input class="text" name="datalimit" type="text" value="'+k64(div64(ipsec__datalimit,1024000))+insstr(' Mb',ipsec__datalimit>=1)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Post limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of contact form submissions and/or emails sent by an IP address)')+'<input class="text" name="postlimit" type="text" value="'+k64(ipsec__postlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Post 2 limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of server tool submisions (e.g. Icon Maker) sent by an IP address)')+'<input class="text" name="postlimit2" type="text" value="'+k64(ipsec__postlimit2)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Bad login limit')+xsmall2('(0=unlimited or 10..N, e.g. limit the number of unsuccessful Admin login attempts)')+'<input class="text" name="badlimit" type="text" value="'+k64(ipsec__badlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Bad request limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of 502 and 400 codes)')+'<input class="text" name="badreqlimit" type="text" value="'+k64(ipsec__badreqlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Max. simultaneous connections')+xsmall2('(0=unlimited or 1..N)')+'<input class="text" name="simconnlimit" type="text" value="'+k64(ipsec__connlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Bad mail limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of emails that don''t match the inbound mail mask below)')+'<input class="text" name="badmaillimit" type="text" value="'+k64(ipsec__badmaillimit)+'"></div>'+#10+
       '</div>'+#10+
 
-      '<div class="inlineblock">Bad Bot Prevention ('+low__aorbstr('Off','On',inotthislink<>'')+')<br><div style="display:block;font-size:70%">Type a filename, that when requested site-wide will trigger an immediate'+' ban of the IP address for the "Ban for" time period above.  Name only, no path, e.g. "notthisfile.html" (excluding quotes).  Leave blank to turn off/disable.  Bait bad bots by including a reference to this file '+' in your robots.txt file.</div><input class="text"'+insstr(' style="background-color:#0f02;"',inotthislink<>'')+' name="notthislink" type="text" value="'+net__encodeforhtmlstr(inotthislink)+'"></div>'+#10+
+      '<br>'+#10+
+      '<div class="inlineblock">'+xbold('Mail mask')+' ('+low__aorbstr('Off','On',imail_mask<>'')+')<br><div style="display:block;font-size:70%">A set of one or more complex masks to filter acceptable inbound email addresses, e.g. "*@blaizenterprises.com" (without quotes) the leading asterisk permits all '+'emails addressed to @blaizenterprises.com, but bans emails with a different domain name.  Emails which fail the mask filter test count towards the "'+xbold('Bad mail')+'" value above.  Separate multiple masks with the semi-colon "'+fesep+'" character, e.g. "*@blaizenterprises.com;*blaiz*.com" (without quotes).  Upto to 2 "*" asterisks permitted per mask.  Leave mask filter blank to turn off/disable and allow all emails through.</div><input class="text"'+insstr(' style="background-color:#0f02;"',imail_mask<>'')+' name="mailmask" type="text" value="'+net__encodeforhtmlstr(imail_mask)+'"></div>'+#10+
+
+      '<br>'+#10+
+      '<br>'+#10+
+      '<div class="inlineblock">'+xbold('Bad bot')+' prevention ('+low__aorbstr('Off','On',inotthislink<>'')+')<br><div style="display:block;font-size:70%">Type a filename, that when requested site-wide will trigger an immediate'+' ban of the IP address for the "'+xbold('Ban for')+'" time period above.  Name only, no path, e.g. "notthisfile.html" (excluding quotes).  Leave blank to turn off/disable.  Bait bad bots by including a reference to this file '+' in your robots.txt file.</div><input class="text"'+insstr(' style="background-color:#0f02;"',inotthislink<>'')+' name="notthislink" type="text" value="'+net__encodeforhtmlstr(inotthislink)+'"></div>'+#10+
 
       xvsep+
       '<input name="cmd" type="hidden" value="limits"><input class="button" type=submit value="Save"></form>'+#10+
@@ -9633,7 +9676,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    else if (hname_low='ban.html') then
       begin
       if xheadonly2(200,false,'',
-      xhtmlstart(a,true)+
+      xhtmlstart1(a,'',true,1100)+
 
       xh2b('ban',xsymbol('ban')+'Banned List','nobotmargin')+
       xvsep+
@@ -9704,7 +9747,6 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       '<form class="block" method=post action="contact.html#mail">'+
       '<div class="grid2">'+#10+
       '<div><input name="mail.allow" type="checkbox" '+insstr('checked',imail_allow)+'>Allow emails to be received on port 25 and stored in the inbox.</div>'+#10+
-      '<div><input name="mail.banbaddomain" type="checkbox" '+insstr('checked',imail_banbaddomain)+'>Ban IP addresses that send mail not matching the mail domain (uses the "Ban for" time period on the Limits tab)</div>'+#10+
       '<div>Max Email Size (1..50 Mb)<br><input class="text" name="mail.sizelimit" type="text" value="'+k64(imail_sizelimit)+' Mb"></div>'+#10+
       '<div class="inlineblock">Mail domain name to report to email senders<br><input class="text" name="mail.domain" type="text" value="'+net__encodeforhtmlstr(imail_domain)+'"></div>'+#10+
       '<div class="inlineblock">From email address (e.g. yourname@yourdomain.com)<br><input class="text" name="mail.fromaddress" type="text" value="'+net__encodeforhtmlstr(imail_fromaddress)+'"></div>'+#10+
@@ -10055,7 +10097,7 @@ var
    buf:pobject;//pointer only
    smin,smax,int1,bp,p,blen,len:longint;
    smem:pdlbyte;
-   str1,str2,xline,xcmd:string;
+   str1,xline,xcmd:string;
    xnewslot:boolean;
 
    procedure xalive(xin,xout:comp);
@@ -10237,11 +10279,14 @@ if not net__recinfo(a,m,buf) then exit;
 //information vars - set once
 if m.vonce then
    begin
-   m.vonce:=false;
-   m.vstarttime:=ms64;
-   a.used:=add64(a.used,1);
-   m.hip:=intstr32(a.sock_ip4.b0)+'.'+intstr32(a.sock_ip4.b1)+'.'+intstr32(a.sock_ip4.b2)+'.'+intstr32(a.sock_ip4.b3);
-   a.infolastip:=m.hip;//06apr2024
+   //clear
+   m.vonce       :=false;
+   m.vstarttime  :=ms64;
+   a.used        :=add64(a.used,1);
+   m.hip         :=intstr32(a.sock_ip4.b0)+'.'+intstr32(a.sock_ip4.b1)+'.'+intstr32(a.sock_ip4.b2)+'.'+intstr32(a.sock_ip4.b3);
+   a.infolastip  :=m.hip;//06apr2024
+   m.hreferer    :='';//flush previous value when connection is left open - 19jun2025
+   m.hua         :='';//flush previous value when connection is left open - 19jun2025
 
    //.ipsec security tracking
    m.hslot:=ipsec__trackb(m.hip,xnewslot);//we should have a valid client ip address by this stage
@@ -10370,28 +10415,25 @@ if not m.writing then
             end
          else if (xcmd='rcpt') then
             begin
-
             //.1st to address
-            if (m.hreferer='') then
+            if (m.hreferer='') then m.hreferer:=swapcharsb(strcopy1(xline,9,low__len(xline)),'"','''');//1st one only
+
+            //Inbound Email Filter -> security check -> ensure "to: address" is within the specified email mask
+            if (imail_mask<>'') then
                begin
-               m.hreferer:=swapcharsb(strcopy1(xline,9,low__len(xline)),'"','''');//1st one only
 
-               //security check -> ensure "to: address" has same mail.domain.name as our server
-               if imail_banbaddomain and (m.hreferer<>'') and (imail_domain<>'') then
+               //remove leading "<" and trailing ">" brackets from email address
+               str1:=m.hreferer;
+               if (strfirst(str1)='<') then strdelfirst(str1);
+               if (strlast(str1) ='>') then strdellast(str1);
+
+               //compare using complex mask -> if email not within complex mask then discard email AND optionally ban the mail sender
+               if not low__matchmasklist(str1,imail_mask) then
                   begin
-                  low__splitstr(m.hreferer,ssAt,str1,str2);//str2=mail domain name (after the "@" symbol) - 17jun2025
-
-                  //trim trailing ">"
-                  if (strlast(str2)='>') then strdel1(str2,low__len(str2),1);
-
-                  //mail.domain.name does NOT match our server -> discard email AND ban the sender
-                  if not strmatch(imail_domain,str2) then
-                     begin
-                     ipsec__Badmaildomain(m.hslot);//ban the sender immediately
-                     xlogrequest_smtp(a,403);
-                     a.mustclose:=true;
-                     goto skipend;
-                     end;
+                  ipsec__incBadmail(m.hslot);//increment the "Bad mail" counter for this sender's IP address - 19jun2025
+                  xlogrequest_smtp(a,403);
+                  a.mustclose:=true;
+                  goto skipend;
                   end;
 
                end;
@@ -10906,7 +10948,7 @@ result:='';
 xname:=strlow(xname);
 
 //get
-if      (xname='ver')      then result:='1.00.082'
+if      (xname='ver')      then result:='1.00.085'//18jun2025
 else if (xname='name')     then result:='Bubbles Log Generator'
 else
    begin
@@ -10919,15 +10961,14 @@ label
    skipend;
 var
    d:tobject;
-   dreportfilename,dmakeref,e:string;
-   dlen,lv,p,p2:longint;
-   v:string;
+   dreportfilename,dmakeref,v,e:string;
+   dlen,p,p2,lv:longint;
 begin
-try
 //defaults
 d:=nil;
 dreportfilename:=slogfilename+'.html';
 
+try
 //init
 d:=str__new9;//log report
 dmakeref:=log__info('name')+' v'+log__info('ver')+' / '+low__makeetag2(io__filedateb(slogfilename),'')+' / '+k64(io__filesize64(slogfilename))+' / '+k64(ilogs_report_read_limit)+' / '+k64(ilogs_report_large_limit);
@@ -10968,9 +11009,8 @@ skipend:
 //save the report
 io__tofile64(dreportfilename,@d,e);
 except;end;
-try
+//free
 str__free(@d);
-except;end;
 end;
 
 function log__buildreport(var a:pnetwork;d:tobject;dmakeref,slogfilename:string):boolean;
@@ -11049,16 +11089,18 @@ var
       begin
       //name filter
       if (xname='') then xname:='(none)';
+
       //find name or add name
       if not n.find(xname,xindex) then
          begin
          n.s[xname]:='1';
          n.find(xname,xindex);
          end;
+
       //sync values for name
       if (xindex>=0) then
          begin
-         if (xhits>=1)  then a.value[xindex]:=a.value[xindex]+xhits;
+         if (xhits>=1)  then a.value[xindex]:=add64(a.value[xindex],xhits);//18jun2025
          if (xbytes>=1) then b.value[xindex]:=add64(b.value[xindex],xbytes);
          end;
       end;
@@ -11208,6 +11250,7 @@ var
       slen:=str__len(@s);
       if (slen>=1) then
          begin
+
          for p:=(slen-1) downto 0 do if (str__bytes0(@s,p)=10) then
             begin
             slen:=p+1;
@@ -11215,6 +11258,7 @@ var
             result:=(slen>=1);
             break;
             end;
+
          end;
       end;
    except;end;
@@ -11451,11 +11495,11 @@ var
    end;
 begin
 //defaults
-result:=false;
-s:=nil;
-xonce:=true;
-isortcmp:=nil;
-isorter:=nil;
+result   :=false;
+s        :=nil;
+xonce    :=true;
+isortcmp :=nil;
+isorter  :=nil;
 
 //check
 if not str__ok(@d) then exit;
@@ -11525,8 +11569,8 @@ sOTH     :=n8;
 //get - scane the log one line at a time, one chunk at a time, counting the variables for the report maker
 spos:=0;//position within log file
 slen:=0;//length of buffer s
-p:=0;//position within buffer s
-lp:=0;
+p   :=0;//position within buffer s
+lp  :=0;
 
 //.no data
 if not xnextchunk then goto makereport;
@@ -11536,14 +11580,16 @@ redo:
 //.end of line
 if (str__bytes0(@s,p)=10) then
    begin
-   //.clear
+   //init
    vclear;
+   vms    :=0;
+   xcount :=0;
+   li     :=lp;
 
-   //.split line into parts
-   xcount:=0;
-   li:=lp;
+   //get - split line into parts
    for i:=lp to p do
    begin
+
    c:=str__bytes0(@s,i);
    case xcount of
    0:if (c=ssspace)           then vip:=ival;
@@ -11566,6 +11612,7 @@ if (str__bytes0(@s,p)=10) then
       break;
       end;
    end;//case
+
    end;//i
 
    //.increment counters
@@ -11577,12 +11624,14 @@ if (str__bytes0(@s,p)=10) then
    radd(vreferrer,vbandwidth,vms);
    vadd(vip,vbandwidth,vms);
    if not strmatch(strcopy1(vprotocol,1,5),'SMTP/') then sadd(vsite,vcode,vbandwidth,vms);
+
    //.totals
    if (not vadmin) and hits__extcounts(vext) then vtotal_hits:=add64(vtotal_hits,1);//hits for HTML and HTM docs and NOT admin session docs
    vtotal_requests:=add64(vtotal_requests,1);
    vtotal_bandwidth:=add64(vtotal_bandwidth,vbandwidth);
    ivisitors.s[vip]:='1';
    ireferrers.s[vreferrer]:='1';
+
    //.reset
    lp:=p+1;
    end;
@@ -11592,13 +11641,13 @@ inc(p);
 if (p<slen) then goto redo
 else if xnextchunk then
    begin
-   p:=0;
+   p :=0;
    lp:=0;
    goto redo;
    end;
 
-makereport:
 
+makereport:
 //init
 xstarttime:=ms64-xstarttime;
 
@@ -11700,7 +11749,6 @@ tadd41('Requests','Bandwidth','Time','Url',true);
 xsortcmp(dtime2);
 for i:=0 to (dhits.count-1) do if xsortindex(i,p) and (dhits2.value[p]>=1) then tadd4(k64(dhits2.value[p]),low__mbPLUS(dbytes2.value[p],true),time__str(dtime2.value[p]),dnames.n[p]);
 tend;
-
 
 //end html
 xadd(xhtmlfinish2(true));

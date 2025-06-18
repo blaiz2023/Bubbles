@@ -50,10 +50,10 @@ uses {$ifdef laz}classes,{$endif} gosswin;
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. root (gossroot.pas)
-//## Version.................. 4.00.5178 (+326)
+//## Version.................. 4.00.5201 (+330)
 //## Items.................... 41
-//## Last Updated ............ 17jun2025, 11jun2025, 28may2025, 26apr2025, 11apr2025, 31mar2025, 21mar2025, 08mar2025, 20feb2025, 29jan2025, 11jan2025, 17dec2024, 06dec2024, 27nov2024, 15nov2024, 11nov2024, 01nov2024, 31oct2024, 12oct2024, 24aug2024: images extensions fix, 26jul2024: str__write, 20jul2024: zip_* procs updated, 18jun2024: GUI support added, 02may2024: low__ref256/U, 28apr2024: low__uptime(), 17apr2024
-//## Lines of Code............ 28,200+
+//## Last Updated ............ 19jun2025, 11jun2025, 28may2025, 26apr2025, 11apr2025, 31mar2025, 21mar2025, 08mar2025, 20feb2025, 29jan2025, 11jan2025, 17dec2024, 06dec2024, 27nov2024, 15nov2024, 11nov2024, 01nov2024, 31oct2024, 12oct2024, 24aug2024: images extensions fix, 26jul2024: str__write, 20jul2024: zip_* procs updated, 18jun2024: GUI support added, 02may2024: low__ref256/U, 28apr2024: low__uptime(), 17apr2024
+//## Lines of Code............ 28,300+
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -108,7 +108,7 @@ uses {$ifdef laz}classes,{$endif} gosswin;
 //## | tdynamicstr8           | tdynamiclist      | 1.00.040  | 25jul2024   | Dynamic array of tstr8 - 25jul2024: isnil(), 09feb2024: removed "protected" for "public", 01jan2024, 28dec2023
 //## | tdynamicstr9           | tobjectex         | 1.00.155  | 17feb2024   | Dynamic array of tstr9 using memory blocks, 17feb2024: created
 //## | tintlist               | tobjectex         | 1.00.155  | 20feb2024   | Dynamic array of longint/pointer using memory blocks, 20feb2024: mincount() fixed, 17feb2024: created
-//## | tcmplist               | tobjectex         | 1.00.035  | 20feb2024   | Dynamic array of comp/double/datetime using memory blocks, 20feb2024: mincount() fixed, 17feb2024: created
+//## | tcmplist               | tobjectex         | 1.00.055  | 18jun2025   | Dynamic array of comp/double/datetime using memory blocks, 18jun2025: fixed index tracking, 20feb2024, 20feb2024: mincount() fixed, 17feb2024: created
 //## | tmemstr                | tstream           | 1.00.030  | 25jul2024   | tstringstream replacement - accepts tstr8 and tstr9 handlers -> for compatibility with Lazarus stream based handlers
 //## | tflowcontrol           | tobjectex         | 1.00.172  | 06apr2025   | Helper object for switching through modular code blocks for running in a non-threaded enviroment
 //## ==========================================================================================================================================================================================================================
@@ -3423,7 +3423,7 @@ function mswaiting(var xref:comp):boolean;//timer reference has not yet expired 
 
 //simple message procs ---------------------------------------------------------
 function showtext(const x:string):boolean;//12jun2025
-function showbasic(const x:string):boolean;
+function showbasic(const x:string):boolean;//18jun2025
 function showbasic2(const x:string;xsec:longint):boolean;//26apr2025
 function showlow(const x:string):boolean;
 function showerror(const x:string):boolean;
@@ -3604,7 +3604,12 @@ function low__swapvals0123(const x,v0,v1,v2,v3:string):string;
 function low__swapvals01234(const x,v0,v1,v2,v3,v4:string):string;
 function strcopy0(const x:string;xpos,xlen:longint):string;//0based always -> forward compatible with D10 - 02may2020
 function strcopy1(const x:string;xpos,xlen:longint):string;//1based always -> backward compatible with D3 - 02may2020
+
+function strfirst(const x:string):string;//returns first char of string or nil if string is empty - 18jun2025
 function strlast(const x:string):string;//returns last char of string or nil if string is empty
+procedure strdelfirst(var x:string);//delete first char of string - 18jun2025
+procedure strdellast(var x:string);//delete last char of string - 18jun2025
+
 function strdel0(var x:string;xpos,xlen:longint):boolean;//0based
 function strdel1(var x:string;xpos,xlen:longint):boolean;//1based
 function strbyte0(const x:string;xpos:longint):byte;//0based always -> backward compatible with D3 - 02may2020
@@ -4831,8 +4836,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,9)='gossroot.') then strdel1(xname,1,9) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.5178'
-else if (xname='date')       then result:='17jun2025'
+if      (xname='ver')        then result:='4.00.5201'
+else if (xname='date')       then result:='19jun2025'
 else if (xname='name')       then result:='Root'
 else if (xname='mode.int')   then result:=intstr32(info__mode)
 else if (xname='mode')       then
@@ -9703,9 +9708,9 @@ begin
 result:=showbasic(x);
 end;
 
-function showbasic(const x:string):boolean;
+function showbasic(const x:string):boolean;//18jun2025
 begin
-result:=showbasic2(x,5);
+result:=showbasic2(x,2);
 end;
 
 function showbasic2(const x:string;xsec:longint):boolean;//26apr2025
@@ -10834,7 +10839,7 @@ except;end;
 end;
 
 function low__matchmask(const xline,xmask:string):boolean;//04nov2019
-label//Handles semi-complex masks (upto two "*" allow in a xmask - 04nov2019
+label//Handles semi-complex masks (upto two "*" allowed in a xmask - 04nov2019
      //Superfast: between 20,000 (short ~14c) to 4,000 (long ~160c) comparisons/sec -> Intel atom 1.33Ghz
      //Accepts masks:
      // exact='aaaaaaaaaaa', two-part='aaaaaa*aaaaaa', tri-part='aaa*aaa*aaa',
@@ -12596,9 +12601,24 @@ result:=copy(x,xpos-1+stroffset,xlen);
 except;end;
 end;
 
+function strfirst(const x:string):string;//returns first char of string or nil if string is empty - 18jun2025
+begin
+result:=strcopy1(x,1,1);
+end;
+
 function strlast(const x:string):string;//returns last char of string or nil if string is empty
 begin
-result:='';try;result:=strcopy1(x,low__len(x),1);except;end;
+result:=strcopy1(x,low__len(x),1);
+end;
+
+procedure strdelfirst(var x:string);//delete first char of string - 18jun2025
+begin
+if (x<>'') then strdel1(x,1,1);
+end;
+
+procedure strdellast(var x:string);//delete last char of string - 18jun2025
+begin
+if (x<>'') then strdel1(x,low__len(x),1);
 end;
 
 function strdel0(var x:string;xpos,xlen:longint):boolean;//0based
@@ -21837,7 +21857,7 @@ if (xpos<=igetmax) and (xpos>=igetmin)         then result:=igetmem[xpos-igetmin
 else if fastinfo(xpos,igetmem,igetmin,igetmax) then result:=igetmem[xpos-igetmin]
 else
    begin
-   result:=0;
+   result :=0;
    igetmin:=-1;
    igetmax:=-2;//off
    end;
@@ -23444,6 +23464,7 @@ else if (x>=0) and (x<ilimit) then
    end;
 end;
 
+
 //## tcmplist ##################################################################
 constructor tcmplist.create;
 begin
@@ -23503,8 +23524,8 @@ try
 if (xcount=icount) then exit;
 
 //.rootcount
-xrootcount:=xcount div irootlimit;
-if (xcount<>(xrootcount*irootlimit)) then xrootcount:=frcrange32(xrootcount+1,0,irootlimit);
+xrootcount:=xcount div iblocklimit;//18jun2025: fixed, was irootlimit
+if (xcount>(xrootcount*iblocklimit)) then xrootcount:=frcrange32(xrootcount+1,0,irootlimit);
 if (irootcount=xrootcount) then goto skipend;
 
 //.reset fastinfo vars
@@ -23513,10 +23534,10 @@ igetmax:=-2;
 isetmin:=-1;
 isetmax:=-2;
 
-
 //get
 if (xrootcount>irootcount) then
    begin
+
    //root
    if (iroot=nil) then
       begin
@@ -23530,9 +23551,11 @@ if (xrootcount>irootcount) then
       iroot[p]:=block__new;;
       block__cls(iroot[p]);
       end;
+
    end
 else if (xrootcount<irootcount) then
    begin
+
    //root
    if (iroot=nil) then goto skipend;
 
@@ -23545,6 +23568,7 @@ else if (xrootcount<irootcount) then
       block__freeb(iroot);
       iroot:=nil;
       end;
+
    end;
 
 skipend:
@@ -23556,7 +23580,7 @@ icount:=xcount;
 except;end;
 end;
 
-function tcmplist.fastinfo(xpos:longint;var xmem:pointer;var xmin,xmax:longint):boolean;//15feb2024
+function tcmplist.fastinfo(xpos:longint;var xmem:pointer;var xmin,xmax:longint):boolean;//18jun2025, 15feb2024
 var
    xrootindex:longint;
 begin
@@ -23566,23 +23590,25 @@ xmem:=nil;
 xmin:=-1;
 xmax:=-2;
 
-try
 //get
 if (xpos>=0) and (xpos<icount) and (iroot<>nil) then
    begin
-   xrootindex:=xpos div irootlimit;
+   xrootindex:=xpos div iblocklimit;//18jun2025: fixed, was irootlimit
    xmem:=iroot[xrootindex];
+
    if (xmem<>nil) then
       begin
       xmin:=xrootindex*iblocklimit;
-      xmax:=((xrootindex+1)*iblocklimit)-1;
+      xmax:=xmin + (iblocklimit-1);
+
       //.limit max for last block using datastream length - 15feb2024
       if (xmax>=icount) then xmax:=icount-1;
+
       //successful
-      result:=(xmem<>nil);
+      result:=true;
       end;
    end;
-except;end;
+
 end;
 
 function tcmplist.getvalue(x:longint):comp;

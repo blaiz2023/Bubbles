@@ -7,7 +7,9 @@ uses
   gossio in 'gossio.pas',
   gossimg in 'gossimg.pas',
   gossnet in 'gossnet.pas',
-  gosswin in 'gosswin.pas';
+  gosswin in 'gosswin.pas',
+  gossjpg in 'gossjpg.pas',
+  gosszip in 'gosszip.pas';
 
 
 //include multi-format icon - Delphi 3 can't compile an of 256x256 @ 32 bit -> resource error/out of memory error - 19nov2024
