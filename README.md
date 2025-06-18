@@ -52,13 +52,13 @@ Her design is light and stable, and an extensive block-based memory management s
 
 # Images
 <img src="images/bubbles-screenshot2.jpg">
-
+<br>
 
 <img src="images/bubbles-screenshot3.jpg">
-
+<br>
 
 <img src="images/bubbles-screenshot4.jpg">
-
+<br>
 
 <img src="images/bubbles-screenshot5.jpg">
 
