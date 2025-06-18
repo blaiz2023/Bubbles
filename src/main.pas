@@ -30,7 +30,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. app code (main.pas) -> Bubbles - Multi-Function Server
-//## Version.................. 3.00.10800
+//## Version.................. 3.00.10805
 //## Items.................... 5
 //## Last Updated ............ 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
 //## Lines of Code............ 11,800+
@@ -530,7 +530,7 @@ function xconbut(xpageurl,xcmd,xcmd2,xtitle,xbutlabel:string):string;
 function xlivestatus(xstyle:longint):string;//realtime vital statistics - 21feb2025
 function xinfo2(xpageurl,xcmd:string):string;
 procedure xinfo(xpageurl,xcmd:string;var xtitle,xout:string);
-function xmanage:string;
+function xmanage:string;//19jun2025
 function xredirect__have(sname:string;var dnameORurl:string):boolean;
 function xredirect__sitelinks(ssite:string):string;
 procedure xredirect__addlocal(xsite,xlinks:string);
@@ -6687,7 +6687,7 @@ except;end;
 try;str__free(@b);except;end;
 end;
 
-function xmanage:string;
+function xmanage:string;//19jun2025
 var
    b:tstr9;
    xsitemapsto,xcreatesite_status,str1,dname,xname,xcmd,xsite,xsitehtml,v,xmask:string;
@@ -6738,7 +6738,7 @@ var
       end;
    end;
 
-   function xlistfiles(xsite,xmask:string;xdel,xuse:boolean):string;
+   function xlistfiles(xsite,xmask:string;xdel,xuse:boolean):string;//19jun2025
    label
       skipend;
    var
@@ -6825,7 +6825,7 @@ var
       //.finalise
       if (xtotal>=1) then
          begin
-         str__sadd(@xlog,#10+k64(xtotalsize)+' bytes ('+low__mbPLUS(xtotalsize,true)+') in total'+insstr(' with '+k64(xramcount)+' file/s in RAM and '+k64(xdiskcount)+' on disk',not xdel)+#10);
+         str__sadd(@xlog,#10+k64(xtotalsize)+' bytes ('+low__mbPLUS(xtotalsize,true)+') in total'+insstr(' with '+k64(xramcount)+' file/s in RAM and '+k64(xdiskcount)+' on DISK',not xdel)+#10);//19jun2025
          end;
       end;
 

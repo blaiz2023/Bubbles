@@ -29,9 +29,9 @@ uses gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. image/graphics (gossimg.pas)
-//## Version.................. 4.00.15573 (+345)
+//## Version.................. 4.00.15574 (+345)
 //## Items.................... 25
-//## Last Updated ............ 17jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
+//## Last Updated ............ 19jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
 //## Lines of Code............ 29,600+
 //##
 //## main.pas ................ app code
@@ -64,7 +64,7 @@ uses gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg
 //## | jpg__*                 | family of procs   | 1.00.272   | 05dec2024   | Read / write JPEG images -> automatic quality control - 24nov2024, 06aug2024
 //## | png__*                 | family of procs   | 1.00.331   | 29may2025   | Read / write PMG images - 15mar2025, 15nov2024
 //## | tea__*                 | family of procs   | 1.00.393   | 17jun2025   | Read / write TEA images - 12dec2024, 18nov2024
-//## | ico__*, low__ico*      | family of procs   | 1.00.652   | 08jun2025   | Read / write ICO images - 28may2025, 13may2025, 22nov2024
+//## | ico__*, low__ico*      | family of procs   | 1.00.653   | 19jun2025   | Read / write ICO images - 28may2025, 13may2025, 22nov2024
 //## | cur__*                 | family of procs   | 1.00.210   | 28may2025   | Read / write CUR images - 22nov2024
 //## | ani__*                 | family of procs   | 1.00.200   | 22nov2024   | Read / write ANI images
 //## | ia__*                  | family of procs   | 1.00.131   | 21dec2024   | Read / write image action commands - for passing low level information to graphic subprocs - 24nov2024
@@ -1088,7 +1088,7 @@ function xbm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 //ico procs --------------------------------------------------------------------
 function ico__todata(s:tobject;d:pobject;var e:string):boolean;//27may2025
 function ico__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;//27may2025
-function ico__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//27may2025
+function ico__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//19jun2025, 27may2025
 
 function ico__fromdata(d:tobject;s:pobject;var e:string):boolean;
 
@@ -1492,8 +1492,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossimg.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.15573'
-else if (xname='date')       then result:='17jun2025'
+if      (xname='ver')        then result:='4.00.15574'
+else if (xname='date')       then result:='19jun2025'
 else if (xname='name')       then result:='Graphics'
 else
    begin
@@ -11586,12 +11586,12 @@ begin
 result:=ico__todata3(s,d,daction,e);
 end;
 
-function ico__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//27may2025
+function ico__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//19jun2025, 27may2025
 label
    skipend;
 var
    dbits:longint;
-   xsimple0255:boolean;
+   xtransparent,xsimple0255:boolean;
 begin
 //defaults
 result       :=false;
@@ -11606,7 +11606,9 @@ else dbits:=32;
 end;
 
 //decide
-if (not mask__hasTransparency322(s,xsimple0255)) or xsimple0255 then
+xtransparent:=mask__hasTransparency322(s,xsimple0255);
+
+if (not xtransparent) or xsimple0255 then
    begin
    case mis__countcolors257(s) of
    0..15  :dbits:=4;//1 color for transparency or not
@@ -11621,6 +11623,13 @@ else if ia__found(daction,ia_24bitPLUS)   then dbits:=24;
 
 //set
 result:=icoXX__todata(s,d,dbits);
+
+//.information feedback
+if result then
+   begin
+   daction:=ia__iadd(daction,ia_bpp,dbits);
+   daction:=ia__iadd(daction,ia_transparent,[low__aorb(0,1,xtransparent)]);
+   end;
 
 skipend:
 except;end;
