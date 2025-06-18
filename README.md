@@ -52,36 +52,48 @@ Her design is light and stable, and an extensive block-based memory management s
 
 # Images
 <img src="images/bubbles-screenshot2.jpg">
-<br>
+<br><br>
 
 <img src="images/bubbles-screenshot3.jpg">
-<br>
+<br><br>
 
 <img src="images/bubbles-screenshot4.jpg">
-<br>
+<br><br>
 
 <img src="images/bubbles-screenshot5.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot6.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot7.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot8.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot9.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot10.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot11.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot12.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot13.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot14.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot15.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot16.jpg">
+<br><br>
 
 <img src="images/bubbles-screenshot17.jpg">
