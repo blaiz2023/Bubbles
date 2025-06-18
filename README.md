@@ -44,7 +44,7 @@ Her design is light and stable, and an extensive block-based memory management s
 * Compact binary ~1 MB
 * Easy to use
 * 32 bit codebase for wide deployment
-* Smart source code (MIT license) supports both Delphi 3 and Lazarus 2
+* Smart source code, compile in Borland Delphi 3 and Lazarus 2
 * Portable (when not installed as a Windows service)
 
 # Download
