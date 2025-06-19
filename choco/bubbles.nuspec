@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>bubbles</id>
-    <version>3.0.10751</version>
+    <version>3.0.10800</version>
     <title>Bubbles</title>
     <authors>Blaiz Enterprises</authors>
     <owners>Blaiz Enterprises</owners>
@@ -16,7 +16,7 @@ An extensive GUI administration control panel is accessed through your web brows
 
 Apart from serving files, Bubbles is capable of tracking site visits (site counters), receiving emails, accepting contact form submissions with support for Spam Guard, and recording site activity as date stamped traffic logs. A built-in log analyser generates realtime overview reports for each traffic log. A light and stable design with an extensive block-based memory management system ensures all key operations use memory in a sustained and reliable manner. These and other features make running multiple static websites maintenance and hassle free.
 
-![Bubbles v3.0.10751 Screenshot](https://rawcdn.githack.com/blaiz2023/Bubbles/ec7acfd917cbc36ca58d5faf931cfb4b59dedee5/images/bubbles-screenshot.jpg)
+![Bubbles v3.0.10800 Screenshot](https://rawcdn.githack.com/blaiz2023/Bubbles/6835ddf6e950efa322d030e90a9a0e5c811e5331/images/bubbles-screenshot_b_3.0.10800.jpg)
 
 Features
 * Browser based administration panel
