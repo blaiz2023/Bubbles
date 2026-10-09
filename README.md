@@ -1,4 +1,4 @@
-# Bubbles v3.00.10800 - 19jun2025
+# Bubbles v3.00.3.0.11252 - 09oct2026
 Bubbles the simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
 
 A GUI administration panel is accessed through your web browser (e.g. "http://localhost:1080/admin/" + default password of "admin"), which controls all her settings and vital functions, all in realtime.
@@ -9,7 +9,7 @@ Her design is light and stable, and an extensive block-based memory management s
 
 <img src="images/bubbles-screenshot.jpg">
 
-# Features:
+# Features
 * Browser based administration panel
 * HTTP/1 web server (default port 1080)
 * SMTP email server (port 25)
@@ -21,6 +21,7 @@ Her design is light and stable, and an extensive block-based memory management s
 * Send mail (compose)
 * Mail mask (filter acceptable inbound email addresses via one or more complex address masks)
 * Contact Form submission handler (stores and replies to contact form messages - no script or plug in required)
+* Email Subscribe and Unsubscribe request handler (maintains a per site email list with automatic sanitisation, list management/overview, change notifications etc)
 * Hit Counters with digital display (png image) for site specific / overall hit reporting
 * Live Daily Status - realtime bandwidth, visitors, requests, hits, emails and contact form subsmissions (resets each day) updated every 30 minutes
 * Built-in Tools: Icon Maker and Image Converter
@@ -32,7 +33,7 @@ Her design is light and stable, and an extensive block-based memory management s
 * Map panel (reroute / map one domain to another)
 * Proxy request support (test multiple domains / websites offline in your browser without the need for DNS)
 * Block based memory handling for stable memory management
-* Daily summary notices, boot notices, reload notices and security notices
+* Daily summary notices, daily subscribe list notices, realtime subscribe notices, realtime unsubscribe notices, boot notices, reload notices, and security notices
 * Mime Type panel (manage custom mime types / override defaults)
 * Console panel (realtime statistics for bandwidth in, out, hits, connections etc)
 * Threadless server design keeps things light
@@ -41,11 +42,18 @@ Her design is light and stable, and an extensive block-based memory management s
 * Power Level (CPU usage) throttle to tweak performance on low power, shared, or weak CPU / v-core environments
 * Backend server support for use with frontend servers like Caddy (e.g. for HTTPS)
 * Built-in help (view offline without the need for internet)
-* Compact binary ~1 MB
+* Compact binary (~ 1.1 MB)
 * Easy to use
 * 32 bit codebase for wide deployment
 * Smart source code, compile in Borland Delphi 3 and Lazarus 2
 * Portable (when not installed as a Windows service)
+
+# Codebase Changes
+* Memory speed efficiencies
+* Automatic MSIX handling (MS Store app/MSIX bundle) with seamless adaptive settings and temp file storage and management for restrictive access compliance
+* Source code supports both 32bit and 64bit
+* 32bit compilation in Borland Delphi 3 (stable)
+* 32bit compilation in Lazarus 2.2 (stable)
 
 # Download
 <a href="src/bubbles.exe">bubbles.exe</a> - windows all
