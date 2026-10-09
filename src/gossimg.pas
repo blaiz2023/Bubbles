@@ -1,19 +1,21 @@
 unit gossimg;
 
 interface
+{$ifdef gui4} {$define gui3} {$define gamecore}{$endif}
 {$ifdef gui3} {$define gui2} {$define net} {$define ipsec} {$endif}
 {$ifdef gui2} {$define gui}  {$define jpeg} {$endif}
 {$ifdef gui} {$define snd} {$endif}
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
-{$ifdef con2} {$define jpeg} {$endif}
+{$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
+{$ifdef WIN64}{$define 64bit}{$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg{$endif};
-{$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
+uses gosswin2, gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg{$endif};
+{$align on}{$iochecks on}{$O+}{$W-}{$U+}{$V+}{$B-}{$X+}{$T-}{$P+}{$H+}{$J-} { set critical compiler conditionals for proper compilation - 10aug2025 }
 //## ==========================================================================================================================================================================================================================
 //##
 //## MIT License
 //##
-//## Copyright 2025 Blaiz Enterprises ( http://www.blaizenterprises.com )
+//## Copyright 2026 Blaiz Enterprises ( http://www.blaizenterprises.com )
 //##
 //## Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 //## files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
@@ -29,51 +31,63 @@ uses gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. image/graphics (gossimg.pas)
-//## Version.................. 4.00.15574 (+345)
-//## Items.................... 25
-//## Last Updated ............ 19jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
-//## Lines of Code............ 29,600+
+//## Version.................. 4.00.16400 (+447)
+//## Items.................... 28
+//## Last Updated ............ 30aug2026, 30jul2026, 01jul2026, 19jun2026, 14jun2026, 11jun2026, 09jun2026, 04jun2026, 02jun2026, 23may2026, 04may2026, 16apr2026, 10apr2026, 09apr2026, 03apr2026, 23mar2026, 21mar2026, 19mar2026, 13mar2026, 10mar2026, 07mar2026, 03mar2026, 25feb2026, 01dec2025, 09nov2025, 08nov2025, 24oct2025, 05oct2025, 03oct2025, 26sep2025, 18sep2025, 13sep2025, 04sep2025, 27aug2025, 08aug2025, 25jul2025, 16jul2025, 19jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
+//## Lines of Code............ 32,800+
+//## Origin .................. Human generated and maintained
 //##
-//## main.pas ................ app code
-//## gossroot.pas ............ console/gui app startup and control
-//## gossio.pas .............. file io
-//## gossimg.pas ............. image/graphics
-//## gossnet.pas ............. network
-//## gosswin.pas ............. 32bit windows api's/xbox controller
-//## gosssnd.pas ............. sound/audio/midi/chimes
-//## gossgui.pas ............. gui management/controls
-//## gossdat.pas ............. app icons (24px and 20px) and help documents (gui only) in txt, bwd or bwp format
-//## gosszip.pas ............. zip support
-//## gossjpg.pas ............. jpeg support
+//## main.pas ................ App specific code
+//## gossdat.pas ............. App specific icons and help documents
+//## gossfast.pas ............ FastDraw - rapid render graphic procs
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
+//## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossgui.pas ............. GUI management and controls
+//## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
+//## gossio.pas .............. File IO and low level file/folder/disk/data format procs
+//## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossnet.pas ............. Networking - ip filtering, socket management etc
+//## gossroot.pas ............ App startup and control (GUI, console and service)
+//## gosssnd.pas ............. Sound, audio, midi and midi based chimes
+//## gossteps.pas ............ System, Folder and App images
+//## gosstext.pas ............ TextCore - non-GUI and GUI text engine for text boxes
+//## gosswin.pas ............. Win32 api calls for 32 and 64 bit (static / api references disabled by default)
+//## gosswin2.pas ............ Win32 api calls for 32 and 64 bit (dynamic - load as required with fallback failure handling and default value(s) support)
+//## gosszip.pas ............. ZIP IO (read/write zip data via third party libraries)
 //##
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version    | Date        | Update history / brief description of function
 //## |------------------------|-------------------|------------|-------------|--------------------------------------------------------
 //## | tbasicimage            | tobject           | 1.00.187   | 07dec2023   | Lightweight + fast system independent image, not resizable, supports 8/24/32 bit pixel depth - 09may2022, 27jul2021, 25jan2021, ??jan2020: created
-//## | twinbmp                | tobject           | 1.00.060   | 01may2025   | Replacement for tbitmap - 26apr2025
+//## | twinbmp                | tobject           | 1.00.170   | 01dec2025   | Replacement for tbitmap - 27aug2025: GDI handling upgrades, 04sep2025, 27aug2025, 01may2025, 26apr2025
 //## | trawimage              | tobject           | 1.00.070   | 26apr2025   | Independent resizeable image -> persistent pixel rows and supports 8/24/32 bit color depth - 27dec2024, 25jul2024: created
-//## | c8__/c24__/c32__/int__ | family of procs   | 1.00.245   | 06may2025   | Graphic color conversion procs - 18feb2025
-//## | mis*                   | family of procs   | 1.00.10480 | 06jun2025   | Graphic procs for working with multiple different image objects - 09may2025, 27dec2024, 27nov2024
+//## | c8__/c24__/c32__/int__ | family of procs   | 1.00.288   | 04jun2026   | Graphic color conversion procs - 02jun2026, 03mar2026, 03oct2025, 16sep2025, 13sep2025, 16jul2025, 06may2025, 18feb2025
+//## | mis*/mis__*            | family of procs   | 1.00.10659 | 04jun2026   | Graphic procs for working with multiple different image objects - 02jun2026, 23may2026, 03apr2026, 19mar2026, 07mar2026, 08nov2025, 18sep2025, 06jun2025, 09may2025, 27dec2024, 27nov2024
 //## | ref_*                  | family of procs   | 1.00.100   | 20jul2024   | Reference procs for image adjustment
 //## | canvas__*              | family of procs   | 1.00.045   | 18feb2025   | Indirect support for tcanvas - 28jun2024
-//## | gif__*                 | family of procs   | 1.00.900   | 06aug2024   | Read / write GIF images, static and animated, automatic on-the-fly optimisation (solid, transparent and mixed cell modes)
-//## | bmp__*                 | family of procs   | 1.00.472   | 12jun2025   | Read / write BMP images - 32bit with alpha/DIB/clipboard formats - 26may2025, 14may2025, 01may2025, 06aug2024
+//## | gif__*                 | family of procs   | 1.00.918   | 04may2026   | Read / write GIF images, static and animated, automatic on-the-fly optimisation (solid, transparent and mixed cell modes) - 16apr2026, 13mar2026, 08aug2025, 06aug2024
+//## | mask__*                | family of procs   | 1.00.134   | 04may2026   | Mask related procs for working with alpha channel on 32bit images or 8bit images - 10apr2026, 24oct2025, 08aug2025
+//## | bmp__*                 | family of procs   | 1.00.475   | 09nov2025   | Read / write BMP images - 32bit with alpha/DIB/clipboard formats - 12jun2025, 26may2025, 14may2025, 01may2025, 06aug2024
 //## | dib__*                 | family of procs   | 1.00.052   | 28may2025   | Read / write DIB images - 14may2025, 06aug2024
 //## | tj32__*                | family of procs   | 1.00.045   | 06aug2024   | Read / write TJ32 images -> 32bit hybrid transparent jpeg -> static and animated
+//## | san__*                 | family of procs   | 1.00.020   | 16sep2025   | Read / write SAN images -> supports legacy 24 bit and new 32 bit image strips
+//## | img8__*                | family of procs   | 1.00.020   | 17sep2025   | Read / write PIC8 images -> supports basic mode
 //## | img32__*               | family of procs   | 1.00.040   | 06aug2024   | Read / write IMG32 images -> 32bit raw images -> static and animated
 //## | jpg__*                 | family of procs   | 1.00.272   | 05dec2024   | Read / write JPEG images -> automatic quality control - 24nov2024, 06aug2024
-//## | png__*                 | family of procs   | 1.00.331   | 29may2025   | Read / write PMG images - 15mar2025, 15nov2024
-//## | tea__*                 | family of procs   | 1.00.393   | 17jun2025   | Read / write TEA images - 12dec2024, 18nov2024
-//## | ico__*, low__ico*      | family of procs   | 1.00.653   | 19jun2025   | Read / write ICO images - 28may2025, 13may2025, 22nov2024
-//## | cur__*                 | family of procs   | 1.00.210   | 28may2025   | Read / write CUR images - 22nov2024
-//## | ani__*                 | family of procs   | 1.00.200   | 22nov2024   | Read / write ANI images
+//## | png__*                 | family of procs   | 1.00.335   | 25jul2025   | Read / write PMG images - 29may2025, 15mar2025, 15nov2024
+//## | tea__*                 | family of procs   | 1.00.415   | 23mar2026   | Read / write TEA images - 05oct2025, 08aug2025, 17jun2025, 12dec2024, 18nov2024
+//## | rle8__*                | family of procs   | 1.00.030   | 25feb2026   | Read / write RLE8 images
+//## | tep__*                 | family of procs   | 1.00.082   | 10mar2026   | Read / ????? TEP images - 05oct2025
+//## | ico__*, low__ico*      | family of procs   | 1.00.680   | 30aug2026   | Read / write ICO images - 19jun2026, 02jun2025, 28may2025, 13may2025, 22nov2024
+//## | cur__*                 | family of procs   | 1.00.212   | 09jun2026   | Read / write CUR images - 28may2025, 22nov2024
+//## | ani__*                 | family of procs   | 1.00.210   | 23may2026   | Read / write ANI images - 22nov2024
 //## | ia__*                  | family of procs   | 1.00.131   | 21dec2024   | Read / write image action commands - for passing low level information to graphic subprocs - 24nov2024
 //## | tga__*                 | family of procs   | 1.00.205   | 29may2025   | Read / write TGA images in 8bit greyscale and 24bit/32bit color with or without RLE compression and topleft or botleft orientation - 20dec2024
 //## | ppm__*                 | family of procs   | 1.00.040   | 02jan2025   | Read / write PPM images
 //## | pgm__*                 | family of procs   | 1.00.020   | 02jan2025   | Read / write PGM images
 //## | pbm__*                 | family of procs   | 1.00.035   | 02jan2025   | Read / write PBM images
 //## | pnm__*                 | family of procs   | 1.00.022   | 02jan2025   | Read / write PNM images
-//## | xbm__*                 | family of procs   | 1.00.040   | 02jan2025   | Read / write XBM images
+//## | xbm__*                 | family of procs   | 1.00.060   | 18sep2025   | Read / write XBM images - 02jan2025
 //## ==========================================================================================================================================================================================================================
 //## Performance Note:
 //##
@@ -82,6 +96,7 @@ uses gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpeg},gossjpg
 //## causing ~2x more CPU to be consumed.  For optimal performance, these options should be disabled
 //## when compiling.
 //## ==========================================================================================================================================================================================================================
+
 
 const
    //Color Format
@@ -93,7 +108,6 @@ const
    cfRGB16        =5;//16bit color
    cfRGB15        =6;//15bit color
    cfRGB8         =7;//8bit grey/color
-
 
 
    //image action strings - 27jul2024 ------------------------------------------
@@ -118,6 +132,7 @@ const
 
    //.info
    ia_info_filename                   ='info.filename';
+   ia_fast                            ='fast';//23may2026
 
    //.animation support
    ia_cellcount                       ='cellcount';
@@ -190,7 +205,26 @@ const
    ia_pnm_binary                      ='pnm.binary';
    ia_pnm_ascii                       ='pnm.ascii';
 
+   //XBM action codes ----------------------------------------------------------
+   ia_xbm_char                        ='xbm.char';
+   ia_xbm_char2                       ='xbm.char2';
+   ia_xbm_short                       ='xbm.short';
+   ia_xbm_short2                      ='xbm.short2';
 
+
+   //misc ----------------------------------------------------------------------
+
+   sd32_32                             =0;
+   sd32_24                             =1;
+   sd32_8                              =2;
+   sd24_32                             =3;
+   sd24_24                             =4;
+   sd24_8                              =5;
+   sd8_32                              =6;
+   sd8_24                              =7;
+   sd8_8                               =8;
+   sd_err                              =9;
+   
 type
    tbasicimage  =class;
    twinbmp      =class;
@@ -258,9 +292,11 @@ type
     function pmake(a32:tobject;atrans:boolean):boolean;//make palette
    end;
 
+
 {tbasicimage}
    tbasicimage=class(tobject)
    private
+
     idata,irows:tstr8;
     ibits,iwidth,iheight:longint;
     iprows8 :pcolorrows8;
@@ -268,10 +304,13 @@ type
     iprows24:pcolorrows24;
     iprows32:pcolorrows32;
     istable:boolean;
+
     procedure setareadata(sa:twinrect;sdata:tstr8);
     function getareadata(sa:twinrect):tstr8;
     function getareadata2(sa:twinrect):tstr8;
+
    public
+
     //animation support
     ai:tanimationinformation;
     dtransparent:boolean;
@@ -279,29 +318,35 @@ type
     oaddress:string;//used for "AAS" to load from a specific folder - 30NOV2010
     ocleanmask32bpp:boolean;//default=false, true=reads only the upper levels of the 8bit mask of a 32bit icon/cursor to eliminate poor mask quality - ccs.fromicon32() etc - 26JAN2012
     rhavemovie:boolean;//default=false, true=object has a movie as it's animation
+
     //create
     constructor create; virtual;
     destructor destroy; override;
     function copyfrom(s:tbasicimage):boolean;//09may2022, 09feb2022
+
     //information
-    property stable:boolean read istable;
-    property bits:longint read ibits;
-    property width:longint read iwidth;
-    property height:longint read iheight;
-    property prows8 :pcolorrows8  read iprows8;
-    property prows16:pcolorrows16 read iprows16;
-    property prows24:pcolorrows24 read iprows24;
-    property prows32:pcolorrows32 read iprows32;
-    property rows:tstr8 read irows;
+    property stable             :boolean            read istable;
+    property bits               :longint            read ibits;
+    property width              :longint            read iwidth;
+    property height             :longint            read iheight;
+    property prows8             :pcolorrows8        read iprows8;
+    property prows16            :pcolorrows16       read iprows16;
+    property prows24            :pcolorrows24       read iprows24;
+    property prows32            :pcolorrows32       read iprows32;
+    property rows               :tstr8              read irows;
+
     //workers
     function sizeto(dw,dh:longint):boolean;
     function setparams(dbits,dw,dh:longint):boolean;
     function findscanline(slayer,sy:longint):pointer;
+
     //io
     function todata:tstr8;//19feb2022
     function fromdata(s:tstr8):boolean;//19feb2022
+
     //core
     property data:tstr8 read idata;
+
     //.raw data handlers
     function setraw(dbits,dw,dh:longint;ddata:tstr8):boolean;
     function getarea(ddata:tstr8;da:twinrect):boolean;//07dec2023
@@ -309,6 +354,7 @@ type
     function setarea(ddata:tstr8;da:twinrect):boolean;//07dec2023
     property areadata[sa:twinrect]:tstr8 read getareadata write setareadata;
     property areadata_fast[sa:twinrect]:tstr8 read getareadata2 write setareadata;
+
    end;
 
 {trawimage}
@@ -360,10 +406,16 @@ type
 //xxxxxxxxxxxxxxxxxxxxxxxxxxx//bbbbbbbbbbbbbbbbbbbbbbb
    twinbmp=class(tobject)
    private
-    iinfo    :TBitmapInfoHeader;
-    ihbitmap :HBITMAP;
-    icore    :pointer;
-    idc      :hdc;
+
+    iinfo       :TBitmapInfoHeader;
+    ifont       :HFONT;
+    ibrush      :HBRUSH;
+    ifontOLD    :HGDIOBJ;
+    ibrushOLD   :HGDIOBJ;
+    ihbitmapOLD :HBITMAP;
+    ihbitmap    :HBITMAP;
+    icore       :pointer;
+    idc         :hdc;
 
     irows:tstr8;
     ibits,iwidth,iheight,irowsize:longint;
@@ -373,38 +425,53 @@ type
     irows16:pcolorrows16;
     irows24:pcolorrows24;
     irows32:pcolorrows32;
+
     procedure setwidth(x:longint);
     procedure setheight(x:longint);
     procedure setbits(x:longint);
-    procedure xfreeimage;
+    function xcreate(xnew:boolean):boolean;
+
    public
+
     //animation support
     ai:tanimationinformation;
+
     //create
     constructor create; virtual;
     destructor destroy; override;
+
     //information
-    property dc:hdc read idc;
-    property handle:hbitmap read ihbitmap;
-    property bits:longint read ibits write setbits;
-    property width:longint read iwidth write setwidth;
-    property height:longint read iheight write setheight;
-    property rowsize:longint read irowsize;
-    function bytes:comp;
+    property dc           :hdc           read idc;
+    property handle       :hbitmap       read ihbitmap;
+    property bits         :longint       read ibits write setbits;
+    property width        :longint       read iwidth write setwidth;
+    property height       :longint       read iheight write setheight;
+    property rowsize      :longint       read irowsize;
+    function bytes        :comp;
+    property font         :hfont         read ifont;
+    property brush        :hbrush        read ibrush;
+
     //setparams
     function setparams(dbits,dw,dh:longint):boolean;
-    function setparams2(dbits,dw,dh:longint;dforce:boolean):boolean;
+    function setparams2(dbits,dw,dh:longint;dforce:boolean):boolean;//01dec2025
+
     //scanline
-    property rows   :tstr8        read irows;
-    property prows8 :pcolorrows8  read irows8;
-    property prows15:pcolorrows16 read irows15;
-    property prows16:pcolorrows16 read irows16;
-    property prows24:pcolorrows24 read irows24;
-    property prows32:pcolorrows32 read irows32;
+    property rows         :tstr8         read irows;
+    property prows8       :pcolorrows8   read irows8;
+    property prows15      :pcolorrows16  read irows15;
+    property prows16      :pcolorrows16  read irows16;
+    property prows24      :pcolorrows24  read irows24;
+    property prows32      :pcolorrows32  read irows32;
     function getscanline(sy:longint):pointer;
+
     //workers
     function copyarea(sa:twinrect;s:hdc):boolean;
     function copyarea2(da,sa:twinrect;s:hdc):boolean;
+
+    //support
+    function setfont(xfontname:string;xsharp,xbold:boolean;xsize,xcolor,xbackcolor:longint):boolean;
+    function fontheight:longint;
+
    end;
 
 
@@ -442,26 +509,28 @@ type
    // A Hash Key is 20 bits wide.
     // - The lower 8 bits are the postfix character (the new pixel).
     // - The upper 12 bits are the prefix code (the GIF token).
-    // A KeyInt must be able to represent the integer values -1..(2^20)-1
+    // A KeyInt must be able to represent the longint32 values -1..(2^20)-1
     //KeyInt = longInt;	// 32 bits
     //CodeInt = SmallInt;	// 16 bits
     thasharray=array[0..hashsize-1] of longint;
     phasharray=^thasharray;
     thashtable=class(tobjectex)//hash table for GIF compressor
     private
+
      hashtable:phasharray;
+
     public
+
      constructor create; virtual;
      destructor destroy; override;
+
      procedure clear;
      procedure insert(key:longint;code:smallint);
-     function lookup(key:longint):smallint;
+     function lookup(key:longInt):smallint;//updated - 16apr2026
+
     end;
 
 var
-   //.started
-   system_started      :boolean=false;
-
    //.ref arrays
    ref65025_div_255      :array[0..65025] of byte;//06apr2017
 
@@ -475,27 +544,11 @@ var
    systmptime            :array[0..99] of comp;
    systmpbmp             :array[0..99] of tbasicimage;//23may2020
    systmppos             :longint;
-   //.temp int buffer support
-   sysintstyle           :array[0..99] of byte;//0=free, 1=available, 2=locked
-   sysintid              :array[0..99] of string;
-   sysinttime            :array[0..99] of comp;
-   sysintobj             :array[0..99] of tdynamicinteger;
-   sysintpos             :longint;
-   //.temp byte buffer support
-   sysbytestyle          :array[0..99] of byte;//0=free, 1=available, 2=locked
-   sysbyteid             :array[0..99] of string;
-   sysbytetime           :array[0..99] of comp;
-   sysbyteobj            :array[0..99] of tdynamicbyte;
-   sysbytepos            :longint;
+
    //.mis support
    system_default_ai     :tanimationinformation;//29may2019
    system_screenlogpixels:longint=96;
-   
-   //.random sparkle shader list -> stores a list of random shades 0..100 - 27feb2022
-   system_sparklelist   :array[0..9999] of byte;
-   system_sparklepos    :longint=0;
-   system_sparkleref    :longint=-1;
-   system_sparklecount  :longint=0;//tracks number of times low__sparkfill fills the list - 27feb2022
+
 
 //start-stop procs -------------------------------------------------------------
 procedure gossimg__start;
@@ -508,34 +561,30 @@ function gossimg__havegif:boolean;
 function gossimg__havejpg:boolean;
 function gossimg__havetga:boolean;//20feb2025
 
+
 //info procs -------------------------------------------------------------------
 function app__info(xname:string):string;
 function app__bol(xname:string):boolean;
 function info__img(xname:string):string;//information specific to this unit of code
 
+
 //general procs ----------------------------------------------------------------
 function zzimg(x:tobject):boolean;//12feb2202
 function asimg(x:tobject):tbasicimage;//12feb2202
+
 
 //temp procs -------------------------------------------------------------------
 //note: rapid reuse of temporary objects for caching tasks, like for intensive graphics scaling work etc
 function low__createimg24(var x:tbasicimage;xid:string;var xwascached:boolean):boolean;
 procedure low__freeimg(var x:tbasicimage);
 procedure low__checkimg;
-function low__createint(var x:tdynamicinteger;xid:string;var xwascached:boolean):boolean;
-procedure low__freeint(var x:tdynamicinteger);
-procedure low__checkint;
-function low__createbyte(var x:tdynamicbyte;xid:string;var xwascached:boolean):boolean;
-procedure low__freebyte(var x:tdynamicbyte);
-procedure low__checkbyte;
+
 
 //graphics procs ---------------------------------------------------------------
 procedure low__scaledown(maxw,maxh,sw,sh:longint;var dw,dh:longint);//20feb2025: tweaked, 29jul2016
-procedure low__scale(maxw,maxh,sw,sh:integer;var dw,dh:integer);//20feb2025: tweaked
-procedure low__scalecrop(maxw,maxh,sw,sh:integer;var dw,dh:integer);//20feb2025: fixed
+procedure low__scale(maxw,maxh,sw,sh:longint32;var dw,dh:longint32);//20feb2025: tweaked
+procedure low__scalecrop(maxw,maxh,sw,sh:longint32;var dw,dh:longint32);//20feb2025: fixed
 
-function low__cornerMaxwidth:longint;//used by some patch systems to work around corner restrictions such as "statusbar.cellpert.round/square" - 07ul2021
-function low__cornersolid(xdynamicCorners:boolean;var a:twinrect;amin,ay,xmin,xmax,xroundstyle:longint;xround:boolean;var lx,rx:longint):boolean;//29mar2021
 function misv(s:tobject):boolean;//image is valid
 function misb(s:tobject):longint;//get image bits
 procedure missetb(s:tobject;sbits:longint);
@@ -547,6 +596,9 @@ function misch(s:tobject):longint;//cell height
 function miscc(s:tobject):longint;//cell count
 function mis__nextcell(s:tobject;var sitemindex:longint;var stimer:comp):boolean;
 function misf(s:tobject):longint;//color format
+
+function misfast24(s:tobject;var sw,sh:longint;var srows:pcolorrows24):boolean;//15jul2025: fast basic info for 24 bit image
+
 //.animation information
 function misonecell(s:tobject):boolean;//26apr2022
 function miscells(s:tobject;var sbits,sw,sh,scellcount,scellw,scellh,sdelay:longint;var shasai:boolean;var stransparent:boolean):boolean;//16dec2024, 27jul2021
@@ -555,7 +607,7 @@ function miscell2(s:tobject;sindex:longint):twinrect;
 function miscellarea(s:tobject;sindex:longint):twinrect;
 function mishasai(s:tobject):boolean;
 function misaiclear2(s:tobject):boolean;
-function misaiclear(var x:tanimationinformation):boolean;
+function misaiclear(var x:tanimationinformation):boolean;//18mar2026
 function misai(s:tobject):panimationinformation;
 function low__aicopy(var s,d:tanimationinformation):boolean;
 function misaicopy(s,d:tobject):boolean;
@@ -566,11 +618,13 @@ function misimg32(dw,dh:longint):tbasicimage;
 
 function misraw(dbits,dw,dh:longint):trawimage;
 function misraw8(dw,dh:longint):trawimage;
+function misraw16(dw,dh:longint):trawimage;
 function misraw24(dw,dh:longint):trawimage;
 function misraw32(dw,dh:longint):trawimage;
 
 function miswin(dbits,dw,dh:longint):twinbmp;
 function miswin8(dw,dh:longint):twinbmp;
+function miswin16(dw,dh:longint):twinbmp;
 function miswin24(dw,dh:longint):twinbmp;
 function miswin32(dw,dh:longint):twinbmp;
 
@@ -596,6 +650,7 @@ function misokk24(s:tobject):boolean;
 function misokai24(s:tobject;var sw,sh:longint):boolean;
 function misok824(s:tobject;var sbits,sw,sh:longint):boolean;
 function misok82432(s:tobject;var sbits,sw,sh:longint):boolean;
+function misok8162432(s:tobject;var sbits,sw,sh:longint):boolean;//04jun2026
 function misok2432(s:tobject;var sbits,sw,sh:longint):boolean;//01may2025
 function misokk824(s:tobject):boolean;
 function misokk82432(s:tobject):boolean;
@@ -616,6 +671,7 @@ function misrows82432(s:tobject;var xout8:pcolorrows8;var xout24:pcolorrows24;va
 //.get image scan row (just one row)
 function misscan(s:tobject;sy:longint):pointer;//21jun2024
 function misscan82432(s:tobject;sy:longint;var sr8:pcolorrow8;var sr24:pcolorrow24;var sr32:pcolorrow32):boolean;//26jan2021
+function misscan8162432(s:tobject;sy:longint;var sr8:pcolorrow8;var sr16:pcolorrow16;var sr24:pcolorrow24;var sr32:pcolorrow32):boolean;//26jan2021
 function misscan8(s:tobject;sy:longint;var sr8:pcolorrow8):boolean;//26jan2021
 function misscan16(s:tobject;sy:longint;var sr16:pcolorrow16):boolean;//03aug2024
 function misscan24(s:tobject;sy:longint;var sr24:pcolorrow24):boolean;//26jan2021
@@ -640,16 +696,23 @@ function miscountcolors(i:tobject):longint;//full color count - uses dynamic mem
 function miscountcolors2(da_clip:twinrect;i,xsel:tobject):longint;//full color count - uses dynamic memory (2mb) - 19sep2018, 15OCT2009
 function miscountcolors3(da_clip:twinrect;i,xsel:tobject;var xcolorcount,xmaskcount:longint):boolean;//full color count - uses dynamic memory (2mb) - 19sep2018, 15OCT2009
 function miscountcolors4(da_clip:twinrect;i,xsel:tobject;var xcolorcount,xmaskcount:longint;var xunusedcolor:longint;xfindunusedcolor:boolean):boolean;//full color count - uses dynamic memory (2mb) - 23mar2025: findunusedcolor option added, 19sep2018, 15OCT2009
-//.copy an area of pixels from one image to another - full 32bit RGBA support - 15feb2022
-function miscopyarea32(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//can copy ALL 32bits of color
-function miscopyarea321(da,sa:twinrect;d,s:tobject):boolean;//can copy ALL 32bits of color
-function miscopyarea322(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xscroll,yscroll:longint):boolean;//can copy ALL 32bits of color
-function miscopyarea323(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xscroll,yscroll:longint;xmix32:boolean):boolean;//18nov2024: xmix32 mixes alpha colors into a lesser bit depth image e.g. drawing a 32 bit image onto a 24 bit one, can copy ALL 32bits of color
 
 function mis__colormatrixpixel24(x,y,w,h:longint):tcolor24;
 function mis__colormatrixpixel32(x,y,w,h:longint;a:byte):tcolor32;//matches "ldm()" exactly for color reproduction - 18feb2025: tweaked, 02feb2025
-function mis__copyfast82432(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//09jan2025 - barebones pixel copier
-function mis__copyfast2432MASK(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xmask,xbackmask:tmask8;xmaskval,xpower255:longint):boolean;//30jan2025, 18nov2024: xmix32 mixes alpha colors into a lesser bit depth image e.g. drawing a 32 bit image onto a 24 bit one, can copy ALL 32bits of color
+
+function mis__sdPair(const sbits,dbits:longint):longint;//03apr2026
+
+
+//.high-speed area copy - 03apr2026
+function mis__copyfast(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject):boolean;//03apr2026
+function mis__copyfast2(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint):boolean;//03apr2026
+function mis__copyfast3(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip,drenderAlphaShades:boolean):boolean;//03apr2026
+
+//..support procs
+function xmis__copyfast_cliprange_mirror_flip(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dmirror,dflip:boolean):boolean;//03apr2026
+function xmis__copyfast_cliprange_mirror_flip_power255(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip:boolean):boolean;//03apr2026
+function xmis__copyfast_cliprange_mirror_flip_power255_alphaShades(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip:boolean):boolean;//03apr2026
+
 //.used for an "average" scaling down of an image -> retains ratio and relative position of pixels in final image
 function mis__copyAVE82432(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;dsmoothresampling:boolean):boolean;//06jun2025, 09may2025 - barebones "average" pixel copier/resampler
 
@@ -675,7 +738,7 @@ function mis__drawdigits(s:tobject;dcliparea:twinrect;dx,dy,dfontsize,dcolor:lon
 function mis__drawdigits2(s:tobject;dcliparea:twinrect;dx,dy,dfontsize,dcolor:longint;dheightscale:extended;x:string;xbold,xdraw:boolean;var dwidth,dheight:longint):boolean;
 
 //.io - 25jul2024
-function mis__format(xdata:pobject;var xformat:string;var xbase64:boolean):boolean;//26jul2024: created to handle tstr8 and tstr9
+function mis__format(xdata:pobject;var xformat:string;var xbase64:boolean):boolean;//06mar2026, 18sep2025, 26jul2024: created to handle tstr8 and tstr9
 function mis__clear(s:tobject):boolean;
 function mis__copy(s,d:tobject):boolean;
 function mis__browsersupports(dformat:string):boolean;//22feb2025
@@ -694,14 +757,18 @@ function mis__resizable(s:tobject):boolean;
 function mis__retaindataonresize(s:tobject):boolean;//26jul2024: same as "mis__resizable()"
 
 function mis__rowsize4(ximagewidth,xbitsPERpixel:longint):longint;//rounds to nearest 4 bytes - 27may2025
+function mis__reducecolors256(s:tobject;xMaxColorCount:longint):boolean;//17sep2025
+procedure mis__checkerAndcolor(const d:tobject;const r,g,b,a:byte);//23jun2026
 function mis__cls(s:tobject;r,g,b,a:byte):boolean;//04aug2024
-function mis__cls2(s:tobject;sa:twinrect;r,g,b,a:byte):boolean;//04aug2024
+function mis__cls2(s:tobject;sa:twinrect;r,g,b,a:byte):boolean;//04jun2026, 04aug2024
 function mis__cls3(s:tobject;sa:twinrect;scolor32:tcolor32):boolean;//29jan2025
 function mis__cls8(s:tobject;a:byte):boolean;//04aug2024
 function mis__cls82(s:tobject;sa:twinrect;a:byte):boolean;//04aug2024
 
 function mis__mirror82432(x:tobject):boolean;//left-right - 08may2025
+function mis__mirror82432b(x:tobject;xa:twinrect):boolean;//left-right - 16sep2026, 08may2025
 function mis__flip82432(x:tobject):boolean;//up-down - 08may2025
+function mis__flip82432b(x:tobject;xa:twinrect):boolean;//up-down - 16sep2025, 08may2025
 function mis__rotate82432(x:tobject;xangle:longint):boolean;//-90, 90, -180, 180, -270, or 270 deg - 09may2025
 
 function mis__findBPP(s:tobject):longint;//scans image to determine the actual BPP required
@@ -715,29 +782,16 @@ function mis__fromfile2(s:tobject;sfilename:string;sbuffer:boolean;var e:string)
 
 function mis__todata(s:tobject;sdata:pobject;dformat:string;var e:string):boolean;//25jul2024
 function mis__todata2(s:tobject;sdata:pobject;dformat,daction:string;var e:string):boolean;//25jul2024
-function mis__todata3(s:tobject;sdata:pobject;dformat:string;var daction,e:string):boolean;//19feb2025, 14dec2024: ia_nonAnimatedFormatsSaveImageStrip, 25jul2024
+function mis__todata3(s:tobject;sdata:pobject;dformat:string;var daction,e:string):boolean;//23may2026, 18mar2026, 19feb2025, 14dec2024: ia_nonAnimatedFormatsSaveImageStrip, 25jul2024
 
 function mis__fromadata(s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
 function mis__fromdata(s:tobject;sdata:pobject;var e:string):boolean;//25jul2024
 function mis__fromdata2(s:tobject;sdata:pobject;sbuffer:boolean;var e:string):boolean;//06jun2025, 25jul2024
 function mis__fromarray(s:tobject;const xdata:array of byte;var e:string):boolean;//01may2025, 02jun2020
 
-function miscopyareaxx(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255,xtrans,xtc:longint;xoptions:currency):boolean;//05sep2017, 25jul2017
-function miscopyareaxx1(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//01jun2019
-function miscopyareaxx1A(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xusealpha:boolean):boolean;//support 32bit alpha channel - 27jan2021
-function miscopyareaxx1B(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255:longint;xusealpha:boolean):boolean;//support 32bit alpha channel - 27jan2021
-function miscopyareaxx2(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx3(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx3b(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx4(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx5(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx6(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//32bit support - 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx7(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//32bit alpha channel support - 26jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx8(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function misoptions(xinvert,xgrey,xsepia,xnoise:boolean):currency;
-function miscopyareaxx9(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//xinvert put last for better results - 05jun2021, colorise - 27mar2021, "round()" instead of "trunc()" - 16mar2021, dsysinfo support - 10mar2021, 32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-function miscopyareaxx91(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask,dbackmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//04dec2024
-function miscopyareaxx10(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask,dbackmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc,xwriteShadesofcolor:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//xinvert put last for better results - 05jun2021, "round()" instead of "trunc()" - 16mar2021, dsysinfo support - 10mar2021, 32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
+function mis__fromarrayBYTE(const d:tobject;const s:pobject):boolean;//18mar2026
+function mis__frombase64(const d:tobject;const s:pobject):boolean;//18mar2026
+
 function misformat(xdata:tstr8;var xformat:string;var xbase64:boolean):boolean;
 
 
@@ -760,19 +814,15 @@ function misblur82432(s:tobject):boolean;//03sep2021
 function misblur82432b(s:tobject;xwraprange:boolean;xpower255,xtranscol:longint):boolean;//11sep2021, 03sep2021
 function misblur82432c(s:tobject;scliparea:twinrect;xwraprange:boolean;xpower255,xtranscol:longint):boolean;//17may2022 - cell-based clipping, 27apr2022, 11sep2021, 03sep2021
 function misblur82432d(s:tobject;scliparea:twinrect;xwraprange:boolean;xpower255,xtranscol,xstage:longint):boolean;//30dec2022 - stage support (-1 to 2), 17may2022 - cell-based clipping, 27apr2022, 11sep2021, 03sep2021
-function misIconArt82432(s,s2:tobject;xzoom,xbackcolor,xtranscolor:longint;xpadding:boolean):boolean;//17sep2022 - fixed integer overflow error, 27apr2022
+function misIconArt82432(s,s2:tobject;xzoom,xbackcolor,xtranscolor:longint;xpadding:boolean):boolean;//17sep2022 - fixed longint32 overflow error, 27apr2022
 function miscrop82432(s:tobject):boolean;
 function miscrop82432b(s:tobject;t32:tcolor32;var l,t,r,b:longint;xcalonly,xusealpha,xretainT32:boolean):boolean;//21jun20221
+
 //.frame "universal" drawer
 function misframe82432(s:tobject;da_cliparea,xouterarea:twinrect;xautoouterarea:boolean;var slist:array of longint;scount:longint;var e:string):boolean;//28jan2021
 function misframe82432ex(s:tobject;da_cliparea,xouterarea:twinrect;xautoouterarea:boolean;var slist:array of longint;scount:longint;var e:string):boolean;//28jan2021
 procedure low__framecols(xback,xframe,xframe2:longint;var xminsize,xcol1,xcol2:longint);//24feb2022
 function low__frameset(var xpos:longint;xdata:tstr8;var sremsize:longint;sframesize,scolor,scolor2:longint;var dminsize,dsize,dcolor,dcolor2:longint):boolean;
-//.sparkle procs
-procedure sparkle__fill(xrichlevel:longint);
-function sparkle__start:longint;
-procedure sparkle__stop(xpos:longint);
-function sparkle__uniquestart:longint;
 
 
 //icon procs -------------------------------------------------------------------
@@ -796,20 +846,20 @@ type
    end;
    panirec=^tanirec;
    tanirec=packed record
-     cbSizeOf:dword;// Num bytes in AniHeader (36 bytes)
-     cFrames:dword;// Number of unique Icons in this cursor
-     cSteps:dword;// Number of Blits before the animation cycles
-     cx:dword;// reserved, must be zero.
-     cy:dword;// reserved, must be zero.
-     cBitCount:dword;// reserved, must be zero.
-     cPlanes:dword;// reserved, must be zero.
-     JifRate:dword;//Note: 1xJiffy=1/60s=16.666ms - Default Jiffies (1/60th of a second) if rate chunk not present.
-     flags:dword;// Animation Flag (see AF_ constants) - #define AF_ICON =3D 0x0001L // Windows format icon/cursor animation
+     cbSizeOf:dword32;// Num bytes in AniHeader (36 bytes)
+     cFrames:dword32;// Number of unique Icons in this cursor
+     cSteps:dword32;// Number of Blits before the animation cycles
+     cx:dword32;// reserved, must be zero.
+     cy:dword32;// reserved, must be zero.
+     cBitCount:dword32;// reserved, must be zero.
+     cPlanes:dword32;// reserved, must be zero.
+     JifRate:dword32;//Note: 1xJiffy=1/60s=16.666ms - Default Jiffies (1/60th of a second) if rate chunk not present.
+     flags:dword32;// Animation Flag (see AF_ constants) - #define AF_ICON =3D 0x0001L // Windows format icon/cursor animation
    end;
 
 function low__findbpp82432(i:tobject;iarea:twinrect;imask32:boolean):longint;//limited color count 07feb2022, 19jan2021, 21-SEP-2004
 function low__palfind24(var a:array of tcolor24;acount:longint;var z:tcolor24):byte;
-function low__icosizes(x:longint):longint;//18JAN2012, 25APR2011
+function low__icosizes(x:longint):longint;//02jun2026, 18JAN2012, 25APR2011
 //.1-32bit using transparent color - old/original tech
 function low__toico(s:tobject;dcursor:boolean;dsize,dBPP,dtranscol,dfeather:longint;dtransframe:boolean;dhotX,dhotY:longint;xdata:tstr8;var e:string):boolean;//handles 1-32 bpp icons - 03jan2019, 14mar2015, 16JAN2012
 function low__toani(s:tobject;slist:tfindlistimage;dsize,dBPP,dtranscolor,dfeather:longint;dtransframe:boolean;ddelay,dhotX,dhotY:longint;xdata:tstr8;var e:string):boolean;//07aug2021 (disabled repeat checker as it breaks the ANI file!), 24JAN2012
@@ -818,7 +868,7 @@ function low__fromico32(d:tobject;sdata:tstr8;dsize:longint;xuse32:boolean;var e
 function low__fromico322(d:tobject;sdata:pobject;dsize:longint;xuse32:boolean;var e:string):boolean;//supports tstr8/9, handles 1-32 bpp icons - 26JAN2012
 
 function low__fromani32(d:tobject;sdata:tstr8;dsize:longint;xuse32:boolean;var e:string):boolean;//04dec2024: fixed stack overflow, handles 1-32 bpp animated icons - 23may2022, 26JAN2012
-function low__fromani322(d:tobject;sdata:pobject;dsize:longint;xuse32:boolean;var e:string):boolean;//handles 1-32 bpp animated icons - 23may2022, 26JAN2012
+function low__fromani322(d:tobject;sdata:pobject;dsize:longint;xuse32:boolean;var e:string):boolean;//handles 1-32 bpp animated icons - 30jul2026, 23may2022, 26JAN2012
 
 function low__toico32(s:tobject;dcursor,dpng:boolean;dsize,dBPP,dhotX,dhotY:longint;var xouthotX,xouthotY,xoutBPP:longint;xdata:tstr8;var e:string):boolean;//handles 1-32 bpp icons - 13may2025: 32bit transparency updated for Win98, 03jan2019, 14mar2015, 16JAN2012
 function low__toani32(s:tobject;slist:tfindlistimage;dformat:string;dpng:boolean;dsize:longint;ddelay,dhotX,dhotY:longint;xonehotspot:boolean;xdata:tstr8;var e:string):boolean;//15feb2022
@@ -881,7 +931,7 @@ function png__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function png__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//29may2025, 06may2025, OK=27jan2021, 20jan2021
 function png__todata4(s:tobject;d:pobject;dbits:longint;var daction,e:string):boolean;//29may2025, 06may2025, OK=27jan2021, 20jan2021
 
-function png__fromdata(s:tobject;d:pobject;var e:string):boolean;
+function png__fromdata(s:tobject;d:pobject;var e:string):boolean;//25jul2025: fixed row rounding error
 
 function png32__todata(s:tobject;d:pobject):boolean;
 function png24__todata(s:tobject;d:pobject):boolean;//no transparency support
@@ -890,13 +940,9 @@ function png8__todata(s:tobject;d:pobject):boolean;
 
 //tea procs (text picture) -----------------------------------------------------
 //draw-on-the-fly (direct from data buffer) GUI image
-function tea__info(var adata:tlistptr;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
-function tea__info1(xtep:longint;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//17jun2025, 25may2025
-function tea__info2(adata:tstr8;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
-function tea__info3(adata:pobject;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18nov2024
-
-function tea__draw(xcolorise,xsyszoom:boolean;dx,dy,dc,dc2:longint;xarea,xarea2:twinrect;d:tobject;xtea:tlistptr;xfocus,xgrey,xround:boolean;xroundstyle:longint):boolean;//curved corner support - 07may2020, 09apr2020, 29mar2020
-function tea__draw2(xcolorise,xsyszoom:boolean;dx,dy,dc,dc2:longint;xarea,xarea2:twinrect;dbits,dw,dh:longint;drows24:pcolorrows24;drows32:pcolorrows32;xmask,xbackmask:tmask8;xmaskval:longint;xtea:tlistptr;xfocus,xgrey,xround:boolean;xroundstyle:longint):boolean;//04may2025: soft support, 04dec2024: background mask support, 02aug204: div 256 faster, curved corner support - 13may2020, 07may2020, 09apr2020, 29mar2020
+function tea__info(var adata:tlistptr;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18mar2026
+function tea__info2(adata:tstr8;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
+function tea__info3(adata:pobject;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18mar2026, 18nov2024
 
 function tea__TLpixel(xtea:tlistptr):longint;//top-left pixel of TEA image - 01aug2020
 function tea__TLpixel2(xtea:tlistptr;var xw,xh,xcolor:longint):boolean;//top-left pixel of TEA image - 01aug2020
@@ -905,10 +951,34 @@ function tea__torawdata24(xtea:tlistptr;xdata:tstr8;var xw,xh:longint):boolean;
 function tea__torawdata242(xtea:tlistptr;xdata:pobject;var xw,xh:longint):boolean;
 
 function tea__fromdata(d:tobject;sdata:pobject;var xw,xh:longint):boolean;
-function tea__fromdata32(d:tobject;sdata:pobject;var xw,xh:longint):boolean;
+function tea__fromdata32(d:tobject;sdata:pobject;var xw,xh:longint):boolean;//05oct2025
+function tea__fromdata322(d:tobject;sdata:pobject;xconverttransparency:boolean;var xw,xh:longint):boolean;//05oct2025
 function tea__todata(x:tobject;xout:pobject;var e:string):boolean;
 function tea__todata2(x:tobject;xtransparent,xsyscolors:boolean;xval1,xval2:longint;xout:pobject;var e:string):boolean;//07apr2021
-function tea__todata32(x:tobject;xtransparent,xsyscolors:boolean;xval1,xval2:longint;xout:pobject;var e:string):boolean;//18nov2024
+function tea__todata32(x:tobject;xtransparent,xsyscolors:boolean;xval1,xval2:longint;xout:pobject;var e:string):boolean;//08aug2025, 18nov2024
+
+
+//rle6 procs -------------------------------------------------------------------
+
+function rle6__fromdata(s:tobject;d:pobject;var e:string):boolean;//25feb2026
+function rle6__todata(s:tobject;d:pobject;var e:string):boolean;//06mar2026
+
+
+//rle8 procs -------------------------------------------------------------------
+
+function rle8__fromdata(s:tobject;d:pobject;var e:string):boolean;//25feb2026
+function rle8__todata(s:tobject;d:pobject;var e:string):boolean;//25feb2026
+
+//rle32 procs ------------------------------------------------------------------
+
+function rle32__fromdata(s:tobject;d:pobject;var e:string):boolean;//21mar2026
+function rle32__todata(s:tobject;d:pobject;var e:string):boolean;//21mar2026
+
+
+//tep procs --------------------------------------------------------------------
+//v1
+
+function tep__fromdata(s:tobject;d:pobject;var e:string):boolean;//10mar2026, 05oct2025
 
 
 //ia procs ---------------------------------------------------------------------
@@ -948,6 +1018,16 @@ function ia__ifind(xactions,xfindname:string;var xvals:array of longint):boolean
 function ia__ifind64(xactions,xfindname:string;var xvals:array of comp):boolean;
 
 function ia__find(xactions,xfindname:string;var xvals:array of string):boolean;
+
+
+//pic8 procs --------------------------------------------------------------------
+function img8__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+function img8__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+
+
+//san procs --------------------------------------------------------------------
+function san__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+function san__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
 
 
 //img32 procs ------------------------------------------------------------------
@@ -993,7 +1073,7 @@ function bmp1__todata(s:tobject;d:pobject):boolean;//14may2025
 function bmp1__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
 function bmp1__todata3(s:tobject;d:pobject;dheaderlevel:longint):boolean;//27may2025, 14may2025
 
-function bmp32__fromdata(d:tobject;s:pobject):boolean;//11jun2025: supports DIB +12b patch, 15may2025
+function bmp32__fromdata(d:tobject;s:pobject):boolean;//11jun2025: supports DIB +12b patch, 09nov2025, 15may2025
 function bmp32__fromdata2(d:tobject;s:pobject;sallow_dib_patch_12:boolean):boolean;//12jun2025: dib_patch_12 control, 11jun2025: supports DIB +12b patch, 15may2025
 function bmp24__fromdata(d:tobject;s:pobject):boolean;//15may2025
 function bmp16__fromdata(d:tobject;s:pobject):boolean;//15may2025
@@ -1095,18 +1175,18 @@ function ico__fromdata(d:tobject;s:pobject;var e:string):boolean;
 function icoXX__todata(s:tobject;d:pobject;dbits:longint):boolean;//27may2025
 function ico32__todata(s:tobject;d:pobject):boolean;//16may2025
 function ico32__todata2(s:tobject;d:pobject;dbits:longint):boolean;//27may2025
-function ico32__todata3(s:tobject;d:pobject;dpng,dcursor:boolean;dhotX,dhotY,dbits:longint):boolean;//27may2025
+function ico32__todata3(s:tobject;d:pobject;dpng,dcursor:boolean;dhotX,dhotY,dbits:longint):boolean;//19jun2026, 28may2025
 function ico24__todata(s:tobject;d:pobject):boolean;//27may2025
 function ico16__todata(s:tobject;d:pobject):boolean;//27may2025
 function ico8__todata(s:tobject;d:pobject):boolean;//27may2025
 function ico4__todata(s:tobject;d:pobject):boolean;//27may2025
 
 function ico32__fromdata(s:tobject;d:pobject):boolean;//27may2025
-function ico32__fromdata2(s:tobject;d:pobject;var dhotX,dhotY:longint):boolean;//08jun2025, 27may2025
+function ico32__fromdata2(s:tobject;d:pobject;var dhotX,dhotY:longint):boolean;//30aug2026 - xfindLargest count mismatch, 19jun2026 - added xfindLargest, 02jun2026, 08jun2025, 27may2025
 
 //.support procs
 function ico32__findhotspot(s:tobject;sw,sh:longint;var hx,hy:longint):boolean;
-function bmp32__toicondata(s:tobject;d:pobject;dbits:longint):boolean;//27may2025
+function bmp32__toicondata(s:tobject;d:pobject;dbits:longint):boolean;//19jun2026, 27may2025
 function bmp8__toicondata(s:tobject;d:pobject;var xcolorsused:longint):boolean;//27may2025
 function bmp4__toicondata(s:tobject;d:pobject;var xcolorsused:longint):boolean;//27may2025
 function bmp1__toicondata(s:tobject;d:pobject):boolean;//27may2025
@@ -1115,7 +1195,7 @@ function bmp1__toicondata(s:tobject;d:pobject):boolean;//27may2025
 //cur procs --------------------------------------------------------------------
 function cur__todata(s:tobject;d:pobject;var e:string):boolean;
 function cur__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
-function cur__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//27may2025
+function cur__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//09jun2026, 27may2025
 
 function cur__fromdata(d:tobject;s:pobject;var e:string):boolean;
 
@@ -1138,13 +1218,13 @@ function ani__todata(s:tobject;d:pobject;var e:string):boolean;
 function ani__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function ani__todata3(s:tobject;d:pobject;daction:string;dhotX,dhotY:longint;xonehotspot:boolean;var e:string):boolean;
 function ani__todata4(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:string;dforceBPP,dsize:longint;dhotX,dhotY:longint;xonehotspot:boolean;var xoutbpp:longint;var xouttransparent:boolean;var e:string):boolean;
-function ani__todata5(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:string;dforceBPP,dsize:longint;ddelay,dhotX,dhotY:longint;xonehotspot:boolean;var xoutbpp:longint;var xouttransparent:boolean;var e:string):boolean;
+function ani__todata5(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:string;dforceBPP,dsize:longint;ddelay,dhotX,dhotY:longint;xonehotspot:boolean;var xoutbpp:longint;var xouttransparent:boolean;var e:string):boolean;//23may2026
 
 
 //gif procs --------------------------------------------------------------------
-function gif__fromdata(ss:tobject;ds:pobject;var e:string):boolean;//06aug2024, 28jul2021, 20JAN2012, 22SEP2009
+function gif__fromdata(ss:tobject;ds:pobject;var e:string):boolean;//08aug2025, 06aug2024, 28jul2021, 20JAN2012, 22SEP2009
 function gif__todata(s:tobject;ds:pobject;var e:string):boolean;//11SEP2007
-function gif__todata2(s:tobject;ds:pobject;daction:string;var e:string):boolean;
+function gif__todata2(s:tobject;ds:pobject;daction:string;var e:string):boolean;//04may2026
 
 //.gif support
 function gif__start(gs:tobject;ds:pobject;dw,dh:longint;dloop:boolean):boolean;
@@ -1154,12 +1234,13 @@ function gif__stop(ds:pobject):boolean;
 procedure gif__decompress(x:pobject);//26jul2024, 28jul2021, 11SEP2007
 procedure gif__decompressex(var xlenpos1:longint;x,imgdata:pobject;_width,_height:longint;interlaced:boolean);//11SEP2007
 function gif__compress(x:pobject;var e:string):boolean;//12SEP2007
-function gif__compressex(x,imgdata:pobject;e:string):boolean;//12SEP2007
+function gif__compressex(x,imgdata:pobject;e:string):boolean;//12mar2026, 12SEP2007
 
 
 //mask procs -------------------------------------------------------------------
 //alpha support for 32bit images (R,G,B,A*)
 function mask__empty(s:tobject):boolean;
+function mask__count(s:tobject):longint;//24oct2025
 function mask__allTransparent(s:tobject):boolean;//indicates no pixel in mask is 255
 function mask__hasTransparency32(s:tobject):boolean;//one or more alpha values are below 255 - 27may2025
 function mask__hasTransparency322(s:tobject;var xsimple0255:boolean):boolean;//one or more alpha values are below 255 - 27may2025
@@ -1173,8 +1254,12 @@ function mask__copy(s,d:tobject):boolean;//15feb2022 - was "missetAlpha32(()"
 function mask__copy2(s,d:tobject;stranscol:longint):boolean;
 function mask__copy3(s,d:tobject;stranscol,sremove:longint):boolean;
 function mask__copymin(s,d:tobject):boolean;//15feb2022
-function mask__forcesimple0255(s:tobject):boolean;//21nov2024
+
+function mask__forcesimple(s:tobject):boolean;//18mar2026, 21nov2024
+function mask__forcesimple2(s:tobject;const xthreshold:byte):boolean;//04may2026, 18mar2026, 21nov2024
+
 function mask__makesimple0255(s:tobject;tc:longint):boolean;//21nov2024
+function mask__makesimple0255b(s:tobject;sa:twinrect;tc:longint):boolean;//16sep2025, 08aug2025, 21nov2024
 function mask__feather(s,d:tobject;sfeather,stranscol:longint;var xouttranscol:longint):boolean;//20jan2021
 function mask__feather2(s,d:tobject;sfeather,stranscol:longint;stransframe:boolean;var xouttranscol:longint):boolean;//15feb2022, 18jun2021, 08jun2021, 20jan2021 - was "misalpha82432b()"
 
@@ -1188,82 +1273,101 @@ function mask__fromdata2(s:tobject;d:pobject;donshortfall:longint;dforcetoimage:
 function mask__todata(s:tobject;d:pobject):boolean;
 function mask__todata2(s:tobject;d:pobject;stranscol:longint):boolean;
 
+function mask__blur32(const s:tobject;const xdepth100,xpower255:longint32):boolean;//10apr2026 - fast version
+//.support procs
+function xmask__blur32(const s:tobject;const xdepth100:longint32):boolean;
+function xmask__blur32_power255(const s:tobject;const xdepth100,xpower255:longint32):boolean;
+
 
 //color procs ------------------------------------------------------------------
 //.conversion
-function int24__rgba0(x24__or__syscolor:longint):longint;
-function int__c8(x:longint):tcolor8;
-function int__c24(x:longint):tcolor24;
-function int__c32(x:longint):tcolor32;
-function inta__c32(x:longint;a:byte):tcolor32;
-function inta__int(x:longint;a:byte):longint;
-function c8__int(x:tcolor8):longint;
-function c24__int(x:tcolor24):longint;
-function c24a0__int(x:tcolor24):longint;
-function c32__int(x:tcolor32):longint;
-function c8a__int(x:tcolor8;a:byte):longint;
-function c24a__int(x:tcolor24;a:byte):longint;
-function rgba0__int(r,g,b:byte):longint;
-function rgba__int(r,g,b,a:byte):longint;
-function ggga0__int(r:byte):longint;
-function ggga__int(r,a:byte):longint;
-function rgb__c24(r,g,b:byte):tcolor24;
-function rgba0__c32(r,g,b:byte):tcolor32;
-function rgba255__c32(r,g,b:byte):tcolor32;
-function rgba__c32(r,g,b,a:byte):tcolor32;
-function c24a0__c32(x:tcolor24):tcolor32;
-function c24a255__c32(x:tcolor24):tcolor32;
-function c24a__c32(x:tcolor24;a:byte):tcolor32;
-function c32__c24(x:tcolor32):tcolor24;
-function c32__c8(x:tcolor32):tcolor8;
-function c24__c8(x:tcolor24):tcolor8;
-function ca__c8(x:tcolor32):tcolor8;
+procedure c32__swap(var x,y:tcolor32);//16jul2025
+procedure c24__swap(var x,y:tcolor24);//16jul2025
+procedure c8__swap(var x,y:tcolor8);//16jul2025
+function int24__rgba0(const x24__or__syscolor:longint):longint;
+function int__c8(const x:longint):tcolor8;//16sep2025
+function int__c24(const x:longint):tcolor24;//16sep2025
+function int__c32(const x:longint):tcolor32;//16sep2025
+function inta__c32(const x:longint;const a:byte):tcolor32;
+function inta__int(const x:longint;const a:byte):longint;
+procedure int__rgba(const s:longint;var dr,dg,db,da:byte);//03mar2026
+procedure int__rgb(const s:longint;var dr,dg,db:byte);//03mar2026
+function c8__int(const x:tcolor8):longint;
+function c24__int(const x:tcolor24):longint;//16sep2025
+function c24a0__int(const x:tcolor24):longint;//16sep2025
+function c32__int(const x:tcolor32):longint;//16sep2025
+function c8a__int(const x:tcolor8;const a:byte):longint;
+function c24a__int(const x:tcolor24;const a:byte):longint;
+function rgba0__int(const r,g,b:byte):longint;
+function rgba__int(const r,g,b,a:byte):longint;
+function ggga0__int(const r:byte):longint;
+function ggga__int(const r,a:byte):longint;
+function rgb__c24(const r,g,b:byte):tcolor24;
+function rgba0__c32(const r,g,b:byte):tcolor32;
+function rgba255__c32(const r,g,b:byte):tcolor32;
+function rgba__c32(const r,g,b,a:byte):tcolor32;
+function c24a0__c32(const x:tcolor24):tcolor32;
+function c24a255__c32(const x:tcolor24):tcolor32;
+function c24a__c32(const x:tcolor24;const a:byte):tcolor32;
+function c32__c24(const x:tcolor32):tcolor24;
+function c32__c8(const x:tcolor32):tcolor8;
+function c24__c8(const x:tcolor24):tcolor8;
+function ca__c8(const x:tcolor32):tcolor8;
 procedure c32__irgb(var x:tcolor32);//invert RGB
 procedure c32__irgba(var x:tcolor32);//invert RGBA
 procedure c32__ia(var x:tcolor32);//invert A
 procedure c24__irgb(var x:tcolor24);//invert RGB
 procedure c8__i(var x:tcolor8);//invert
+function color32(const r,g,b,a:byte):tcolor32;//11jun2026
+function color24(const r,g,b:byte):tcolor24;//11jun2026
+function rainbow24(const xpert01:double):tcolor24;//return rainbow color according to xpert01 progress from 0.0..1.0 - 14jun2026
+function rainbow32(const xpert01:double;const a:byte):tcolor32;//return rainbow color according to xpert01 progress from 0.0..1.0 - 14jun2026
+function rainbow32__int(const xpert01:double;const a:byte):longint32;//return rainbow color according to xpert01 progress from 0.0..1.0
 
 //.match
-function c24__match(s,d:tcolor24):boolean;
-function c32__match(s,d:tcolor32):boolean;
-function c32_c24__match(s:tcolor32;d:tcolor24):boolean;
+function c24__match(const s,d:tcolor24):boolean;
+function c32__match(const s,d:tcolor32):boolean;
+function c32_c24__match(const s:tcolor32;const d:tcolor24):boolean;
 
 //.greyscale
-function c24__lum(x:tcolor24):byte;
-function c32__lum(x:tcolor32):byte;
+function int__lum(const x:longint):byte;//13sep2025
+function c24__lum(const x:tcolor24):byte;
+function c32__lum(const x:tcolor32):byte;
+procedure c24__GuiDisableGrey(var x:tcolor24);//sourced from ttoolbars from Text2EXE 2007
 procedure c24__greyscale(var x:tcolor24);
 function c24__greyscale2(var x:tcolor24):byte;
-function c24__greyscale2b(x:tcolor24):byte;
-function int__greyscale(x:longint):longint;
-function inta__greyscale(x:longint;a:byte):longint;
-function int__greyscale_ave(x:longint):longint;
-function int__greyscale_c8(x:longint):tcolor8;//03feb2025, 18nov2023
+function c24__greyscale2b(const x:tcolor24):byte;
+function int__greyscale(const x:longint):longint;
+function inta__greyscale(const x:longint;const a:byte):longint;
+function int__greyscale_ave(const x:longint):longint;
+function int__greyscale_c8(const x:longint):tcolor8;//03feb2025, 18nov2023
 
 //.invert
-function int__invert(x:longint;var xout:longint):boolean;
-function int__invertb(x:longint):longint;
-function int__invert2(x:longint;xgreycorrection:boolean;var xout:longint):boolean;
-function int__invert2b(x:longint;xgreycorrection:boolean):longint;
+function int__invert(const x:longint;var xout:longint):boolean;
+function int__invertb(const x:longint):longint;
+function int__invert2(const x:longint;const xgreycorrection:boolean;var xout:longint):boolean;
+function int__invert2b(const x:longint;const xgreycorrection:boolean):longint;
+function int__colorlabel(const xbackcolor:longint):longint;//softer but still highly visible color label "text label" color - 13sep2025
 
 //.brightness
-function int__brightness(x:longint;var xout:longint):boolean;
-function int__brightnessb(x:longint):longint;
-function int__brightness_ave(x:longint;var xout:longint):boolean;
-function int__brightness_aveb(x:longint):longint;
+function int__brightness(const x:longint;var xout:longint):boolean;
+function int__brightnessb(const x:longint):longint;
+function int__brightness_ave(const x:longint;var xout:longint):boolean;
+function int__brightness_aveb(const x:longint):longint;
 function int__setbrightness357(xcolor,xbrightness357:longint):longint;//18feb2025, 05feb2025
 
-//.splicer
-function c24__splice(xpert01:extended;s,d:tcolor24):tcolor24;//17may2022
-function c32__splice(xpert01:extended;s,d:tcolor32):tcolor32;//06dec2023
-function int__splice24(xpert01:extended;s,d:longint):longint;//13nov2022
-function int__splice32(xpert01:extended;s,d:longint):longint;//13nov2022
-function int__splice24_100(xpert100,s,d:longint):longint;
-function int__splice32_100(xpert100,s,d:longint):longint;
+//.splicers
+function c8__splice(const xpert01:extended;const s,d:tcolor8):tcolor8;//04jun2026
+function c24__splice(const xpert01:extended;const s,d:tcolor24):tcolor24;//02jun2026, 17may2022
+function c32__splice(const xpert01:extended;const s,d:tcolor32):tcolor32;//02jun2026, 06dec2023
+function int__splice24(const xpert01:extended;const s,d:longint32):longint32;//02jun2026, 16sep2025, 13nov2022
+function int__splice32(const xpert01:extended;const s,d:longint32):longint32;//16sep2025, 13nov2022
+function int__splice24_100(const xpert100,s,d:longint32):longint32;//02jun2026
+function int__splice32_100(const xpert100,s,d:longint32):longint32;//02jun2026
 
 //.color by name
 function inta0__findcolor(xname:string):longint;
-function inta__findcolor(xname:string;a:byte):longint;
+function inta__findcolor(xname:string;const a:byte):longint;
 
 //.color dodgers
 function c24__nonwhite24(x:tcolor24):tcolor24;//make sure color is never white - 18feb2025: fixed
@@ -1297,35 +1401,40 @@ procedure int__soft24(xcolor24:longint;var xoutHint,xoutSoft,xoutSoftRow,xoutSof
 function int__dif24(xcolor24,xchangeby0255:longint):longint;//differential color
 function int__dif242(xcolor24,xchangeby0255:longint;xautoflip:boolean):longint;//differential color
 
-function int__vis24(xforeground24,xbackground24,xseparation:longint):boolean;//color is visible
-function c24__vis24(xforeground24,xbackground24:tcolor24;xseparation:longint):boolean;//color is visible
+function int__vis24(const xforeground24,xbackground24,xseparation:longint):boolean;//color is visible
+function c24__vis24(const xforeground24,xbackground24:tcolor24;xseparation:longint):boolean;//color is visible
 
-function int__makevis24(xforeground24,xbackground24,xseparation:longint):longint;//make color visible (foreground visible on background)
-function c24__makevis24(xforeground24,xbackground24:tcolor24;xseparation:longint):tcolor24;//make color visible (foreground visible on background)
+function int__makevis24(const xforeground24,xbackground24,xseparation:longint):longint;//make color visible (foreground visible on background)
+function c24__makevis24(const xforeground24,xbackground24:tcolor24;xseparation:longint):tcolor24;//make color visible (foreground visible on background)
 
 //.pixel processors
-function ppBlend32(var s,snew:tcolor32):boolean;//color / pixel processor - 30nov2023
-function ppBlendColor32(var s,snew:tcolor32):boolean;//color blending / pixel processor - 01dec2023
+procedure ppBlend32(const s:tcolor32;var d:tcolor32);//merge 2 32-bit colors together - 21jun2026
+function  ppBlendColor32(var s,snew:tcolor32):boolean;//color blending / pixel processor - 01dec2023
 procedure ppMerge24(var d:tcolor24;snew:tcolor32);//25may2025
 procedure ppMerge24FAST(var d:tcolor24;snew:tcolor32);//25may2025
 
 
 //logic procs ------------------------------------------------------------------
 function low__aorbimg(a,b:tbasicimage;xuseb:boolean):tbasicimage;//30nov2023
+function c32__aorb(const a,b:tcolor32;const xuseb:boolean):tcolor32;//09apr2026
+function c24__aorb(const a,b:tcolor24;const xuseb:boolean):tcolor24;//09apr2026
 
 
 //canvas procs -----------------------------------------------------------------
-function wincanvas__setfont(x:hdc;xfontname:string;xsharp,xbold:boolean;xsize,xcolor,xbackcolor:longint;var xoutfont,xoutbrush:hdc):boolean;
 function wincanvas__textwidth(x:hdc;const xval:string):longint;
 function wincanvas__textheight(x:hdc;const xval:string):longint;
 function wincanvas__textextent(x:hdc;const xval:string):tpoint;
 function wincanvas__textout(x:hdc;xtransparent:boolean;dx,dy:longint;const xval:string):boolean;
-function wincanvas__textrect(x:hdc;xtransparent:boolean;xarea:twinrect;dx,dy:longint;const xval:string):boolean;
+function wincanvas__textrect(const x:hdc;const xtransparent:boolean;const xarea:twinrect;const dx,dy:longint;const xval:string):boolean;//20dec2025
 
 
 implementation
 
-uses main {$ifdef gui},gossgui{$endif};
+uses main {$ifdef gui},gossgui{$endif} {$ifdef gamecore},gossgame{$endif}, gossfast;
+
+
+var
+   system_started_img           :boolean                      =false;
 
 
 //start-stop procs -------------------------------------------------------------
@@ -1336,7 +1445,7 @@ var
 begin
 try
 //check
-if system_started then exit else system_started:=true;
+if system_started_img then exit else system_started_img:=true;
 
 
 //ref arrays -------------------------------------------------------------------
@@ -1376,26 +1485,6 @@ systmptime[p]:=0;
 systmpbmp[p]:=nil;
 end;//p
 
-//.temp int buffer support
-sysintpos:=0;
-for p:=0 to high(sysintstyle) do
-begin
-sysintstyle[p]:=0;//free
-sysintid[p]:='';
-sysinttime[p]:=0;
-sysintobj[p]:=nil;
-end;//p
-
-//.temp byte buffer support
-sysbytepos:=0;
-for p:=0 to high(sysbytestyle) do
-begin
-sysbytestyle[p]:=0;//free
-sysbyteid[p]:='';
-sysbytetime[p]:=0;
-sysbyteobj[p]:=nil;
-end;//p
-
 d:=0;
 try
 d:=win____GetDC(0);
@@ -1417,7 +1506,7 @@ var
 begin
 try
 //check
-if not system_started then exit else system_started:=false;
+if not system_started_img then exit else system_started_img:=false;
 
 
 //temp support -----------------------------------------------------------------
@@ -1426,18 +1515,6 @@ for p:=0 to high(systmpstyle) do
 begin
 systmpstyle[p]:=2;//locked
 freeobj(@systmpbmp[p]);
-end;//p
-//.temp int support
-for p:=0 to high(sysintstyle) do
-begin
-sysintstyle[p]:=2;//locked
-freeobj(@sysintobj[p]);
-end;//p
-//.temp byte support
-for p:=0 to high(sysbytestyle) do
-begin
-sysbytestyle[p]:=2;//locked
-freeobj(@sysbyteobj[p]);
 end;//p
 
 except;end;
@@ -1492,8 +1569,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossimg.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.15574'
-else if (xname='date')       then result:='19jun2025'
+if      (xname='ver')        then result:='4.00.16395'
+else if (xname='date')       then result:='30jul2026'
 else if (xname='name')       then result:='Graphics'
 else
    begin
@@ -1519,45 +1596,58 @@ end;
 //## tgifsupport ###############################################################
 constructor tgifsupport.create;
 begin
+
+//self
 if classnameis('tgifsupport') then track__inc(satGifsupport,1);
 zzadd(self);
+
 inherited create;
+
 //vars
-ds :=nil;
-s32:=misraw32(1,1);
-p8 :=misraw8(1,1);
-d32:=misraw32(1,1);
-sw :=1;
-sh :=1;
-cc :=1;
-flags__lastpos:=0;//not set -> should be 1+ something
-flags__lastval:=0;
+ds                    :=nil;
+s32                   :=misraw32(1,1);
+p8                    :=misraw8(1,1);
+d32                   :=misraw32(1,1);
+sw                    :=1;
+sh                    :=1;
+cc                    :=1;
+flags__lastpos        :=0;//not set -> should be 1+ something
+flags__lastval        :=0;
+
 pcls;
+
 end;
 
 destructor tgifsupport.destroy;
 begin
 try
+
 //vars
 //ds -> is a pointer to a host owned data stream -> up to host to destroy the data stream and not us
 freeobj(@s32);
 freeobj(@p8);
 freeobj(@d32);
+
 //destroy
 inherited destroy;
 if classnameis('tgifsupport') then track__inc(satGifsupport,-1);
+
 except;end;
 end;
 
 function tgifsupport.size(dw,dh:longint):boolean;
 begin
+
 result:=missize(s32,dw,dh) and missize(p8,dw,dh) and missize(d32,dw,dh);
+
 end;
 
 procedure tgifsupport.pcls;//clear palette
 begin
-pcount:=0;
+
+pcount      :=0;
 fillchar(ppal,sizeof(ppal),0);
+
 end;
 
 function tgifsupport.pmake(a32:tobject;atrans:boolean):boolean;//make palette
@@ -1579,31 +1669,42 @@ var
    var
       p:longint;
    begin
-   result:=false;
+
+   //defaults
+   result             :=false;
 
    //search to see if color already exists
    for p:=1 to (pcount-1) do if (c24.r=ppal[p].r) and (c24.g=ppal[p].g) and (c24.b=ppal[p].b) then
       begin
-      pr8[ax]:=p;
-      result:=true;
+
+      pr8[ax]         :=p;
+      result          :=true;
       break;
+
       end;
 
    //add
    if (not result) and (pcount<plimit) then
       begin
-      ppal[pcount]:=c24;
-      pr8[ax]:=pcount;
+
+      ppal[pcount]    :=c24;
+      pr8[ax]         :=pcount;
+
       inc(pcount);
-      result:=true;
+
+      result          :=true;
+
       end;
+
    end;
+
 begin
+
 //defaults
-result:=false;
+result                :=false;
 
 //first palette entry reserved for transparency -> color (0,0,0) WHEN atrans=TRUE
-plimit:=frcmax32(high(ppal)+1,256);
+plimit                :=frcmax32(high(ppal)+1,256);
 
 //check
 if not misok32(a32,aw,ah)  then exit;
@@ -1612,58 +1713,75 @@ if (mw<aw) or (mh<ah)      then exit;
 if (plimit<=0)             then exit;
 
 try
+
 //build palette (entries 1..255)
-pdiv:=1;
+pdiv                  :=1;
 
 redo:
 pcls;//clear the palette
 
 if atrans then
    begin
-   pcount:=1;
-   amin:=255;
+
+   pcount             :=1;
+   amin               :=255;
+
    end
 else
    begin
-   pcount:=0;
-   amin:=0;
+
+   pcount             :=0;
+   amin               :=0;
+
    end;
 
 for ay:=0 to (ah-1) do
 begin
+
 if not misscan32(a32,ay,ar32) then goto skipend;
 if not misscan8(p8,ay,pr8)  then goto skipend;
 
 for ax:=0 to (aw-1) do
 begin
-c32:=ar32[ax];
+
+c32                   :=ar32[ax];
+
 if (c32.a>=amin) then
    begin
+
    //shrink color bandwidth
-   c24.r:=(c32.r div pdiv)*pdiv;
-   c24.g:=(c32.g div pdiv)*pdiv;
-   c24.b:=(c32.b div pdiv)*pdiv;
+   c24.r              :=(c32.r div pdiv)*pdiv;
+   c24.g              :=(c32.g div pdiv)*pdiv;
+   c24.b              :=(c32.b div pdiv)*pdiv;
 
    //pallete is full -> we need to shrink the color bandwidth and start over
    if not padd then
       begin
+
       //used up all bandwidth shrinkage and palette still can't be built -> quit -> task failed
       if (pdiv>=dvlimit) then goto skipend;
 
       //try again by shrinking color bandwidth using "pdiv" -> increment by powers of two for fast division
-      pdiv:=frcmax32(pdiv+low__aorb(1,10,pdiv>30),dvlimit);//smoother and faster - 25dec2022
+      pdiv            :=frcmax32(pdiv+low__aorb(1,10,pdiv>30),dvlimit);//smoother and faster - 25dec2022
+
       goto redo;
+
       end;
    end
-else pr8[ax]:=0;//pal. slot #0 reserved for transparent color
+
+else pr8[ax]          :=0;//pal. slot #0 reserved for transparent color
+
 end;//sx
+
 end;//sy
 
 //successful
-result:=true;
+result                :=true;
+
 skipend:
 except;end;
 end;
+
 
 //## tbasicimage ###############################################################
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxx//ggggggggggggggggggggggggggggg
@@ -1718,28 +1836,38 @@ function tbasicimage.copyfrom(s:tbasicimage):boolean;//09may2022, 09feb2022
 label
    skipend;
 begin
+
 //defaults
-result:=false;
+result      :=false;
 
 try
+
 //check
 if (s=self) then
    begin
+
    result:=true;
    exit;
+
    end;
+
 if (s=nil) then exit;
+
 //get
 //was: if not low__aicopy(ai,s.ai) then goto skipend;
 if not low__aicopy(s.ai,ai) then goto skipend;//09may2022
-dtransparent:=s.dtransparent;
-omovie:=s.omovie;
-oaddress:=s.oaddress;
-ocleanmask32bpp:=s.ocleanmask32bpp;
-rhavemovie:=s.rhavemovie;
+
+dtransparent          :=s.dtransparent;
+omovie                :=s.omovie;
+oaddress              :=s.oaddress;
+ocleanmask32bpp       :=s.ocleanmask32bpp;
+rhavemovie            :=s.rhavemovie;
+
 setraw(misb(s),misw(s),mish(s),s.data);
+
 //successful
 result:=true;
+
 skipend:
 except;end;
 end;
@@ -1794,11 +1922,11 @@ if rhavemovie             then v8.b['hmv']:=rhavemovie;
 //.info
 tmp:=v8.data;
 result.addint4(0);
-result.addint4(tmp.len);
+result.addint4(tmp.len32);
 result.add(tmp);
 //.pixels
 result.addint4(1);
-result.addint4(12+idata.len);
+result.addint4(12+idata.len32);
 result.addint4(bits);
 result.addint4(width);
 result.addint4(height);
@@ -1884,7 +2012,7 @@ xdata:=nil;
 //check
 if not str__lock(@s) then exit;
 //init
-xlen:=s.len;
+xlen:=s.len32;
 xpos:=0;
 v8:=vnew;
 xdata:=str__new8;
@@ -1947,47 +2075,60 @@ function tbasicimage.setparams(dbits,dw,dh:longint):boolean;
 var
    dy,dlen:longint;
 begin
-//defaults
-result:=false;
 
-try
+//defaults
+result      :=false;
+
 //range
 if (dbits<>8) and (dbits<>16) and (dbits<>24) and (dbits<>32) then dbits:=24;
-if (dw<1) then dw:=1;
-if (dh<1) then dh:=1;
+if (dw<1)                                                     then dw:=1;
+if (dh<1)                                                     then dh:=1;
+
 //check
 if (dbits=ibits) and (dw=iwidth) and (dh=iheight) then
    begin
-   result:=true;
+
+   result   :=true;
    exit;
+
    end;
+
 //get
-dlen:=(dbits div 8)*dw*dh;
+dlen        :=(dbits div 8)*dw*dh;
+
 if idata.setlen(dlen) then
    begin
+
    //init
-   ibits:=dbits;
-   iwidth:=dw;
-   iheight:=dh;
+   ibits    :=dbits;
+   iwidth   :=dw;
+   iheight  :=dh;
+
    irows.setlen(dh*sizeof(pointer));
-   iprows8 :=irows.prows8;
-   iprows16:=irows.prows16;
-   iprows24:=irows.prows24;
-   iprows32:=irows.prows32;
+
+   iprows8  :=irows.prows8;
+   iprows16 :=irows.prows16;
+   iprows24 :=irows.prows24;
+   iprows32 :=irows.prows32;
+
    //get
    for dy:=0 to (dh-1) do
    begin
+
    case dbits of
-   8 :iprows8[dy] :=ptr__shift(idata.core,dy*dw*1);
-   16:iprows16[dy]:=ptr__shift(idata.core,dy*dw*2);
-   24:iprows24[dy]:=ptr__shift(idata.core,dy*dw*3);
-   32:iprows32[dy]:=ptr__shift(idata.core,dy*dw*4);
-   end;
+   8  :iprows8[dy] :=ptr__shift(idata.core,dy*dw*1);
+   16 :iprows16[dy]:=ptr__shift(idata.core,dy*dw*2);
+   24 :iprows24[dy]:=ptr__shift(idata.core,dy*dw*3);
+   32 :iprows32[dy]:=ptr__shift(idata.core,dy*dw*4);
+   end;//case
+
    end;//dy
+
    //successful
-   result:=true;
+   result   :=true;
+
    end;
-except;end;
+
 end;
 
 function tbasicimage.setraw(dbits,dw,dh:longint;ddata:tstr8):boolean;
@@ -2006,7 +2147,7 @@ if not str__lock(@ddata) then exit;
 //get
 if (ddata<>nil) and (idata<>nil) then
    begin
-   xlen:=frcmax32(idata.len,ddata.len);
+   xlen:=frcmax32(idata.len32,ddata.len32);
    if (xlen>=1) then
       begin
       //was: for p:=0 to (xlen-1) do idata.pbytes[p]:=ddata.pbytes[p];
@@ -2057,8 +2198,9 @@ ddata.clear;
 //check
 if not validarea(da) then goto skipend;
 //get
-a:=misimg(bits,da.right-da.left+1,da.bottom-da.top+1);//image of same bit depth as ourselves
-result:=miscopyarea32(0,0,misw(a),mish(a),da,a,self) and ddata.addb(a.data);//copy area to this image and then return it's raw datastream - 07dec2023
+a           :=misimg(bits,da.right-da.left+1,da.bottom-da.top+1);//image of same bit depth as ourselves
+result      :=mis__copyfast(maxarea,da,0,0,misw(a),mish(a),self,a) and ddata.add(a.data);//copy area to this image and then return it's raw datastream - 07dec2023
+
 skipend:
 except;end;
 try
@@ -2137,29 +2279,34 @@ label
 var
    a:tbasicimage;
 begin
-//defaults
-result:=false;
 
-try
-a:=nil;
+//defaults
+result      :=false;
+a           :=nil;
+
 //lock
 if not str__lock(@ddata) then exit;
+
 //check
 if (da.left>=width) or (da.right<0) or (da.top>=height) or (da.bottom<0) or (da.right<da.left) or (da.bottom<da.top) then
    begin
-   result:=true;
+
+   result   :=true;
    goto skipend;
+
    end;
+
 //init
-a:=misimg8(1,1);
+a           :=misimg8(1,1);
+
 //get
-result:=a.setraw(bits,da.right-da.left+1,da.bottom-da.top+1,ddata) and miscopyarea32(da.left,da.top,da.right-da.left+1,da.bottom-da.top+1,misarea(a),self,a);
+result      :=a.setraw(bits,da.right-da.left+1,da.bottom-da.top+1,ddata) and mis__copyfast(maxarea,misarea(a),da.left,da.top,da.right-da.left+1,da.bottom-da.top+1,a,self);
 skipend:
-except;end;
-try
+
+//free
 str__uaf(@ddata);
 freeobj(@a);
-except;end;
+
 end;
 
 function tbasicimage.findscanline(slayer,sy:longint):pointer;
@@ -2215,7 +2362,7 @@ function trawimage.rowinfo(sy:longint):string;
 begin
 result:='none';
 //for p:=0 to 99 do icore.items[p]:=str__new8;//xxxxxxxxxx
-//if (sy>=0) and (sy<icore.count) and (icore.value[sy]<>nil) then result:=k64(icore.count)+'<<'+k64(str__len(cache__ptr(icore.value[sy])))+'<< len: '+k64(icore.value[sy].len)+', datalen: '+k64(icore.value[sy].datalen)+', ptr: '+k64(cardinal(icore.value[sy]));
+//if (sy>=0) and (sy<icore.count) and (icore.value[sy]<>nil) then result:=k64(icore.count)+'<<'+k64(str__len32(cache__ptr(icore.value[sy])))+'<< len: '+k64(icore.value[sy].len)+', datalen: '+k64(icore.value[sy].datalen)+', ptr: '+k64(cardinal(icore.value[sy]));
 if (sy>=0) and (sy<icore.count) and (icore.value[sy]<>nil) then result:='sy: '+k64(sy)+'>>'+k64(longint(icore))+'<<..'+k64(icore.count)+'<< len: '+k64(icore.value[sy].len)+', datalen: '+k64(icore.value[sy].datalen)+', ptr: '+k64(cardinal(icore.value[sy]));
 end;
 
@@ -2247,22 +2394,27 @@ var
    var
       i:longint;
    begin
-   for i:=0 to (dh-1) do if (icore.value[i].len<>drowlen) then icore.value[i].setlen(drowlen);
-   end;
-begin
-//defaults
-result:=false;
 
-try
+   for i:=0 to (dh-1) do if (icore.value[i].len<>drowlen) then icore.value[i].setlen(drowlen);
+
+   end;
+
+begin
+
+//defaults
+result      :=false;
+
 //range
 if (dbits<>8) and (dbits<>16) and (dbits<>24) and (dbits<>32) then dbits:=32;
-dw      :=frcmin32(dw,1);
-dh      :=frcmin32(dh,1);
-drowlen :=mis__rowsize4(dw,dbits);//27may2025
+
+dw          :=frcmin32(dw,1);
+dh          :=frcmin32(dh,1);
+drowlen     :=mis__rowsize4(dw,dbits);//27may2025
 
 //get
 if (dbits<>ibits) or (dw<>iwidth) or (dh<>iheight) or dforce then
    begin
+
    //ifallback
    ifallback.setlen(drowlen);
 
@@ -2273,24 +2425,27 @@ if (dbits<>ibits) or (dw<>iwidth) or (dh<>iheight) or dforce then
    xcheckrows;
 
    //set
-   iheight:=dh;
-   iwidth :=dw;
-   ibits  :=dbits;
+   iheight  :=dh;
+   iwidth   :=dw;
+   ibits    :=dbits;
 
    //sync
    xsync;
 
    //successful
-   result:=true;
+   result   :=true;
+
    end
-else result:=true;
-except;end;
+else result :=true;
+
 end;
 
 function trawimage.getscanline(sy:longint):pointer;
 begin
+
 if (sy<0) then sy:=0 else if (sy>=iheight) then sy:=iheight-1;
 result:=pointer(icore.value[sy].core);
+
 end;
 
 procedure trawimage.xsync;
@@ -2316,20 +2471,28 @@ end;
 //xxxxxxxxxxxxxxxxxxxxxxxxxxx//bbbbbbbbbbbbbbbbbbbbbbb
 constructor twinbmp.create;
 begin
-if classnameis('twinbmp') then track__inc(satBitmap,1);
+if classnameis('twinbmp') then track__inc(satWinbmp,1);
 inherited create;
 
 //vars
 low__cls(@iinfo,sizeof(iinfo));
-ihbitmap  :=0;
-idc       :=0;
-icore     :=nil;
 
-ibits     :=32;
-iwidth    :=1;
-iheight   :=1;
-irowsize  :=0;
-irows     :=str__new8;
+ifont       :=0;
+ibrush      :=0;
+ifontOLD    :=0;
+ibrushOLD   :=0;
+
+ihbitmapOLD :=0;
+ihbitmap    :=0;
+
+idc         :=0;
+icore       :=nil;
+
+ibits       :=32;
+iwidth      :=1;
+iheight     :=1;
+irowsize    :=0;
+irows       :=str__new8;
 
 misaiclear(ai);
 
@@ -2342,14 +2505,23 @@ destructor twinbmp.destroy;
 begin
 try
 //image
-xfreeimage;
+xcreate(false);
+
+if (ifontOLD<>0)  then win____deleteobject(win____selectobject(idc,ifontOLD));
+if (ifont<>0)     then win____deleteobject(ifont);
+
+if (ibrushOLD<>0) then win____deleteobject(win____selectobject(idc,ibrushOLD));
+if (ibrush<>0)    then win____deleteobject(ibrush);
+
+if (ihbitmap<>0) then win____deleteobject(ihbitmap);
+if (idc<>0)      then win____deletedc(idc);
 
 //vars
 str__free(@irows);
 
 //self
 inherited destroy;
-if classnameis('twinbmp') then track__inc(satBitmap,-1);
+if classnameis('twinbmp') then track__inc(satWinbmp,-1);
 except;end;
 end;
 
@@ -2378,26 +2550,148 @@ begin
 result:=setparams2(dbits,dw,dh,false);
 end;
 
-function twinbmp.setparams2(dbits,dw,dh:longint;dforce:boolean):boolean;
-var//Note: GUI only goes as far as 24bit, so alpha value for 32bit pixels are not used/persistent
+function twinbmp.setfont(xfontname:string;xsharp,xbold:boolean;xsize,xcolor,xbackcolor:longint):boolean;
+var
+   b:tlogbrush;
+   f:tlogfont;
+   p:longint;
+begin
+
+//pass-thru
+result:=true;
+
+//filter
+xcolor    :=int24__rgba0(xcolor);
+xbackcolor:=int24__rgba0(xbackcolor);
+
+//brush
+low__cls(@b,sizeof(b));
+b.lbstyle:=0;//0;//solid
+b.lbcolor:=xbackcolor;
+b.lbhatch:=0;
+
+//font
+low__cls(@f,sizeof(f));
+
+//.size
+case (xsize>=0) of
+true:f.lfHeight:=-win____MulDiv(xsize,system_screenlogpixels,72);
+else f.lfHeight:=xsize;
+end;//case
+
+//.enforce safe font height range -> values of ~ "-1" can cause fatal error - 04sep2025
+case f.lfHeight of
+-3..-1 :f.lfHeight:=-4;
+0..3   :f.lfHeight:=4;
+end;//case
+
+f.lfWidth         :=0;//font mapper chooses
+f.lfEscapement    :=0;//straight fonts
+f.lfOrientation   :=0;//no rotation
+f.lfWeight        :=low__aorb(0,700,xbold);//400=normal, 700=bold
+f.lfItalic        :=0;
+f.lfUnderline     :=0;
+f.lfStrikeOut     :=0;
+f.lfCharSet       :=1;//DEFAULT_CHARSET=1, ANSI_CHARSET=0
+
+for p:=1 to frcmax32(low__len32(xfontname),1+high(f.lfFaceName)) do f.lfFaceName[p-1]:=char(xfontname[p-1+stroffset]);
+
+//f.lfQuality       :=low__aorb(4,NONANTIALIASED_QUALITY,xsharp);
+f.lfQuality       :=low__aorb(4,NONANTIALIASED_QUALITY,xsharp);
+f.lfOutPrecision  :=0;//OUT_DEFAULT_PRECIS=0
+f.lfClipPrecision :=0;//CLIP_DEFAULT_PRECIS=0
+f.lfPitchAndFamily:=0;//DEFAULT_PITCH=0
+
+//free
+if (ifontOLD<>0) then win____deleteobject(win____selectobject(idc,ifontOLD));
+if (ifont<>0)    then win____deleteobject(ifont);
+
+//create
+ifont     :=win____CreateFontIndirect(f);
+ifontOLD  :=win____selectobject(idc,ifont);
+
+//free
+if (ibrushOLD<>0) then win____deleteobject(win____selectobject(idc,ibrushOLD));
+if (ibrush<>0)    then win____deleteobject(ibrush);
+
+//create
+ibrush    :=win____CreateBrushIndirect(b);
+ibrushOLD :=win____selectobject(idc,ibrush);
+
+//colors
+win____SetBkMode(idc,2);//transparent=1, OPAQUE=2
+win____SetBkColor(idc,xbackcolor);
+win____SetTextColor(idc,xcolor);
+
+end;
+
+function twinbmp.fontheight:longint;
+begin
+result:=wincanvas__textextent(dc,'aH#W!fq').y;
+end;
+
+function twinbmp.xcreate(xnew:boolean):boolean;
+begin
+
+//pass-thru
+result:=true;
+
+//init
+if (idc=0) then idc:=win____CreateCompatibleDC(0);
+
+//clean up
+if (ihbitmapOLD<>0) then
+   begin
+
+   ihbitmap:=win____SelectObject(idc,ihbitmapOLD);
+   win____deleteobject(ihbitmap);
+   ihbitmap:=0;
+
+   end;
+
+//new
+if xnew then
+   begin
+
+   ihbitmap     :=win____CreateDIBSection(idc,iinfo,DIB_RGB_COLORS,icore,0,0);
+   ihbitmapOLD  :=win____SelectObject(idc,ihbitmap);
+
+   end;
+
+end;
+
+function twinbmp.setparams2(dbits,dw,dh:longint;dforce:boolean):boolean;//01dec2025
+var//Note: GDI only goes as far as 24bit, so alpha value for 32bit pixels are not used/persistent
    dy:longint;
 begin
+
 //defaults
 result:=false;
 
 try
+
 //range
 dw:=frcmin32(dw,1);
 dh:=frcmin32(dh,1);
 if (dbits<>8) and (dbits<>16) and (dbits<>24) and (dbits<>32) then dbits:=32;
 
+//check - 01dec2025 -> inline with other image handlers
+if (dbits=ibits) and (dw=iwidth) and (dh=iheight) then
+   begin
+   result:=true;
+   exit;
+   end;
+
 //get
 if (dw<>iwidth) or (dh<>iheight) or (dbits<>ibits) or dforce then
    begin
+
+   //changed
+   result  :=true;
+
    //init
    win____GdiFlush;
 
-   result  :=true;
    iwidth  :=dw;
    iheight :=dh;
    ibits   :=dbits;
@@ -2418,13 +2712,8 @@ if (dw<>iwidth) or (dh<>iheight) or (dbits<>ibits) or dforce then
    biClrImportant  :=0;//all colors in table assumed important
    end;
 
-   //free
-   xfreeimage;
-
-   //create
-   idc     :=win____CreateCompatibleDC(0);
-   ihbitmap:=win____CreateDIBSection(idc,iinfo,DIB_RGB_COLORS,icore,0,0);
-   win____SelectObject(idc,ihbitmap);
+   //get
+   xcreate(true);
 
    //cache scanlines
    irows.setlen(iheight*sizeof(tpointer));
@@ -2433,27 +2722,11 @@ if (dw<>iwidth) or (dh<>iheight) or (dbits<>ibits) or dforce then
    irows16:=irows.core;
    irows24:=irows.core;
    irows32:=irows.core;
+
    for dy:=0 to (iheight-1) do irows32[dy]:=ptr__shift(icore,dy*irowsize);
-   end;
-except;end;
-end;
 
-procedure twinbmp.xfreeimage;
-begin
-try
-win____GdiFlush;
-
-if (idc<>0)  then
-   begin
-   win____deletedc(idc);
-   idc:=0;
    end;
 
-if (ihbitmap<>0) then
-   begin
-   win____deleteobject(ihbitmap);
-   ihbitmap:=0;
-   end;
 except;end;
 end;
 
@@ -2568,186 +2841,6 @@ if (systmpstyle[systmppos]=1) and (ms64>=systmptime[systmppos]) and zzok(systmpb
 except;end;
 end;
 
-function low__createint(var x:tdynamicinteger;xid:string;var xwascached:boolean):boolean;
-var
-   _ms64:comp;
-   i,p:longint;
-
-   function _init(x:longint):tdynamicinteger;
-   begin
-   result:=nil;
-
-   try
-   sysintstyle[x]:=2;//0=free, 1=available, 2=locked
-   sysinttime[x]:=add64(ms64,30000);//30s
-   sysintid[x]:=xid;//set the id (duplicate id's are allowed)
-   if zznil(sysintobj[x],2125) then sysintobj[x]:=tdynamicinteger.create;
-   result:=sysintobj[x];
-   except;end;
-   end;
-begin
-//defaults
-result:=false;
-
-try
-xwascached:=false;
-x:=nil;
-//find existing
-for p:=0 to high(sysintstyle) do if (sysintstyle[p]=1) and (xid=sysintid[p]) then
-   begin
-   x:=_init(p);
-   xwascached:=true;//signal to calling proc the int.list was cacched intact -> allows for optimisation at the calling proc's end - 06sep2017
-   break;
-   end;
-//find new
-if zznil(x,2126) then for p:=0 to high(sysintstyle) do if (sysintstyle[p]=0) then
-   begin
-   x:=_init(p);
-   break;
-   end;
-//find oldest
-if zznil(x,2127) then
-   begin
-   i:=-1;
-   _ms64:=0;
-   //find
-   for p:=0 to high(sysintstyle) do if (sysintstyle[p]=1) and ((sysinttime[p]<_ms64) or (_ms64=0)) then
-      begin
-      i:=p;
-      _ms64:=sysinttime[p];
-      end;//p
-   //get
-   if (i>=0) then x:=_init(i);
-   end;
-//successful
-result:=(x<>nil);
-except;end;
-end;
-
-procedure low__freeint(var x:tdynamicinteger);
-var
-   p:longint;
-begin
-try
-if (x<>nil) then for p:=0 to high(sysintstyle) do if (x=sysintobj[p]) then
-   begin
-   if (sysintstyle[p]=2) then//locked
-      begin
-      sysinttime[p]:=add64(ms64,30000);//30s - hold onto this before trying to free it via "checktmp"
-      sysintstyle[p]:=1;//unlock -> make this buffer available again
-      x:=nil;
-      end;
-   break;
-   end;//p
-except;end;
-end;
-
-procedure low__checkint;
-begin
-try
-//init
-inc(sysintpos);
-if (sysintpos<0) or (sysintpos>high(sysintstyle)) then sysintpos:=0;
-//shrink buffer
-if (sysintstyle[sysintpos]=1) and (ms64>=sysinttime[sysintpos]) and zzok(sysintobj[sysintpos],7006) and (sysintobj[sysintpos].size>1) then
-   begin
-   sysintstyle[sysintpos]:=2;//lock
-   sysintid[sysintpos]:='';//clear id - 06sep2017
-   sysintobj[sysintpos].clear;
-   sysintstyle[sysintpos]:=1;//unlock
-   end;
-except;end;
-end;
-
-function low__createbyte(var x:tdynamicbyte;xid:string;var xwascached:boolean):boolean;
-var
-   _ms64:comp;
-   i,p:longint;
-
-   function _init(x:longint):tdynamicbyte;
-   begin
-   result:=nil;
-   try
-   sysbytestyle[x]:=2;//0=free, 1=available, 2=locked
-   sysbytetime[x]:=add64(ms64,30000);//30s
-   sysbyteid[x]:=xid;//set the id (duplicate id's are allowed)
-   if zznil(sysbyteobj[x],2128) then sysbyteobj[x]:=tdynamicbyte.create;
-   result:=sysbyteobj[x];
-   except;end;
-   end;
-begin
-//defaults
-result:=false;
-
-try
-xwascached:=false;
-x:=nil;
-//find existing
-for p:=0 to high(sysbytestyle) do if (sysbytestyle[p]=1) and (xid=sysbyteid[p]) then
-   begin
-   x:=_init(p);
-   xwascached:=true;//signal to calling proc the int.list was cacched intact -> allows for optimisation at the calling proc's end - 06sep2017
-   break;
-   end;
-//find new
-if zznil(x,2129) then for p:=0 to high(sysbytestyle) do if (sysbytestyle[p]=0) then
-   begin
-   x:=_init(p);
-   break;
-   end;
-//find oldest
-if zznil(x,2130) then
-   begin
-   i:=-1;
-   _ms64:=0;
-   //find
-   for p:=0 to high(sysbytestyle) do if (sysbytestyle[p]=1) and ((sysbytetime[p]<_ms64) or (_ms64=0)) then
-      begin
-      i:=p;
-      _ms64:=sysbytetime[p];
-      end;//p
-   //get
-   if (i>=0) then x:=_init(i);
-   end;
-//successful
-result:=(x<>nil);
-except;end;
-end;
-
-procedure low__freebyte(var x:tdynamicbyte);
-var
-   p:longint;
-begin
-try
-if (x<>nil) then for p:=0 to high(sysbytestyle) do if (x=sysbyteobj[p]) then
-   begin
-   if (sysbytestyle[p]=2) then//locked
-      begin
-      sysbytetime[p]:=add64(ms64,30000);//30s - hold onto this before trying to free it via "checktmp"
-      sysbytestyle[p]:=1;//unlock -> make this buffer available again
-      x:=nil;
-      end;
-   break;
-   end;//p
-except;end;
-end;
-
-procedure low__checkbyte;
-begin
-try
-//init
-inc(sysbytepos);
-if (sysbytepos<0) or (sysbytepos>high(sysbytestyle)) then sysbytepos:=0;
-//shrink buffer
-if (sysbytestyle[sysbytepos]=1) and (ms64>=sysbytetime[sysbytepos]) and zzok(sysbyteobj[sysbytepos],7007) and (sysbyteobj[sysbytepos].size>1) then
-   begin
-   sysbytestyle[sysbytepos]:=2;//lock
-   sysbyteid[sysbytepos]:='';//clear id - 06sep2017
-   sysbyteobj[sysbytepos].clear;
-   sysbytestyle[sysbytepos]:=1;//unlock
-   end;
-except;end;
-end;
 
 //png procs --------------------------------------------------------------------
 function png__todata(s:tobject;d:pobject;var e:string):boolean;
@@ -2872,7 +2965,7 @@ var
    if vcompress and (v.len>=1) and (not low__compress(@v)) then exit;
 
    //get
-   str__addint4(d, i32(v.len) );
+   str__addint4(d, i32(v.len32) );
    str__aadd(d,n);
 
    if (v.len>=1) then str__add(d,@v);
@@ -3023,7 +3116,7 @@ var
       begin
       lv:=0;
 
-      for p:=xfrom0 to frcmax32(xfrom0+drowsize-1,x.len-1) do if (lv<>x.pbytes[p]) then
+      for p:=xfrom0 to frcmax32(xfrom0+drowsize-1,x.len32-1) do if (lv<>x.pbytes[p]) then
          begin
          inc(result,x.pbytes[p]);
          lv:=x.pbytes[p];
@@ -3038,9 +3131,9 @@ var
    begin
    //a = left, b=above, c=upper left
    p:=a+b-c;//initial estimate
-   pa:=abs(p-a);
-   pb:=abs(p-b);
-   pc:=abs(p-c);
+   pa:=math_abs(p-a);
+   pb:=math_abs(p-b);
+   pc:=math_abs(p-c);
 
    if (pa<=pb) and (pa<=pc) then result:=a
    else if (pb<=pc)         then result:=b
@@ -3339,7 +3432,7 @@ str__free(@str1);
 str__uaf(d);
 end;
 
-function png__fromdata(s:tobject;d:pobject;var e:string):boolean;
+function png__fromdata(s:tobject;d:pobject;var e:string):boolean;//25jul2025: fixed row rounding error
 label
    skipend;
 var
@@ -3417,7 +3510,7 @@ var
       if dok then str__add3(xdata,d,spos-1,xlen) else str__add3(xdata,@d64,spos-1,xlen);
       end;
 
-   if (str__len(xdata)<>xlen) then goto skipend;
+   if (str__len32(xdata)<>xlen) then goto skipend;
    inc(spos,xlen+4);//step over trailing crc32(4b)
 
    //successful
@@ -3431,9 +3524,10 @@ var
    begin
    //a = left, b=above, c=upper left
    p:=a+b-c;//initial estimate
-   pa:=abs(p-a);
-   pb:=abs(p-b);
-   pc:=abs(p-c);
+   pa:=math_abs(p-a);
+   pb:=math_abs(p-b);
+   pc:=math_abs(p-c);
+
    if (pa<=pb) and (pa<=pc) then result:=a
    else if (pb<=pc)         then result:=b
    else                          result:=c;
@@ -3501,7 +3595,7 @@ if not str__asame3(d,0,[137,80,78,71,13,10,26,10],true) then
    //.strip "b64:" header
    if str__asame3(d,0,[98,54,52,58],true) then
       begin
-      str__add3(@d64,d,4,str__len(d));
+      str__add3(@d64,d,4,str__len32(d));
       if not str__fromb64(@d64,@d64) then goto skipend;
       end
    //.raw base64 data (no header)
@@ -3521,7 +3615,7 @@ if not str__asame3(d,0,[137,80,78,71,13,10,26,10],true) then
 spos:=9;
 
 //IHDR                         //name   width.4     height.4   bitdepth.1  colortype.1 (6=R8,G8,B8,A8)  compressionMethod.1(#0 only = deflate/inflate)  filtermethod.1(#0 only) interlacemethod.1(#0=LR -> TB scanline order)
-if (not xpullchunk(xnam,@xval)) or (not low__comparearray(xnam,[uuI,uuH,uuD,uuR])) or (str__len(@xval)<13) then
+if (not xpullchunk(xnam,@xval)) or (not low__comparearray(xnam,[uuI,uuH,uuD,uuR])) or (str__len32(@xval)<13) then
    begin
    e:=gecDatacorrupt;
    goto skipend;
@@ -3574,7 +3668,7 @@ else if low__comparearray(xnam,[uuI,uuD,uuA,uuT]) then str__add(@xdata,@xval)
 //.plte
 else if low__comparearray(xnam,[uuP,uuL,uuT,uuE]) then
    begin
-   int1:=frcrange32(str__len(@xval) div 3,0,1+high(xcollist));
+   int1:=frcrange32(str__len32(@xval) div 3,0,1+high(xcollist));
    if (int1>=1) then
       begin
       int2:=1;
@@ -3590,7 +3684,7 @@ else if low__comparearray(xnam,[uuP,uuL,uuT,uuE]) then
 //.trns
 else if low__comparearray(xnam,[uuT,uuR,uuN,uuS]) then
    begin
-   int1:=frcrange32(str__len(@xval),0,1+high(xcollist));
+   int1:=frcrange32(str__len32(@xval),0,1+high(xcollist));
    if (int1>=1) then
       begin
       for p:=0 to (int1-1) do xcollist[p].a:=str__bytes0(@xval,p);
@@ -3603,7 +3697,7 @@ end;//while
 str__clear(@xval);
 
 //.decompress "xdata"
-if ( (str__len(@xdata)>=1) and (not low__decompress(@xdata)) ) or (str__len(@xdata)<=0) then
+if ( (str__len32(@xdata)>=1) and (not low__decompress(@xdata)) ) or (str__len32(@xdata)<=0) then
    begin
    e:=gecDataCorrupt;
    goto skipend;
@@ -3628,8 +3722,10 @@ case xcoltype of
 6:xbits:=32;
 end;
 
-drowsize:=mis__rowsize4(xw,xbits);//29may2025
-if ( (xh * (1+drowsize) ) > str__len(@xdata) ) then
+//was: drowsize:=mis__rowsize4(xw,xbits);//29may2025 - error -> PNG does not round like a bitmap - 25jul2025
+drowsize:=xw*(xbits div 8);
+
+if ( (xh * (1+drowsize) ) > str__len32(@xdata) ) then
    begin
    e:=gecDataCorrupt;
    goto skipend;
@@ -3869,38 +3965,6 @@ str__free(@d64);
 str__uaf(d);//27jan2021
 end;
 
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx//11111111111111111111111111111111
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-
-
-
 //tea procs (text picture) -----------------------------------------------------
 function tea__todata(x:tobject;xout:pobject;var e:string):boolean;
 begin
@@ -3912,7 +3976,7 @@ begin
 result:=tea__todata32(x,xtransparent,xsyscolors,xval1,xval2,xout,e);//ver 2
 end;
 
-function tea__todata32(x:tobject;xtransparent,xsyscolors:boolean;xval1,xval2:longint;xout:pobject;var e:string):boolean;//18nov2024
+function tea__todata32(x:tobject;xtransparent,xsyscolors:boolean;xval1,xval2:longint;xout:pobject;var e:string):boolean;//23mar2026, 08aug2025, 18nov2024
 label
    skipend;
 var
@@ -3925,56 +3989,77 @@ var
    sr8:pcolorrow8;
    sr24:pcolorrow24;
    sr32:pcolorrow32;
-   sc8:tcolor8;//07apr2021
    sc24:tcolor24;
    sc32:tcolor32;
 
    procedure xadd24;
    begin
+
    if (l4.r<>sc24.r) or (l4.g<>sc24.g) or (l4.b<>sc24.b) then
       begin
+
       if (l4.a>=1) then str__addint4(xout,l4.val);
-      l4.r:=sc24.r;
-      l4.g:=sc24.g;
-      l4.b:=sc24.b;
-      l4.a:=1;//one
+
+      l4.r  :=sc24.r;
+      l4.g  :=sc24.g;
+      l4.b  :=sc24.b;
+      l4.a  :=1;//one
+
       end
    else
       begin
+
       inc(l4.a);
+
       if (l4.a>=250) then
          begin
+
          str__addint4(xout,l4.val);
          l4.a:=0;//reset
+
          end;
+
       end;
+
    end;
 
    procedure xadd32;
    begin
+
    if (l5.b<>sc32.r) or (l5.g<>sc32.g) or (l5.r<>sc32.b) or (l5.c<>sc32.a) then
       begin
+
       if (l5.a>=1) then str__addrec(xout,@l5,sizeof(l5));
-      l5.b:=sc32.r;//switch bytes to store as RGBAC order as native order is BGRAC
-      l5.g:=sc32.g;
-      l5.r:=sc32.b;
-      l5.c:=sc32.a;
-      l5.a:=1;
+
+      l5.b  :=sc32.r;//switch bytes to store as RGBAC order as native order is BGRAC
+      l5.g  :=sc32.g;
+      l5.r  :=sc32.b;
+      l5.c  :=sc32.a;
+      l5.a  :=1;
+
       end
    else
       begin
+
       inc(l5.a);
+
       if (l5.a>=250) then
          begin
+
          str__addrec(xout,@l5,sizeof(l5));
          l5.a:=0;//reset
+
          end;
+
       end;
+
    end;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
+result      :=false;
+e           :=gecTaskfailed;
 
 try
 //check
@@ -3982,46 +4067,58 @@ if not str__lock(xout) then goto skipend;
 if zznil(x,2202) then goto skipend;
 
 //init
-//.rawimage
+//.rawimage - 08aug2025: fixed
 if (x is trawimage) then
    begin
-   prows8 :=(x as tbasicimage).prows8;
-   prows24:=(x as tbasicimage).prows24;
-   prows32:=(x as tbasicimage).prows32;
+
+   prows8   :=(x as trawimage).prows8;
+   prows24  :=(x as trawimage).prows24;
+   prows32  :=(x as trawimage).prows32;
+
    end
 //.image
 else if (x is tbasicimage) then
    begin
-   prows8 :=(x as tbasicimage).prows8;
-   prows24:=(x as tbasicimage).prows24;
-   prows32:=(x as tbasicimage).prows32;
+
+   prows8   :=(x as tbasicimage).prows8;
+   prows24  :=(x as tbasicimage).prows24;
+   prows32  :=(x as tbasicimage).prows32;
+
    end
 //.winbmp
 else if (x is twinbmp) then
    begin
-   prows8 :=(x as twinbmp).prows8;
-   prows24:=(x as twinbmp).prows24;
-   prows32:=(x as twinbmp).prows32;
+
+   prows8   :=(x as twinbmp).prows8;
+   prows24  :=(x as twinbmp).prows24;
+   prows32  :=(x as twinbmp).prows32;
+
    end
 else goto skipend;
 
 //info
-xbits:=misb(x);
-xw:=misw(x);
-xh:=mish(x);
+xbits :=misb(x);
+xw    :=misw(x);
+xh    :=mish(x);
+
 if (xbits<>8) and (xbits<>24) and (xbits<>32) then goto skipend;
+
 str__clear(xout);
+
 l4.val:=0;
-l5.r:=0;
-l5.g:=0;
-l5.b:=0;
-l5.a:=0;
-l5.c:=0;
+l5.r  :=0;
+l5.g  :=0;
+l5.b  :=0;
+l5.a  :=0;
+l5.c  :=0;
 
 //head
-if (xbits>=32) and mask__hasTransparency32(x) then//ver 3 -> 32bit color - 18nov2024
+if (xbits>=32) then//ver 3 -> 32bit color - 23mar2026, 18nov2024
    begin
-   xver:=3;
+
+   xtransparent       :=mask__hasTransparency32(x);//overrides input "xtransparent" value and uses alpha values to determine transparency state - 23mar2026
+   xver               :=3;
+
    str__aadd(xout,[uuT,uuE,uuA,nn3,ssHash]);//TEA3#
    str__addbyt1(xout,low__insint(1,xtransparent));//0=solid, 1=transparent
    str__addbyt1(xout,low__insint(1,xsyscolors));//0=no, 1=yes
@@ -4031,10 +4128,13 @@ if (xbits>=32) and mask__hasTransparency32(x) then//ver 3 -> 32bit color - 18nov
    str__addbyt1(xout,0);//reserved
    str__addint4(xout,xval1);
    str__addint4(xout,xval2);
+
    end
-else if xtransparent or xsyscolors then//ver 2 -> 24bit color
+else if (not xtransparent) or xsyscolors then//ver 2 -> 24bit color
    begin
-   xver:=2;
+
+   xver               :=2;
+
    str__aadd(xout,[uuT,uuE,uuA,nn2,ssHash]);//TEA2#
    str__addbyt1(xout,low__insint(1,xtransparent));//0=solid, 1=transparent
    str__addbyt1(xout,low__insint(1,xsyscolors));//0=no, 1=yes
@@ -4044,61 +4144,86 @@ else if xtransparent or xsyscolors then//ver 2 -> 24bit color
    str__addbyt1(xout,0);//reserved
    str__addint4(xout,xval1);
    str__addint4(xout,xval2);
+
    end
 else
-   begin
-   xver:=1;
+   begin//v1 is always transparent
+
+   xver               :=1;
+
    str__aadd(xout,[uuT,uuE,uuA,nn1,ssHash]);//TEA1# - ver 1 -> 24bit color
+
    end;
 
 str__addint4(xout,xw);
 str__addint4(xout,xh);//13 bytes
 
 //pixels
-e:=gecOutofmemory;
+e           :=gecOutofmemory;
+
 for sy:=0 to (xh-1) do
 begin
+
 if (xbits=8) then
    begin
-   sr8:=prows8[sy];
+
+   sr8      :=prows8[sy];
+
    for sx:=0 to (xw-1) do
    begin
-   sc8:=sr8[sx];
-   sc24.r:=sc8;
-   sc24.g:=sc8;
-   sc24.b:=sc8;
+
+   sc24.r   :=sr8[sx];
+   sc24.g   :=sc24.r;
+   sc24.b   :=sc24.r;
    xadd24;
+
    end;//sx
+
    end
 else if (xbits=24) then
    begin
-   sr24:=prows24[sy];
+
+   sr24     :=prows24[sy];
+
    for sx:=0 to (xw-1) do
    begin
-   sc24:=sr24[sx];
+
+   sc24     :=sr24[sx];
    xadd24;
+
    end;//sx
+
    end
 else if (xbits=32) and (xver=3) then
    begin
-   sr32:=prows32[sy];
+
+   sr32     :=prows32[sy];
+
    for sx:=0 to (xw-1) do
    begin
-   sc32:=sr32[sx];
+
+   sc32     :=sr32[sx];
    xadd32;
+
    end;//sx
+
    end
 else if (xbits=32) then
    begin
+
    sr32:=prows32[sy];
+
    for sx:=0 to (xw-1) do
    begin
-   sc32:=sr32[sx];
-   sc24.r:=sc32.r;
-   sc24.g:=sc32.g;
-   sc24.b:=sc32.b;
+
+   sc32     :=sr32[sx];
+   sc24.r   :=sc32.r;
+   sc24.g   :=sc32.g;
+   sc24.b   :=sc32.b;
    xadd24;
+
    end;//sx
+
    end;
 end;//xy
 
@@ -4112,41 +4237,45 @@ end;
 result:=true;
 skipend:
 except;end;
-try
+//free
 if (not result) and str__ok(xout) then str__clear(xout);
 str__uaf(xout);
-except;end;
 end;
 
-function tea__info(var adata:tlistptr;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
+function tea__info(var adata:tlistptr;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18mar2026
 label//Note: aSOD = start of data
    skipend;
 var
    v:tint4;
    int1,xpos:longint;
 begin
+
 //defaults
-result:=false;
+result                :=false;
+aw                    :=0;
+ah                    :=0;
+aSOD                  :=13;
+aversion              :=1;
+aval1                 :=0;
+aval2                 :=0;
+atransparent          :=true;
+asyscolors            :=true;
 
 try
-aw:=0;
-ah:=0;
-aSOD:=13;
-aversion:=1;
-aval1:=0;
-aval2:=0;
-atransparent:=true;
-asyscolors:=true;
+
 //check
 if (adata.count<13) or (adata.bytes=nil) then goto skipend;
+
 //get
 //.header
-int1:=adata.bytes[3];
+int1                  :=adata.bytes[3];
+
 if (adata.bytes[0]=uuT) and (adata.bytes[1]=uuE) and (adata.bytes[2]=uuA) and ( (int1=nn2) or (int1=nn3) ) and (adata.bytes[4]=ssHash) then
    begin
+
    //init
-   aSOD:=27;//zero based (27=28 bytes)
-   xpos:=5;
+   aSOD               :=27;//zero based (27=28 bytes)
+   xpos               :=5;
 
    //version 2 = 24 bit color and version 3 = 32 bit color - 18nov2024
    if      (int1=nn2) then aversion:=2
@@ -4154,66 +4283,76 @@ if (adata.bytes[0]=uuT) and (adata.bytes[1]=uuE) and (adata.bytes[2]=uuA) and ( 
    else                    goto skipend;
 
    if (adata.count<(aSOD+1)) then goto skipend;//1 based
+
    //transparent
-   atransparent:=(adata.bytes[xpos]<>0);
+   atransparent       :=(adata.bytes[xpos]<>0);
    inc(xpos,1);
+
    //syscolors -> black=font color, black+1=border color
-   asyscolors:=(adata.bytes[xpos]<>0);
+   asyscolors         :=(adata.bytes[xpos]<>0);
    inc(xpos,1);
+
    //reserved 1-4
    inc(xpos,4);
+
    //val1
-   v.bytes[0]:=adata.bytes[xpos+0];
-   v.bytes[1]:=adata.bytes[xpos+1];
-   v.bytes[2]:=adata.bytes[xpos+2];
-   v.bytes[3]:=adata.bytes[xpos+3];
+   v.bytes[0]         :=adata.bytes[xpos+0];
+   v.bytes[1]         :=adata.bytes[xpos+1];
+   v.bytes[2]         :=adata.bytes[xpos+2];
+   v.bytes[3]         :=adata.bytes[xpos+3];
    inc(xpos,4);
-   aval1:=v.val;
+   aval1              :=v.val;
+
    //val2
-   v.bytes[0]:=adata.bytes[xpos+0];
-   v.bytes[1]:=adata.bytes[xpos+1];
-   v.bytes[2]:=adata.bytes[xpos+2];
-   v.bytes[3]:=adata.bytes[xpos+3];
+   v.bytes[0]         :=adata.bytes[xpos+0];
+   v.bytes[1]         :=adata.bytes[xpos+1];
+   v.bytes[2]         :=adata.bytes[xpos+2];
+   v.bytes[3]         :=adata.bytes[xpos+3];
    inc(xpos,4);
-   aval2:=v.val;
+   aval2              :=v.val;
+
    end
 else if (adata.bytes[0]=uuT) and (adata.bytes[1]=uuE) and (adata.bytes[2]=uuA) and (adata.bytes[3]=nn1) and (adata.bytes[4]=ssHash) then xpos:=5//TEA1#
 else goto skipend;
+
 //.w
-v.bytes[0]:=adata.bytes[xpos+0];
-v.bytes[1]:=adata.bytes[xpos+1];
-v.bytes[2]:=adata.bytes[xpos+2];
-v.bytes[3]:=adata.bytes[xpos+3];
-aw:=v.val;
+v.bytes[0]            :=adata.bytes[xpos+0];
+v.bytes[1]            :=adata.bytes[xpos+1];
+v.bytes[2]            :=adata.bytes[xpos+2];
+v.bytes[3]            :=adata.bytes[xpos+3];
+aw                    :=v.val;
 if (aw<=0) then goto skipend;
 inc(xpos,4);
-//.h
-v.bytes[0]:=adata.bytes[xpos+0];
-v.bytes[1]:=adata.bytes[xpos+1];
-v.bytes[2]:=adata.bytes[xpos+2];
-v.bytes[3]:=adata.bytes[xpos+3];
-ah:=v.val;
-if (ah<=0) then goto skipend;
-//.multiplier
 
-{$ifdef gui}
-if xsyszoom then gui__zoom(aw,ah);
-{$endif}
+//.h
+v.bytes[0]            :=adata.bytes[xpos+0];
+v.bytes[1]            :=adata.bytes[xpos+1];
+v.bytes[2]            :=adata.bytes[xpos+2];
+v.bytes[3]            :=adata.bytes[xpos+3];
+ah                    :=v.val;
+if (ah<=0) then goto skipend;
 
 //successful
-result:=true;
+result                :=true;
+
 skipend:
 except;end;
 end;
 
-function tea__info1(xtep:longint;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//17jun2025, 25may2025
-var
-   xdata:tlistptr;
+function tea__info2(adata:tstr8;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
 begin
-{$ifdef gui}
-tepfind(xtep,xdata);
-result:=tea__info(xdata,xsyszoom,aw,ah,aSOD,aversion,aval1,aval2,atransparent,asyscolors);
-{$else}
+result:=tea__info3(@adata,aw,ah,aSOD,aversion,aval1,aval2,atransparent,asyscolors);
+end;
+
+function tea__info3(adata:pobject;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18mar2026, 18nov2024
+label
+   skipend;
+var
+   v:tint4;
+   int1,xpos:longint;
+begin
+
+//defaults
 result      :=false;
 aw          :=0;
 ah          :=0;
@@ -4223,35 +4362,11 @@ aval1       :=0;
 aval2       :=0;
 atransparent:=true;
 asyscolors  :=true;
-{$endif}
-end;
-
-function tea__info2(adata:tstr8;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
-begin
-result:=tea__info3(@adata,xsyszoom,aw,ah,aSOD,aversion,aval1,aval2,atransparent,asyscolors);
-end;
-
-function tea__info3(adata:pobject;xsyszoom:boolean;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18nov2024
-label
-   skipend;
-var
-   v:tint4;
-   int1,xpos:longint;
-begin
-//defaults
-result:=false;
 
 try
-aw:=0;
-ah:=0;
-aSOD:=13;
-aversion:=1;
-aval1:=0;
-aval2:=0;
-atransparent:=true;
-asyscolors:=true;
 //check
-if (not str__lock(adata)) or (str__len(adata)<13) then goto skipend;
+if (not str__lock(adata)) or (str__len32(adata)<13) then goto skipend;
+
 //get
 //.header
 int1:=str__bytes0(adata,3);
@@ -4266,610 +4381,63 @@ if (str__bytes0(adata,0)=uuT) and (str__bytes0(adata,1)=uuE) and (str__bytes0(ad
    else if (int1=nn3) then aversion:=3
    else                    goto skipend;
 
-   if (str__len(adata)<(aSOD+1)) then goto skipend;//1 based
+   if (str__len32(adata)<(aSOD+1)) then goto skipend;//1 based
+
    //transparent
-   atransparent:=(str__bytes0(adata,xpos)<>0);
+   atransparent       :=(str__bytes0(adata,xpos)<>0);
    inc(xpos,1);
+
    //syscolors -> black=font color, black+1=border color
-   asyscolors:=(str__bytes0(adata,xpos)<>0);
+   asyscolors         :=(str__bytes0(adata,xpos)<>0);
    inc(xpos,1);
+
    //reserved 1-4
    inc(xpos,4);
+
    //val1
-   v.bytes[0]:=str__bytes0(adata,xpos+0);
-   v.bytes[1]:=str__bytes0(adata,xpos+1);
-   v.bytes[2]:=str__bytes0(adata,xpos+2);
-   v.bytes[3]:=str__bytes0(adata,xpos+3);
+   v.bytes[0]         :=str__bytes0(adata,xpos+0);
+   v.bytes[1]         :=str__bytes0(adata,xpos+1);
+   v.bytes[2]         :=str__bytes0(adata,xpos+2);
+   v.bytes[3]         :=str__bytes0(adata,xpos+3);
    inc(xpos,4);
-   aval1:=v.val;
+   aval1              :=v.val;
+
    //val2
-   v.bytes[0]:=str__bytes0(adata,xpos+0);
-   v.bytes[1]:=str__bytes0(adata,xpos+1);
-   v.bytes[2]:=str__bytes0(adata,xpos+2);
-   v.bytes[3]:=str__bytes0(adata,xpos+3);
+   v.bytes[0]         :=str__bytes0(adata,xpos+0);
+   v.bytes[1]         :=str__bytes0(adata,xpos+1);
+   v.bytes[2]         :=str__bytes0(adata,xpos+2);
+   v.bytes[3]         :=str__bytes0(adata,xpos+3);
    inc(xpos,4);
-   aval2:=v.val;
+   aval2              :=v.val;
    end
 else if (str__bytes0(adata,0)=uuT) and (str__bytes0(adata,1)=uuE) and (str__bytes0(adata,2)=uuA) and (str__bytes0(adata,3)=nn1) and (str__bytes0(adata,4)=ssHash) then xpos:=5//TEA1#
 else goto skipend;
+
 //.w
-v.bytes[0]:=str__bytes0(adata,xpos+0);
-v.bytes[1]:=str__bytes0(adata,xpos+1);
-v.bytes[2]:=str__bytes0(adata,xpos+2);
-v.bytes[3]:=str__bytes0(adata,xpos+3);
-aw:=v.val;
+v.bytes[0]            :=str__bytes0(adata,xpos+0);
+v.bytes[1]            :=str__bytes0(adata,xpos+1);
+v.bytes[2]            :=str__bytes0(adata,xpos+2);
+v.bytes[3]            :=str__bytes0(adata,xpos+3);
+aw                    :=v.val;
 if (aw<=0) then goto skipend;
 inc(xpos,4);
+
 //.h
-v.bytes[0]:=str__bytes0(adata,xpos+0);
-v.bytes[1]:=str__bytes0(adata,xpos+1);
-v.bytes[2]:=str__bytes0(adata,xpos+2);
-v.bytes[3]:=str__bytes0(adata,xpos+3);
-ah:=v.val;
+v.bytes[0]            :=str__bytes0(adata,xpos+0);
+v.bytes[1]            :=str__bytes0(adata,xpos+1);
+v.bytes[2]            :=str__bytes0(adata,xpos+2);
+v.bytes[3]            :=str__bytes0(adata,xpos+3);
+ah                    :=v.val;
 if (ah<=0) then goto skipend;
-//.multiplier
-
-{$ifdef gui}
-if xsyszoom then gui__zoom(aw,ah);
-{$endif}
 
 //successful
-result:=true;
+result                :=true;
 skipend:
 except;end;
-try;str__autofree(adata);except;end;
-end;
 
-function tea__draw(xcolorise,xsyszoom:boolean;dx,dy,dc,dc2:longint;xarea,xarea2:twinrect;d:tobject;xtea:tlistptr;xfocus,xgrey,xround:boolean;xroundstyle:longint):boolean;//curved corner support - 07may2020, 09apr2020, 29mar2020
-var
-   prows24:pcolorrows24;
-   prows32:pcolorrows32;
-begin
-//defaults
-result:=false;
-try
-if zznil(d,2206) then exit;
-//init
-if (d is tbasicimage) then//07mar2022
-   begin
-   prows24:=(d as tbasicimage).prows24;
-   prows32:=(d as tbasicimage).prows32;
-   end
-else if (d is trawimage) then//25jul2024
-   begin
-   prows24:=(d as trawimage).prows24;
-   prows32:=(d as trawimage).prows32;
-   end
-else if (d is twinbmp) then
-   begin
-   prows24:=(d as twinbmp).prows24;
-   prows32:=(d as twinbmp).prows32;
-   end
-else exit;
-//get
-result:=tea__draw2(xcolorise,xsyszoom,dx,dy,dc,dc2,xarea,xarea2,misb(d),misw(d),mish(d),prows24,prows32,nil,nil,-1,xtea,xfocus,xgrey,xround,xroundstyle);
-except;end;
-end;
+//free
+str__uaf(adata);
 
-function tea__draw2(xcolorise,xsyszoom:boolean;dx,dy,dc,dc2:longint;xarea,xarea2:twinrect;dbits,dw,dh:longint;drows24:pcolorrows24;drows32:pcolorrows32;xmask,xbackmask:tmask8;xmaskval:longint;xtea:tlistptr;xfocus,xgrey,xround:boolean;xroundstyle:longint):boolean;//04dec2024: background mask support, 02aug204: div 256 faster, curved corner support - 13may2020, 07may2020, 09apr2020, 29mar2020
-label//Note: now supports curved corners on clip area "xarea" - 09apr2020
-     //Note: xsys=optional system color information, if present (xsys<>nil) then image colors are replaced with shades of the system colors - 10mar2021
-     //02aug2024: div 256 for faster performance
-   skipdone,skipend,zoomdraw,zoomredo5,redo5;
-var
-   a:twinrect;
-   b5:tcolor40;//18nov2024
-   vsize,xzoom,zx,zy,v,mbits,lx,rx,lx2,rx2,lx3,rx3,lx4,rx4,amin,p,yi,xi,xx,xw,xh,dd,xSOD,xversion,xval1,xval2:longint;
-   bmr8,bmr82,bmr83,bmr84,mr8,mr82,mr83,mr84:pcolorrow8;//for mask support
-   dr24,dr242,dr243,dr244:pcolorrow24;
-   dr32,dr322,dr323,dr324:pcolorrow32;
-   tmp24,ddc24,tc,xc,xc2:tcolor24;
-   tmp32,ddc32:tcolor32;
-   xcoloriseOK,finv,dreplaceblackOK,dreplaceblackOK2,xonce,xtransparent,xsyscolors:boolean;
-
-   procedure x_sys;
-   begin
-   v:=(ddc24.r+ddc24.g+ddc24.b) div 3;
-   if (v<100) then v:=100 else if (v>230) then v:=230;
-   if finv then v:=255-v;//26mar2021
-   ddc24.r:=((xc.r*v) + (xc2.r*(255-v))) div 256;//256 is faster thna 255
-   ddc24.g:=((xc.g*v) + (xc2.g*(255-v))) div 256;
-   ddc24.b:=((xc.b*v) + (xc2.b*(255-v))) div 256;
-   end;
-
-{
-   procedure x_focus;
-   const
-      xval=40;//was: 30 - 29mar2020
-   var
-      int1:longint;
-   begin
-   //.r
-   int1:=ddc24.r+xval;
-   if (int1>255) then int1:=255;
-   ddc24.r:=byte(int1);
-   //.g
-   int1:=ddc24.g+xval;
-   if (int1>255) then int1:=255;
-   ddc24.g:=byte(int1);
-   //.b
-   int1:=ddc24.b+xval;
-   if (int1>255) then int1:=255;
-   ddc24.b:=byte(int1);
-   end;
-}
-
-   procedure xscan;
-   begin
-   case dbits of
-   24:dr24:=drows24[yi];
-   32:dr32:=drows32[yi];
-   end;//case
-   if (xmaskval>=0) then mr8:=xmask.prows8[yi];
-   if (xbackmask<>nil) then bmr8:=xbackmask.prows8[yi];
-   end;
-
-   procedure xscan2;
-   begin
-   case dbits of
-   24:begin
-      if ((zy+0)>=xarea.top) and ((zy+0)<=xarea.bottom) then dr24:=drows24[zy];
-      if ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then dr242:=drows24[zy+1];
-      if ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then dr243:=drows24[zy+2];
-      if ((zy+3)>=xarea.top) and ((zy+3)<=xarea.bottom) then dr244:=drows24[zy+3];
-      end;
-   32:begin
-      if ((zy+0)>=xarea.top) and ((zy+0)<=xarea.bottom) then dr32:=drows32[zy];
-      if ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then dr322:=drows32[zy+1];
-      if ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then dr323:=drows32[zy+2];
-      if ((zy+3)>=xarea.top) and ((zy+3)<=xarea.bottom) then dr324:=drows32[zy+3];
-      end;
-   end;//case
-   if (xmaskval>=0) then
-      begin
-      if ((zy+0)>=xarea.top) and ((zy+0)<=xarea.bottom) then mr8:=xmask.prows8[zy+0];
-      if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then mr82:=xmask.prows8[zy+1];
-      if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then mr83:=xmask.prows8[zy+2];
-      if (xzoom>=4) and ((zy+3)>=xarea.top) and ((zy+3)<=xarea.bottom) then mr84:=xmask.prows8[zy+3];
-      end;
-
-   if (xbackmask<>nil) then
-      begin
-      if ((zy+0)>=xarea.top) and ((zy+0)<=xarea.bottom) then bmr8:=xbackmask.prows8[zy];
-      if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then bmr82:=xbackmask.prows8[zy+1];
-      if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then bmr83:=xbackmask.prows8[zy+2];
-      if (xzoom>=4) and ((zy+3)>=xarea.top) and ((zy+3)<=xarea.bottom) then bmr84:=xbackmask.prows8[zy+3];
-      end;
-   end;
-
-   procedure dc24normal(dr24:pcolorrow24;xbmr8:pcolorrow8;x:longint);
-   begin
-   if (xbmr8<>nil) then backmask__exclude(xbmr8[x]);
-   dr24[x]:=ddc24;
-   end;
-
-   procedure dc32normal(dr32:pcolorrow32;xbmr8:pcolorrow8;x:longint);
-   begin
-   if (xbmr8<>nil) then backmask__exclude(xbmr8[x]);
-   dr32[x]:=ddc32;
-   end;
-
-   procedure mix24;
-   begin
-   tmp24:=dr24[xi];
-   tmp24.r:=( (ddc24.r*b5.c) + (tmp24.r*(255-b5.c)) ) div 256;//div 256 is FASTER thatn 255
-   tmp24.g:=( (ddc24.g*b5.c) + (tmp24.g*(255-b5.c)) ) div 256;
-   tmp24.b:=( (ddc24.b*b5.c) + (tmp24.b*(255-b5.c)) ) div 256;
-   if (bmr8<>nil) then backmask__exclude(bmr8[xi]);
-   dr24[xi]:=tmp24;
-   end;
-
-   procedure mix32;
-   begin
-   tmp32:=dr32[xi];
-   tmp32.r:=( (ddc24.r*b5.c) + (tmp32.r*(255-b5.c)) ) div 256;//div 256 is FASTER thatn 255
-   tmp32.g:=( (ddc24.g*b5.c) + (tmp32.g*(255-b5.c)) ) div 256;
-   tmp32.b:=( (ddc24.b*b5.c) + (tmp32.b*(255-b5.c)) ) div 256;
-   tmp32.a:=255;
-   if (bmr8<>nil) then backmask__exclude(bmr8[xi]);
-   dr32[xi]:=tmp32;
-   end;
-
-   procedure zoommix24(var dr24:pcolorrow24;var xbmr8:pcolorrow8;x:longint);
-   begin
-   tmp24:=dr24[x];
-   tmp24.r:=( (ddc24.r*b5.c) + (tmp24.r*(255-b5.c)) ) div 256;//div 256 is FASTER thatn 255
-   tmp24.g:=( (ddc24.g*b5.c) + (tmp24.g*(255-b5.c)) ) div 256;
-   tmp24.b:=( (ddc24.b*b5.c) + (tmp24.b*(255-b5.c)) ) div 256;
-   if (xbmr8<>nil) then backmask__exclude(xbmr8[x]);
-   dr24[x]:=tmp24;
-   end;
-
-   procedure zoommix32(var dr32:pcolorrow32;var xbmr8:pcolorrow8;x:longint);
-   begin
-   tmp32:=dr32[x];
-   tmp32.r:=( (ddc24.r*b5.c) + (tmp32.r*(255-b5.c)) ) div 256;//div 256 is FASTER thatn 255
-   tmp32.g:=( (ddc24.g*b5.c) + (tmp32.g*(255-b5.c)) ) div 256;
-   tmp32.b:=( (ddc24.b*b5.c) + (tmp32.b*(255-b5.c)) ) div 256;
-   tmp32.a:=255;
-   if (xbmr8<>nil) then backmask__exclude(xbmr8[x]);
-   dr32[x]:=tmp32;
-   end;
-begin
-//defaults
-result:=false;
-
-try
-//check image "d"
-if (dw<1) or (dh<1) then exit;
-case dbits of
-24:if (drows24=nil) then exit;
-32:if (drows32=nil) then exit;
-else exit;
-end;
-
-//.zoom - optional
-if xsyszoom then xzoom:=vizoom else xzoom:=1;
-
-//check area
-if (xarea.bottom<xarea.top) or (xarea.right<xarea.left) or (xarea.right<0) or (xarea.left>=dw) or (xarea.bottom<0) or (xarea.top>=dh) then exit;
-if (xarea2.bottom<xarea2.top) or (xarea2.right<xarea2.left) or (xarea2.right<xarea.left) or (xarea2.left>xarea.right) or (xarea2.bottom<xarea.top) or (xarea2.top>xarea.bottom) then exit;
-
-//check tea
-if not tea__info(xtea,false,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors) then exit;
-
-case xversion of
-3:begin//v3
-   vsize       :=5;
-   xtransparent:=false;//uses alpha channel instead of top-left pixel color
-   end;
-else vsize:=4;
-end;//case
-
-//check mask
-if (xmaskval>=0) then
-   begin
-   if zznil(xmask,2207) or ((xmask.width<dw) or (xmask.height<dh)) then xmaskval:=-1;//off
-   end;
-
-//check back mask
-if (xbackmask<>nil) and ((xbackmask.width<dw) or (xbackmask.height<dh)) then xbackmask:=nil;
-
-//init
-//.dreplaceblackOK
-dreplaceblackOK  :=xsyscolors and (dc<>clnone);//(0,0,0) => dc.color
-dreplaceblackOK2 :=xsyscolors and (dc2<>clnone);//(0,0,1) => dc2.color - 02mar2021
-//.xc -> dual purpose: replace "0,0,0 => xc" and "0,0,1 => xc2" OR colorise by converting color pixels into shades of "xc ... xc2" - 27mar2021
-xc:=int__c24(dc);
-xc2:=int__c24(dc2);
-xcoloriseOK:=xcolorise and (dc<>clnone) and (dc2<>clnone);
-finv:=(int__brightness_aveb(c24a0__int(xc))<int__brightness_aveb(c24a0__int(xc2)));
-//.amin
-a:=xarea2;//used for calculating curved cornersretain original copy of "xarea" for calculations and reference
-amin:=smallest32(low__sum32([a.bottom,-a.top,1]),low__sum32([a.right,-a.left,1]));
-//.x
-if (xarea.left<xarea2.left) then xarea.left:=xarea2.left;
-xarea.left:=frcrange32(xarea.left,0,dw-1);
-if (xarea.right>xarea2.right) then xarea.right:=xarea2.right;
-xarea.right:=frcrange32(xarea.right,0,dw-1);
-if (xarea.right<xarea.left) then exit;
-//.y
-if (xarea.top<xarea2.top) then xarea.top:=xarea2.top;
-xarea.top:=frcrange32(xarea.top,0,dh-1);
-if (xarea.bottom>xarea2.bottom) then xarea.bottom:=xarea2.bottom;
-xarea.bottom:=frcrange32(xarea.bottom,0,dh-1);
-if (xarea.bottom<xarea.top) then exit;
-//.mbits
-mbits:=dbits;
-if (xmaskval>=0) then mbits:=mbits*10;
-//get
-bmr8 :=nil;
-bmr82:=nil;
-bmr83:=nil;
-bmr84:=nil;
-xonce:=true;
-dd:=xSOD;//start of data
-xx:=0;
-xi:=dx;
-yi:=dy;
-zx:=dx;
-zy:=dy;
-//.switch
-if (xzoom>=2) then goto zoomdraw;
-
-
-//-- normal draw ---------------------------------------------------------------
-//.scan
-if (yi>=xarea.top) and (yi<=xarea.bottom) then xscan;
-//.corner
-low__cornersolid(true,a,amin,yi,xarea.left,xarea.right,xroundstyle,xround,lx,rx);
-
-//version 1, 2 and 3:
-redo5:
-if ((dd+vsize-1)<xtea.count) then
-   begin
-   b5.r:=xtea.bytes[dd+0];
-   b5.g:=xtea.bytes[dd+1];
-   b5.b:=xtea.bytes[dd+2];
-   b5.a:=xtea.bytes[dd+3];//not alpha BUT repeat count
-   if (xversion=3) then b5.c:=xtea.bytes[dd+4] else b5.c:=255;//alpha value
-
-   //.transparent color - top-left (first) pixel - version 1 and 2
-   if xonce then
-      begin
-      tc.r:=b5.r;
-      tc.g:=b5.g;
-      tc.b:=b5.b;
-      xonce:=false;
-      end;
-
-   if      xtransparent and (b5.r=tc.r) and (b5.g=tc.g) and (b5.b=tc.b) then b5.c:=0
-   else if xgrey                                                        then b5.c:=b5.c div 3;
-
-
-   //.draw pixels
-   if (b5.a>=1) then for p:=1 to b5.a do
-      begin
-      //.don't draw transparent pixels
-      if (yi>=xarea.top) and (yi<=xarea.bottom) and (xi>=lx) and (xi<=rx) and (b5.c>=1) then
-         begin
-         //get
-         //.black -> user specified color "dc"
-         if dreplaceblackOK and (b5.r=0) and (b5.g=0) and (b5.b=0) then ddc24:=xc
-         else if dreplaceblackOK2 and (b5.r=0) and (b5.g=0) and (b5.b=1) then ddc24:=xc2//02mar2021
-         //.all other colors applied "as is"
-         else
-            begin
-            ddc24.r:=b5.r;
-            ddc24.g:=b5.g;
-            ddc24.b:=b5.b;
-            if xcoloriseOK then x_sys;
-            end;
-
-         //set
-//was:         if xfocus then x_focus;
-
-         case mbits of
-         24:mix24;
-         240:if (mr8[xi]=xmaskval) then mix24;
-         32:mix32;
-         320:if (mr8[xi]=xmaskval) then mix32;
-         end;//case
-         end;//if
-
-      inc(xx);
-      xi:=xx+dx;
-      if (xx>=xw) then
-         begin
-         inc(yi);
-         if (yi>=xarea.top) and (yi<=xarea.bottom) then xscan;
-         //.corner
-         low__cornersolid(true,a,amin,yi,xarea.left,xarea.right,xroundstyle,xround,lx,rx);
-         xx:=0;
-         xi:=dx;
-         end;
-      end;//b5.a
-   //.loop
-   inc(dd,vsize);
-   if ((dd+vsize-1)<xtea.count) and (yi<=xarea.bottom) then goto redo5;
-   end;
-
-goto skipdone;
-
-
-//-- zoom draw -----------------------------------------------------------------
-zoomdraw:
-//.scan
-xscan2;
-//.corner
-low__cornersolid(true,a,amin,yi,xarea.left,xarea.right,xroundstyle,xround,lx,rx);
-if (xzoom>=2) then low__cornersolid(true,a,amin,zy+1,xarea.left,xarea.right,xroundstyle,xround,lx2,rx2);
-if (xzoom>=3) then low__cornersolid(true,a,amin,zy+2,xarea.left,xarea.right,xroundstyle,xround,lx3,rx3);
-if (xzoom>=4) then low__cornersolid(true,a,amin,zy+3,xarea.left,xarea.right,xroundstyle,xround,lx4,rx4);
-
-//.version 1,2 and 3:
-zoomredo5:
-if ((dd+vsize-1)<xtea.count) then
-   begin
-   b5.r:=xtea.bytes[dd+0];
-   b5.g:=xtea.bytes[dd+1];
-   b5.b:=xtea.bytes[dd+2];
-   b5.a:=xtea.bytes[dd+3];//not alpha BUT repeat count
-   if (xversion=3) then b5.c:=xtea.bytes[dd+4] else b5.c:=255;//alpha value
-
-   //.transparent color - top-left (first) pixel
-   if xonce then
-      begin
-      tc.r:=b5.r;
-      tc.g:=b5.g;
-      tc.b:=b5.b;
-      xonce:=false;
-      end;
-
-   if      xtransparent and (b5.r=tc.r) and (b5.g=tc.g) and (b5.b=tc.b) then b5.c:=0
-   else if xgrey                                                        then b5.c:=b5.c div 3;
-
-   //.draw pixels
-   if (b5.a>=1) then for p:=1 to b5.a do
-      begin
-      //.don't draw transparent pixels (tc -> top-left pixel defined) - 03mar2018
-      if (zy>=xarea.top) and (zy<=xarea.bottom) and (b5.c>=1) then
-         begin
-         //get
-         //.black -> user specified color "dc"
-         if dreplaceblackOK and (b5.r=0) and (b5.g=0) and (b5.b=0) then ddc24:=xc
-         else if dreplaceblackOK2 and (b5.r=0) and (b5.g=0) and (b5.b=1) then ddc24:=xc2//02mar2021
-         //.all other colors applied "as is"
-         else
-            begin
-            ddc24.r:=b5.r;
-            ddc24.g:=b5.g;
-            ddc24.b:=b5.b;
-            if xcoloriseOK then x_sys;
-            end;
-         //set
-
-         //was: if xfocus then x_focus;
-
-         case mbits of
-         24:begin
-            //y+0
-            if (zx>=lx) and (zx<=rx)                        then zoommix24(dr24,bmr8,zx+0);
-            if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix24(dr24,bmr8,zx+1);
-            if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix24(dr24,bmr8,zx+2);
-            if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix24(dr24,bmr8,zx+3);
-            //y+1
-            if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix24(dr242,bmr82,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix24(dr242,bmr82,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix24(dr242,bmr82,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix24(dr242,bmr82,zx+3);
-               end;
-            //y+2
-            if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix24(dr243,bmr83,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix24(dr243,bmr83,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix24(dr243,bmr83,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix24(dr243,bmr83,zx+3);
-               end;
-            //y+32
-            if (xzoom>=4) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix24(dr244,bmr84,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix24(dr244,bmr84,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix24(dr244,bmr84,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix24(dr244,bmr84,zx+3);
-               end;
-            end;//24
-         240:begin
-            //y+0
-            if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                        then zoommix24(dr24,bmr8,zx+0);
-            if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr8[zx]=xmaskval) then zoommix24(dr24,bmr8,zx+1);
-            if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr8[zx]=xmaskval) then zoommix24(dr24,bmr8,zx+2);
-            if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr8[zx]=xmaskval) then zoommix24(dr24,bmr8,zx+3);
-            //y+1
-            if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix24(dr242,bmr82,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr82[zx]=xmaskval) then zoommix24(dr242,bmr82,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr82[zx]=xmaskval) then zoommix24(dr242,bmr82,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr82[zx]=xmaskval) then zoommix24(dr242,bmr82,zx+3);
-               end;
-            //y+2
-            if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix24(dr243,bmr83,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr83[zx]=xmaskval) then zoommix24(dr243,bmr83,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr83[zx]=xmaskval) then zoommix24(dr243,bmr83,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr83[zx]=xmaskval) then zoommix24(dr243,bmr83,zx+3);
-               end;
-            //y+32
-            if (xzoom>=4) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix24(dr244,bmr84,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr84[zx]=xmaskval) then zoommix24(dr244,bmr84,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr84[zx]=xmaskval) then zoommix24(dr244,bmr84,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr84[zx]=xmaskval) then zoommix24(dr244,bmr84,zx+3);
-               end;
-            end;//240
-         32:begin
-            //y+0
-            if (zx>=lx) and (zx<=rx)                        then zoommix32(dr32,bmr8,zx+0);
-            if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix32(dr32,bmr8,zx+1);
-            if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix32(dr32,bmr8,zx+2);
-            if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix32(dr32,bmr8,zx+3);
-            //y+1
-            if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix32(dr322,bmr82,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix32(dr322,bmr82,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix32(dr322,bmr82,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix32(dr322,bmr82,zx+3);
-               end;
-            //y+2
-            if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix32(dr323,bmr83,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix32(dr323,bmr83,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix32(dr323,bmr83,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix32(dr323,bmr83,zx+3);
-               end;
-            //y+32
-            if (xzoom>=4) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx)                        then zoommix32(dr324,bmr84,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) then zoommix32(dr324,bmr84,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) then zoommix32(dr324,bmr84,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) then zoommix32(dr324,bmr84,zx+3);
-               end;
-            end;//32
-         320:begin
-            //y+0
-            if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                        then zoommix32(dr32,bmr8,zx+0);
-            if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr8[zx]=xmaskval) then zoommix32(dr32,bmr8,zx+1);
-            if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr8[zx]=xmaskval) then zoommix32(dr32,bmr8,zx+2);
-            if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr8[zx]=xmaskval) then zoommix32(dr32,bmr8,zx+3);
-            //y+1
-            if (xzoom>=2) and ((zy+1)>=xarea.top) and ((zy+1)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix32(dr322,bmr82,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr82[zx]=xmaskval) then zoommix32(dr322,bmr82,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr82[zx]=xmaskval) then zoommix32(dr322,bmr82,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr82[zx]=xmaskval) then zoommix32(dr322,bmr82,zx+3);
-               end;
-            //y+2
-            if (xzoom>=3) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix32(dr323,bmr83,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr83[zx]=xmaskval) then zoommix32(dr323,bmr83,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr83[zx]=xmaskval) then zoommix32(dr323,bmr83,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr83[zx]=xmaskval) then zoommix32(dr323,bmr83,zx+3);
-               end;
-            //y+32
-            if (xzoom>=4) and ((zy+2)>=xarea.top) and ((zy+2)<=xarea.bottom) then
-               begin
-               if (zx>=lx) and (zx<=rx) and (mr8[zx]=xmaskval)                         then zoommix32(dr324,bmr84,zx+0);
-               if (xzoom>=2) and ((zx+1)>=lx) and ((zx+1)<=rx) and (mr84[zx]=xmaskval) then zoommix32(dr324,bmr84,zx+1);
-               if (xzoom>=3) and ((zx+2)>=lx) and ((zx+2)<=rx) and (mr84[zx]=xmaskval) then zoommix32(dr324,bmr84,zx+2);
-               if (xzoom>=4) and ((zx+3)>=lx) and ((zx+3)<=rx) and (mr84[zx]=xmaskval) then zoommix32(dr324,bmr84,zx+3);
-               end;
-            end;//320
-         end;//case
-         end;//if
-
-      inc(xx);
-      //xi:=xx+dx;
-      zx:=(xx*xzoom)+dx;//12mar2021
-      if (xx>=xw) then
-         begin
-         inc(yi);
-         zy:=((yi-dy)*xzoom)+dy;
-         xscan2;
-         //.corner
-         low__cornersolid(true,a,amin,zy,xarea.left,xarea.right,xroundstyle,xround,lx,rx);
-         if (xzoom>=2) then low__cornersolid(true,a,amin,zy+1,xarea.left,xarea.right,xroundstyle,xround,lx2,rx2);
-         if (xzoom>=3) then low__cornersolid(true,a,amin,zy+2,xarea.left,xarea.right,xroundstyle,xround,lx3,rx3);
-         if (xzoom>=4) then low__cornersolid(true,a,amin,zy+3,xarea.left,xarea.right,xroundstyle,xround,lx4,rx4);
-         xx:=0;
-         //xi:=dx;
-         zx:=dx;
-         end;
-      end;//b5.a
-   //.loop
-   inc(dd,vsize);
-   if ((dd+vsize-1)<xtea.count) and (yi<=xarea.bottom) then goto zoomredo5;
-   end;
-
-goto skipdone;
-
-
-//successful
-skipdone:
-result:=true;
-skipend:
-except;end;
 end;
 
 function tea__torawdata24(xtea:tlistptr;xdata:tstr8;var xw,xh:longint):boolean;
@@ -4891,12 +4459,12 @@ try
 xw:=0;
 xh:=0;
 //check
-if (not str__lock(xdata)) or (not tea__info(xtea,false,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) then goto skipend;
+if (not str__lock(xdata)) or (not tea__info(xtea,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) then goto skipend;
 
 //init
 str__clear(xdata);
 str__setlen(xdata,xw*xh*3);//RGB
-xdatalen:=str__len(xdata);
+xdatalen:=str__len32(xdata);
 
 //get
 dd:=xSOD;//start of data
@@ -4955,7 +4523,7 @@ xw:=0;
 xh:=0;
 xcolor:=clnone;
 //check
-if (not tea__info(xtea,false,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) then exit;
+if (not tea__info(xtea,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) then exit;
 //get
 dd:=xSOD;//start of data
 if ((dd+3)<xtea.count) then
@@ -4988,150 +4556,206 @@ var
 
    procedure dscan;
    begin
+
    case dbits of
-   8: dr8 :=d.prows8[dy];
-   24:dr24:=d.prows24[dy];
-   32:dr32:=d.prows32[dy];
+   8: dr8             :=d.prows8[dy];
+   24:dr24            :=d.prows24[dy];
+   32:dr32            :=d.prows32[dy];
+   end;//case
+
    end;
-   end;
+
 begin
+
 //defaults
-result:=false;
+result                :=false;
+xw                    :=0;
+xh                    :=0;
 
 try
-xw:=0;
-xh:=0;
+
 //check
-if (not tea__info(xtea,false,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) or (not misinfo82432(d,dbits,dw,dh,dhasai)) then exit;
+if (not tea__info(xtea,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors)) or (not misinfo82432(d,dbits,dw,dh,dhasai)) then exit;
+
 //init
 d.sizeto(xw,xh);
-dw:=d.width;
-dh:=d.height;
+dw                    :=d.width;
+dh                    :=d.height;
+
 //get
-dd:=xSOD;//start of data
-dx:=0;
-dy:=0;
-tr:=-1;
-tg:=-1;
-tb:=-1;
-xonce:=true;
+dd                    :=xSOD;//start of data
+dx                    :=0;
+dy                    :=0;
+tr                    :=-1;
+tg                    :=-1;
+tb                    :=-1;
+xonce                 :=true;
 
 dscan;
 
 if (xversion=1) or (xversion=2) then
    begin
 redo4:
+
 if ((dd+3)<xtea.count) then
    begin
-   a4.bytes[0]:=xtea.bytes[dd+0];
-   a4.bytes[1]:=xtea.bytes[dd+1];
-   a4.bytes[2]:=xtea.bytes[dd+2];
-   a4.bytes[3]:=xtea.bytes[dd+3];
+
+   a4.bytes[0]        :=xtea.bytes[dd+0];
+   a4.bytes[1]        :=xtea.bytes[dd+1];
+   a4.bytes[2]        :=xtea.bytes[dd+2];
+   a4.bytes[3]        :=xtea.bytes[dd+3];
+
    //.get pixels
    if (a4.a>=1) then
       begin
+
       for p:=1 to a4.a do
       begin
+
       case dbits of
       8:begin
+
          if (a4.g>a4.r) then a4.r:=a4.g;
          if (a4.b>a4.r) then a4.r:=a4.b;
-         dr8[dx]:=a4.r;
+         dr8[dx]      :=a4.r;
+
          end;
       24:begin
-         dc24.r:=a4.r;
-         dc24.g:=a4.g;
-         dc24.b:=a4.b;
-         dr24[dx]:=dc24;
+
+         dc24.r       :=a4.r;
+         dc24.g       :=a4.g;
+         dc24.b       :=a4.b;
+         dr24[dx]     :=dc24;
+
          end;
       32:begin
+
          if xonce then
             begin
-            xonce:=false;
-            tr:=a4.r;
-            tg:=a4.g;
-            tb:=a4.b;
+
+            xonce     :=false;
+            tr        :=a4.r;
+            tg        :=a4.g;
+            tb        :=a4.b;
+
             end;
-         dc32.r:=a4.r;
-         dc32.g:=a4.g;
-         dc32.b:=a4.b;
+
+         dc32.r       :=a4.r;
+         dc32.g       :=a4.g;
+         dc32.b       :=a4.b;
+
          if (tr=a4.r) and (tg=a4.g) and (tb=a4.b) then dc32.a:=0 else dc32.a:=255;//embed transparency into alpha channel - 01may2025
-         dr32[dx]:=dc32;
+
+         dr32[dx]     :=dc32;
+
          end;
+
       end;//case
+
       //.inc
       inc(dx);
+
       if (dx>=xw) then
          begin
-         dx:=0;
+
+         dx           :=0;
+
          inc(dy);
          if (dy>=xh) then break;
          dscan;
+
          end;
+
       end;//p
+
       end;//a4.a
+
    //.loop
    inc(dd,4);
    if ((dd+3)<xtea.count) then goto redo4;
+
    end;
+
    end
 
 else if (xversion=3) then
    begin
 redo5:
+
 if ((dd+4)<xtea.count) then
    begin
-   a5.r:=xtea.bytes[dd+0];
-   a5.g:=xtea.bytes[dd+1];
-   a5.b:=xtea.bytes[dd+2];
-   a5.a:=xtea.bytes[dd+3];//not alpha BUT repeat count
-   a5.c:=xtea.bytes[dd+4];//alpha value
+
+   a5.r               :=xtea.bytes[dd+0];
+   a5.g               :=xtea.bytes[dd+1];
+   a5.b               :=xtea.bytes[dd+2];
+   a5.a               :=xtea.bytes[dd+3];//not alpha BUT repeat count
+   a5.c               :=xtea.bytes[dd+4];//alpha value
+
    //.get pixels
    if (a5.a>=1) then
       begin
+
       for p:=1 to a5.a do
       begin
+
       case dbits of
       8:begin
+
          if (a5.g>a5.r) then a5.r:=a5.g;
          if (a5.b>a5.r) then a5.r:=a5.b;
-         dr8[dx]:=a5.r;
+         dr8[dx]      :=a5.r;
+
          end;
       24:begin
-         dc24.r:=a5.r;
-         dc24.g:=a5.g;
-         dc24.b:=a5.b;
-         dr24[dx]:=dc24;
+
+         dc24.r       :=a5.r;
+         dc24.g       :=a5.g;
+         dc24.b       :=a5.b;
+         dr24[dx]     :=dc24;
+
          end;
       32:begin
-         dc32.r:=a5.r;
-         dc32.g:=a5.g;
-         dc32.b:=a5.b;
-         dc32.a:=a5.c;
-         dr32[dx]:=dc32;
+
+         dc32.r       :=a5.r;
+         dc32.g       :=a5.g;
+         dc32.b       :=a5.b;
+         dc32.a       :=a5.c;
+         dr32[dx]     :=dc32;
+
          end;
       end;//case
+
       //.inc
       inc(dx);
+
       if (dx>=xw) then
          begin
-         dx:=0;
+
+         dx           :=0;
+
          inc(dy);
          if (dy>=xh) then break;
          dscan;
+
          end;
+
       end;//p
+
       end;//a5.a
+
    //.loop
    inc(dd,5);
    if ((dd+4)<xtea.count) then goto redo5;
+
    end;
+
    end;
 
 //xtransparent
-d.ai.transparent:=xtransparent;//07apr2021
-d.ai.syscolors:=xsyscolors;//13apr2021
-d.ai.bpp:=low__aorb(24,32,xversion=3);//12dec2024
+d.ai.transparent      :=xtransparent;//07apr2021
+d.ai.syscolors        :=xsyscolors;//13apr2021
+d.ai.bpp              :=low__aorb(24,32,xversion=3);//12dec2024
+
 //successful
 result:=true;
 except;end;
@@ -5142,13 +4766,20 @@ begin
 result:=tea__fromdata32(d,sdata,xw,xh);
 end;
 
-function tea__fromdata32(d:tobject;sdata:pobject;var xw,xh:longint):boolean;
+function tea__fromdata32(d:tobject;sdata:pobject;var xw,xh:longint):boolean;//05oct2025
+begin
+result:=tea__fromdata322(d,sdata,false,xw,xh);
+end;
+
+function tea__fromdata322(d:tobject;sdata:pobject;xconverttransparency:boolean;var xw,xh:longint):boolean;//05oct2025
 label//Supports "d" in 8/24/32 bits
    skipend,redo4,redo5;
 var
    a4:tint4;
    a5:tcolor40;
    slen,p,dd,dbits,dx,dy,xSOD,xversion,xval1,xval2:longint;
+   tr,tg,tb:byte;
+   xfirst:boolean;
    dr8 :pcolorrow8;
    dr24:pcolorrow24;
    dr32:pcolorrow32;
@@ -5156,139 +4787,968 @@ var
    dc32:tcolor32;
    xtransparent,xsyscolors:boolean;
 begin
+
 //defaults
-result:=false;
-xw:=0;
-xh:=0;
+result                :=false;
+xw                    :=0;
+xh                    :=0;
+
 try
+
 //check
 if not str__lock(sdata) then goto skipend;
-if not tea__info3(sdata,false,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors) then goto skipend;
+if not tea__info3(sdata,xw,xh,xSOD,xversion,xval1,xval2,xtransparent,xsyscolors) then goto skipend;
+
 //size
 if not missize(d,xw,xh) then goto skipend;
 if not misok82432(d,dbits,xw,xh) then goto skipend;
+
 //get
-slen:=str__len(sdata);
-dd:=xSOD;//start of data
-dx:=0;
-dy:=0;
+slen                  :=str__len32(sdata);
+dd                    :=xSOD;//start of data
+dx                    :=0;
+dy                    :=0;
+xfirst                :=true;
+xconverttransparency  :=xconverttransparency and (xversion<=2) and (dbits>=32);
+
 if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
 
 //.recsize = 4 bytes
 if (xversion=1) or (xversion=2) then
    begin
+
 redo4:
 if ((dd+3)<slen) then
    begin
-   a4.bytes[0]:=str__bytes0(sdata,dd+0);
-   a4.bytes[1]:=str__bytes0(sdata,dd+1);
-   a4.bytes[2]:=str__bytes0(sdata,dd+2);
-   a4.bytes[3]:=str__bytes0(sdata,dd+3);
+
+   a4.bytes[0]        :=str__bytes0(sdata,dd+0);
+   a4.bytes[1]        :=str__bytes0(sdata,dd+1);
+   a4.bytes[2]        :=str__bytes0(sdata,dd+2);
+   a4.bytes[3]        :=str__bytes0(sdata,dd+3);
+
    //.get pixels
    if (a4.a>=1) then
       begin
+
+      if xfirst then
+         begin
+
+         xfirst       :=false;
+         tr           :=a4.r;
+         tg           :=a4.g;
+         tb           :=a4.b;
+
+         end;
+
       for p:=1 to a4.a do
       begin
       case dbits of
       8:begin
+
          if (a4.g>a4.r) then a4.r:=a4.g;
          if (a4.b>a4.r) then a4.r:=a4.b;
-         dr8[dx]:=a4.r;
+         dr8[dx]      :=a4.r;
+
          end;
       24:begin
-         dc24.r:=a4.r;
-         dc24.g:=a4.g;
-         dc24.b:=a4.b;
-         dr24[dx]:=dc24;
+
+         dc24.r       :=a4.r;
+         dc24.g       :=a4.g;
+         dc24.b       :=a4.b;
+         dr24[dx]     :=dc24;
+
          end;
       32:begin
-         dc32.r:=a4.r;
-         dc32.g:=a4.g;
-         dc32.b:=a4.b;
-         dc32.a:=255;
-         dr32[dx]:=dc32;
+
+         dc32.r       :=a4.r;
+         dc32.g       :=a4.g;
+         dc32.b       :=a4.b;
+
+         //TEA v1 and v2 used 24bit color palettes and top-left pixel color when transparent
+         case xconverttransparency and (tr=a4.r) and (tg=a4.g) and (tb=a4.b) of
+         true:dc32.a  :=0;
+         else dc32.a  :=255;
+         end;//case
+
+         dr32[dx]     :=dc32;
+
          end;
+
       end;//case
+
       //.inc
       inc(dx);
+
       if (dx>=xw) then
          begin
-         dx:=0;
+
+         dx           :=0;
+
          inc(dy);
          if (dy>=xh) then break;
          if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
+
          end;
+
       end;//p
       end;//a4.a
+
    //.loop
    inc(dd,4);
    if ((dd+3)<slen) then goto redo4;
+
    end;
    end
 
 else if (xversion=3) then
    begin
+
 //.recsize = 5 bytes
 redo5:
 if ((dd+4)<slen) then
    begin
-   a5.r:=str__bytes0(sdata,dd+0);
-   a5.g:=str__bytes0(sdata,dd+1);
-   a5.b:=str__bytes0(sdata,dd+2);
-   a5.a:=str__bytes0(sdata,dd+3);//not alpha BUT repeat count
-   a5.c:=str__bytes0(sdata,dd+4);//alpha value
+
+   a5.r               :=str__bytes0(sdata,dd+0);
+   a5.g               :=str__bytes0(sdata,dd+1);
+   a5.b               :=str__bytes0(sdata,dd+2);
+   a5.a               :=str__bytes0(sdata,dd+3);//not alpha BUT repeat count
+   a5.c               :=str__bytes0(sdata,dd+4);//alpha value
 
    //.get pixels
    if (a5.a>=1) then
       begin
+
       for p:=1 to a5.a do
       begin
+
       case dbits of
       8:begin
+
          if (a5.g>a5.r) then a5.r:=a5.g;
          if (a5.b>a5.r) then a5.r:=a5.b;
-         dr8[dx]:=a5.r;
+         dr8[dx]      :=a5.r;
+
          end;
       24:begin
-         dc24.r:=a5.r;
-         dc24.g:=a5.g;
-         dc24.b:=a5.b;
-         dr24[dx]:=dc24;
+
+         dc24.r       :=a5.r;
+         dc24.g       :=a5.g;
+         dc24.b       :=a5.b;
+         dr24[dx]     :=dc24;
+
          end;
       32:begin
-         dc32.r:=a5.r;
-         dc32.g:=a5.g;
-         dc32.b:=a5.b;
-         dc32.a:=a5.c;//18nov2024
-         dr32[dx]:=dc32;
+
+         dc32.r       :=a5.r;
+         dc32.g       :=a5.g;
+         dc32.b       :=a5.b;
+         dc32.a       :=a5.c;//18nov2024
+         dr32[dx]     :=dc32;
+
          end;
       end;//case
+
       //.inc
       inc(dx);
+
       if (dx>=xw) then
          begin
-         dx:=0;
+
+         dx           :=0;
+
          inc(dy);
          if (dy>=xh) then break;
          if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
+
          end;
+
       end;//p
+
       end;//a5.a
+
    //.loop
    inc(dd,5);
    if ((dd+4)<slen) then goto redo5;
+
    end;
+
    end;
 
 //xtransparent
-misai(d).transparent:=xtransparent;//07apr2021
-misai(d).syscolors:=xsyscolors;//13apr2021
+misai(d).transparent  :=xtransparent;//07apr2021
+misai(d).syscolors    :=xsyscolors;//13apr2021
+
+//successful
+result                :=true;
+
+skipend:
+except;end;
+
+//free
+str__uaf(sdata);
+
+end;
+
+
+//rle6 procs -------------------------------------------------------------------
+
+function rle6__fromdata(s:tobject;d:pobject;var e:string):boolean;//25feb2026
+label//accepts "d" as tstr8/tstr9 or tbasicrle6
+   skipend;
+
+var
+   a:tbasicrle6;
+   b:tresslot;
+   c:pfastdraw;
+   dx,dy,sbits,sw,sh:longint;
+   vlum:byte;
+   sr32:pcolorrow32;
+   s32:pcolor32;
+
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+b           :=res_nil;
+c           :=nil;
+
+try
+
+//check
+if (d=nil)                                         then exit;
+if (not (d^ is tbasicrle6)) and (not str__lock(d)) then exit;
+if not misok82432(s,sbits,sw,sh)                   then goto skipend;
+
+//init
+case (d^ is tbasicrle6) of
+true:a:=(d^ as tbasicrle6);
+else begin
+
+   a           :=tbasicrle6.create;
+   if not a.fromdata(d)                then goto skipend;
+
+   end;
+end;//case
+
+//.size
+if not missize(s,a.width,a.height)     then goto skipend;
+
+//.cls
+if not mis__cls(s,0,0,0,255)           then goto skipend;
+
+//get
+fd__selStore( c );
+b           :=res__newFD;//fast draw
+fd__select( b );
+fd__defaults;
+
+fd__setbuffer( fd_buffer  ,s );//target buffer
+fd__setbuffer( fd_buffer2 ,a );//source buffer
+
+//.use same colors for channels as the encoder/decoder to retain image integrity
+fd__setval( fd_color1 ,rgba__int(255,255,255,255) );//lum
+fd__setval( fd_color2 ,rgba__int(255,000,000,255) );//red
+fd__setval( fd_color3 ,rgba__int(000,255,000,255) );//green
+fd__setval( fd_color4 ,rgba__int(000,000,255,255) );//blue
+
+//.render image
+fd__render( fd_drawrle6 );
+
+//.generate alpha channel
+if (sbits=32) then
+   begin
+
+   for dy:=0 to pred(a.height) do
+   begin
+
+   if not misscan32(s,dy,sr32) then break;
+
+   for dx:=0 to pred(a.width) do
+   begin
+
+   s32                :=@sr32[dx];
+
+   vlum               :=s32.r;
+   if (s32.g>vlum) then vlum:=s32.g;
+   if (s32.b>vlum) then vlum:=s32.b;
+
+   sr32[dx].a         :=vlum;
+
+   end;//dx
+
+   end;//dy
+
+   end;
+
 //successful
 result:=true;
 skipend:
+
 except;end;
-try;str__uaf(sdata);except;end;
+
+//free
+if (a<>d^)     then freeobj(@a);
+if str__ok(d)  then str__uaf(d);
+res__del( b );
+
+//restore
+if (c<>nil) then fd__selRestore( c );
+
 end;
+
+function rle6__todata(s:tobject;d:pobject;var e:string):boolean;//06mar2026
+label
+   skipend;
+
+var
+   a:tbasicrle6;
+
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+
+try
+
+//check
+if not str__lock(d)              then exit;
+
+//init
+a           :=tbasicrle6.create;
+
+//get
+a.slow__makefromLRGB( s );
+
+//set
+str__add( d ,@a.core );
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+str__uaf(d);
+freeobj(@a);
+
+end;
+
+
+//rle8 procs -------------------------------------------------------------------
+
+function rle8__fromdata(s:tobject;d:pobject;var e:string):boolean;//19mar2026, 25feb2026
+label//accepts "d" as tstr8/tstr9 or tbasicrle8
+   skipend;
+
+var
+   a:tbasicrle8;
+   b:tresslot;
+   c:pfastdraw;
+   dx,dy,sbits,sw,sh:longint;
+   sr32:pcolorrow32;
+
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+b           :=res_nil;
+c           :=nil;
+
+try
+
+//check
+if (d=nil)                                         then exit;
+if (not (d^ is tbasicrle8)) and (not str__lock(d)) then exit;
+if not misok82432(s,sbits,sw,sh)                   then goto skipend;
+
+//init
+case (d^ is tbasicrle8) of
+true:a:=(d^ as tbasicrle8);
+else begin
+
+   a           :=tbasicrle8.create;
+   if not a.fromdata(d)                then goto skipend;
+
+   end;
+end;//case
+
+//.size
+if not missize(s,a.width,a.height)     then goto skipend;
+
+//.cls
+if not mis__cls(s,0,0,0,255)           then goto skipend;
+
+//get
+fd__selStore( c );
+b           :=res__newFD;//fast draw
+fd__select( b );
+fd__defaults;
+
+fd__setbuffer( fd_buffer  ,s );//target buffer
+fd__setbuffer( fd_buffer2 ,a );//source buffer
+
+//.use same color for single-channel as the encoder/decoder to retain image integrity
+fd__setval( fd_color1 ,rgba__int(255,255,255,255) );//lum
+
+//.render image
+fd__render( fd_drawrle8 );
+
+//.generate alpha channel
+if (sbits=32) then
+   begin
+
+   for dy:=0 to pred(a.height) do
+   begin
+
+   if not misscan32(s,dy,sr32) then break;
+
+   for dx:=0 to pred(a.width) do sr32[dx].a:=sr32[dx].r;
+
+   end;//dy
+
+   end;
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+if (a<>d^)     then freeobj(@a);
+if str__ok(d)  then str__uaf(d);
+res__del( b );
+
+//restore
+if (c<>nil) then fd__selRestore( c );
+
+end;
+
+function rle8__todata(s:tobject;d:pobject;var e:string):boolean;//25feb2026
+label
+   skipend;
+var
+   a:tbasicrle8;
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+
+try
+
+//check
+if not str__lock(d)              then exit;
+
+//init
+a           :=tbasicrle8.create;
+
+//get
+a.slow__makefromLUM( s );
+
+//set
+str__add( d ,@a.core );
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+str__uaf(d);
+freeobj(@a);
+
+end;
+
+
+//rle32 procs ------------------------------------------------------------------
+
+function rle32__fromdata(s:tobject;d:pobject;var e:string):boolean;//21mar2026
+label//accepts "d" as tstr8/tstr9 or tbasicrle8
+   skipend;
+
+var
+   a:tbasicrle32;
+   sbits,sw,sh:longint;
+
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+
+try
+
+//check
+if (d=nil)                                          then exit;
+if (not (d^ is tbasicrle32)) and (not str__lock(d)) then exit;
+if not misok82432(s,sbits,sw,sh)                    then goto skipend;
+
+//init
+case (d^ is tbasicrle32) of
+true:a:=(d^ as tbasicrle32);
+else begin
+
+   a           :=tbasicrle32.create;
+   if not a.fromdata(d)                then goto skipend;
+
+   end;
+end;//case
+
+//get
+if not a.copytoimage(s)                then goto skipend;
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+if (a<>d^)     then freeobj(@a);
+if str__ok(d)  then str__uaf(d);
+
+end;
+
+function rle32__todata(s:tobject;d:pobject;var e:string):boolean;//21mar2026
+label
+   skipend;
+var
+   a:tbasicrle32;
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+
+try
+
+//check
+if not str__lock(d)              then exit;
+
+//init
+a           :=tbasicrle32.create;
+
+//get
+a.rgba__makefrom( s );
+
+//set
+str__add( d ,@a.core );
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+str__uaf(d);
+freeobj(@a);
+
+end;
+
+//tep procs --------------------------------------------------------------------
+//v1
+
+function tep__fromdata(s:tobject;d:pobject;var e:string):boolean;//10mar2026, 05oct2025
+label//s=target image to fill, d=data we're reading image from
+   skipend;
+
+const
+   rpccPal8:array[0..7] of longint=(clBlack,clRed,clYellow,clLime,clBlue,clSilver,clGray,clWhite);
+   rpccBPPS:array[0..8] of longint =(0,2,4,8,16,32,64,128,256);//bbp => colors
+   tpccSOF                         =29;//Encoded Value - Start of File
+   tpccEOF                         =35;//End of File
+   tpccEOP                         =126;//End of Palette
+   tpccStartComment                =123;// '{'
+   tpccEndComment                  =125;// '}'
+   tpccMaxInt                      =16777216;
+
+var
+   dlen:longint;
+    spal8:array[0..255] of tcolor8;
+   spal24:array[0..255] of tcolor24;
+   spal32:array[0..255] of tcolor32;
+   pcount,spalCount:longint;
+   xpos,sbits,sx,sy,sw,sh,sbpp:longint;
+   xtransColorIndex:byte;
+   sr32:pcolorrow32;
+   sr24:pcolorrow24;
+    sr8:pcolorrow8;
+
+   function v1:byte;
+   begin
+
+   if (xpos>=0) and (xpos<dlen) then
+      begin
+
+      result:=str__pbytes0(d,xpos);
+      inc(xpos);
+
+      end
+   else result:=0;
+
+   end;
+
+   function xasnum(var x:byte):boolean;
+   begin
+
+   result:=true;
+
+   case x of
+   48..57   :dec(x,48);//0-9=10 "0..9"
+   65..90   :dec(x,55);//10-35=26 "a..z"
+   97..122  :dec(x,61);//36-61=26 "a..z"
+   40..41   :inc(x,22);//62-63=2 "(..)"
+   else      x:=0;
+   end;//case
+
+   end;
+
+   function xasnumb(const x:byte):byte;
+   begin
+   result:=x;
+   xasnum(result);
+   end;
+
+   function xheader:boolean;
+   label
+      skipend,redo;
+   var
+      int1,commentcount,count,p:longint;
+      v:byte;
+      eop,eof:boolean;
+   begin
+
+   //defaults
+   result       :=false;
+
+   //check
+   if (dlen<=0) then exit;
+
+   //init
+   commentcount :=0;
+   eof          :=false;
+   eop          :=false;
+   count        :=0;
+
+   //read
+   redo:
+
+   if (xpos>=dlen) then goto skipend;
+   v:=v1;
+
+   //.start of comment
+   case v of
+   tpccstartcomment  :inc(commentcount);//start of embedded comment
+   tpccendcomment    :dec(commentcount);//end of embedded comment
+   tpcceof           :if (commentcount=0) then eof:=true;//end of file
+   tpcceop           :if (commentcount=0) then eop:=true;//end of palette and header
+   else begin
+
+      if (commentcount=0) then
+         begin
+
+         xasnum(v);
+
+         case count of
+
+         //t
+         0:if (v=tpccsof) then inc(count);
+
+         //bits/per/pixel 1-6
+         1:case (v>=1) and (v<=6) of
+           true:begin
+
+              sbpp       :=v;
+              spalCount  :=rpccbpps[sbpp];
+
+              //.standard color palette
+              for p:=0 to high(rpccPal8) do
+              begin
+
+              spal32[p]:=inta__c32(rpccPal8[p],255);
+              spal24[p]:=int__c24(rpccPal8[p]);
+               spal8[p]:=int__c8(rpccPal8[p]);
+
+              end;//p
+
+              inc(count);
+
+              end;
+           false:goto skipend;{unsupported bbp 1-3 only}
+           end;//end of case
+
+         //width and height
+         2,3:begin
+
+            case count of
+            2:begin
+
+               sw:=v;
+               inc(sw,xasnumb(v1)*64);
+               inc(sw,xasnumb(v1)*64*64);
+               inc(count);
+
+               end;
+            3:begin
+
+               sh:=v;
+               inc(sh,xasnumb(v1)*64);
+               inc(sh,xasnumb(v1)*64*64);
+               inc(count);
+
+               end;
+            end;//case
+
+            end;
+
+         //palette 1-N
+         4:begin
+
+            int1             := v +(xasnumb(v1)*64) + (xasnumb(v1)*64*64) + (xasnumb(v1)*64*64*64);
+            spal32[pcount]   :=inta__c32(int1,255);
+            spal24[pcount]   :=int__c24(int1);
+             spal8[pcount]   :=int__c8(int1);
+
+            inc(pcount);
+
+            if (pcount>=spalCount) then inc(count);
+
+            end;
+
+         5:;//null - wait for eop or eop
+         end;//case
+
+         end;//if
+
+      end;//begin
+   end;//case
+
+   //loop
+   if (not eop) and (not eof) then goto redo;
+
+   //successful
+   result:=eop and (sbpp>0) and (sw>0) and (sh>0);
+
+   skipend:
+   end;
+
+   function pr(const x:byte):byte;
+   begin
+   if (x>=0) and (x<spalCount) then result:=x else result:=pred(spalCount);
+   end;
+
+   procedure p1(x:byte);
+   begin
+
+   //top-left pixel is assumed to be transparent -> record index and use from this point on
+   if (sx=0) and (sy=0) then xtransColorIndex:=x;
+
+   //draw non-transparent pixels only
+   if (sx<sw) and (sy<sh) and (x<>xtransColorIndex) then
+      begin
+
+      case sbits of
+       8:sr8 [sx]:=spal8[x];
+      24:sr24[sx]:=spal24[x];
+      32:sr32[sx]:=spal32[x];
+      end;//case
+
+      end;
+
+   //inc to next pixel/row
+   inc(sx);
+
+   if (sx>=sw) then
+      begin
+
+      sx:=0;
+      inc(sy);
+      if (sy<sh) then misscan82432(s,sy,sr8,sr24,sr32);
+
+      end;
+
+   end;
+
+   procedure pp(x:byte);
+   var
+      v1,v2,v3,v4,v5:byte;
+   begin
+
+   case sbpp of
+
+   //16/32/64 color : (0-63)
+   4..6:p1( pr(x) );
+
+   //8 color : (0-7) + (0-7)*8
+   3:begin
+
+     //get
+     v1:=pr(x div 8);
+     dec(x,v1*8);
+
+     //set
+     p1( pr(x) );
+     p1(v1);
+
+     end;
+
+   //4 color : (0-3) + (0-3)*4 + (0-3)*16
+   2:begin
+
+     //get
+     v1:=pr(x div 16);
+     dec(x,v1*16);
+
+     v2:=pr(x div 4);
+     dec(x,v2*4);
+
+     //set
+     p1( pr(x) );
+     p1(v2);
+     p1(v1);
+
+     end;
+
+   //2 color : (0-1) + (0-1)*2 + (0-1)*4 + (0-1)*8 + (0-1)*16 + (0-1)*32
+   1:begin
+
+     //get
+     v1:=pr(x div 32);
+     dec(x,v1*32);
+
+     v2:=pr(x div 16);
+     dec(x,v2*16);
+
+     v3:=pr(x div 8);
+     dec(x,v3*8);
+
+     v4:=pr(x div 4);
+     dec(x,v4*4);
+
+     v5:=pr(x div 2);
+     dec(x,v5*2);
+
+     //set
+     p1( pr(x) );
+     p1(v5);
+     p1(v4);
+     p1(v3);
+     p1(v2);
+     p1(v1);
+
+     end;
+   else exit;//unknown bpp
+
+   end;//case
+
+   end;
+
+   function xreadpixels:boolean;
+   label
+      redo;
+   var
+      commentcount:longint;
+      v:byte;
+      xignore,eof:boolean;
+   begin
+
+   //defaults
+   result             :=false;
+   commentcount       :=0;
+   eof                :=false;
+   xignore            :=false;
+   misscan82432(s,0,sr8,sr24,sr32);
+
+   //read
+   redo:
+   v                  :=v1;
+
+   if xignore then
+      begin
+
+      case v of
+      ssSingleQuote    :xignore:=not xignore;
+      end;//case
+
+      end
+   else begin
+
+      case v of
+      ssSingleQuote    :xignore:=not xignore;
+      tpccstartcomment :inc(commentcount);
+      tpccendcomment   :dec(commentcount);
+      tpcceof          :if (commentcount=0) then eof:=true;
+      else if (commentcount=0) and xasnum(v) then pp(v);
+      end;//case
+
+      end;
+
+   //loop
+   if (not eof) and (xpos<dlen) then goto redo;
+
+   //successful
+   result:=true;
+
+   end;
+
+begin
+
+//defaults
+result :=false;
+
+try
+//check
+if not str__lock(d)                       then goto skipend;
+if not misok82432(s,sbits,sw,sh)          then goto skipend;
+
+//init
+dlen          :=str__len32(d);
+sw            :=0;
+sh            :=0;
+sx            :=0;
+sy            :=0;
+sbpp          :=6;//6 bit => 64 colors
+xpos          :=0;
+pcount        :=0;
+spalCount     :=0;
+low__cls(@spal32,sizeof(spal32));
+low__cls(@spal24,sizeof(spal24));
+low__cls(@spal8 ,sizeof(spal8));
+
+//read header
+if not xheader then goto skipend;
+
+//check version
+if (sBpp<1) or (sBpp>6) then goto skipend;
+
+//check width and height
+if (sw<=0) or (sh<=0) then goto skipend;
+
+//size and cls
+missize(s,sw,sh);
+mis__cls(s,255,255,255,0);
+
+//read pixels
+if not xreadpixels then goto skipend;
+
+//successful
+result:=true;
+
+skipend:
+except;end;
+
+//free
+str__uaf(d);
+
+end;
+
 
 //ia procs ---------------------------------------------------------------------
 
@@ -5359,7 +5819,7 @@ if system_ia_useroptions_suppress_all then
    exit;
    end;
 //suppression check - by complex masklist (ximgext requires a leading "." dot to match in the mask)
-if (system_ia_useroptions_suppress_masklist<>'') and low__matchmasklist('.'+ximgext,system_ia_useroptions_suppress_masklist) then
+if (system_ia_useroptions_suppress_masklist<>'') and filter__matchlist('.'+ximgext,system_ia_useroptions_suppress_masklist) then
    begin
    dcount(0);
    i('-',['']);
@@ -5384,7 +5844,7 @@ if m('tga') then
    7:i2('8bit Grey'                   ,[ia_tga_8bpp,ia_tga_noRLE]  ,'Uncompressed 8bit greyscale image');
    end;//case
    end
-else if m('jpg') or m('jif') or m('jpeg') then
+else if m('jpg') or m('jif') or m('jpeg') or m('tj32') then//08nov2025
    begin
    dcount(6);
    case xlistindex of
@@ -5410,8 +5870,8 @@ else if m('pgm') then
    dcount(3);
    case xlistindex of
    0:i2('Default'                     ,['']                       ,'Default');
-   1:i2('Binary'                      ,[ia_pgm_binary]            ,'Binary image | Smaller file size than ascii');
-   2:i2('Ascii'                       ,[ia_pgm_ascii]             ,'Ascii image | Larger file size than binary but can be edited in a text editor');
+   1:i2('Binary'                      ,[ia_pgm_binary]            ,'Binary Image | Smaller file size than ascii');
+   2:i2('Ascii'                       ,[ia_pgm_ascii]             ,'Ascii Image | Larger file size than binary but can be edited in a text editor');
    end;//case
    end
 else if m('pbm') then
@@ -5419,8 +5879,8 @@ else if m('pbm') then
    dcount(3);
    case xlistindex of
    0:i2('Default'                     ,['']                       ,'Default');
-   1:i2('Binary'                      ,[ia_pbm_binary]            ,'Binary image | Smaller file size than ascii');
-   2:i2('Ascii'                       ,[ia_pbm_ascii]             ,'Ascii image | Larger file size than binary but can be edited in a text editor');
+   1:i2('Binary'                      ,[ia_pbm_binary]            ,'Binary Image | Smaller file size than ascii');
+   2:i2('Ascii'                       ,[ia_pbm_ascii]             ,'Ascii Image | Larger file size than binary but can be edited in a text editor');
    end;//case
    end
 else if m('pnm') then
@@ -5428,8 +5888,20 @@ else if m('pnm') then
    dcount(3);
    case xlistindex of
    0:i2('Default'                     ,['']                       ,'Default');
-   1:i2('Binary'                      ,[ia_pnm_binary]            ,'Binary image | Smaller file size than ascii');
-   2:i2('Ascii'                       ,[ia_pnm_ascii]             ,'Ascii image | Larger file size than binary but can be edited in a text editor');
+   1:i2('Binary'                      ,[ia_pnm_binary]            ,'Binary Image | Smaller file size than ascii');
+   2:i2('Ascii'                       ,[ia_pnm_ascii]             ,'Ascii Image | Larger file size than binary but can be edited in a text editor');
+   end;//case
+   end
+else if m('xbm') then
+   begin
+   dcount(6);
+   case xlistindex of
+   0:i2('Default'                     ,['']                      ,'Data Type|Store pixels as 2 char hex blocks with format padding|Largest file size for best compatibility');
+   1:i2('Smallest'                    ,[ia_xbm_short]            ,'Data Type|Store pixels as 4 char hex blocks|Smaller file size than Char, Char Padded, and Short Padded');
+   2:i2('Char'                        ,[ia_xbm_char]             ,'Data Type|Store pixels as 2 char hex blocks|Larger file size than Short');
+   3:i2('Short (X10)'                 ,[ia_xbm_short]            ,'Data Type|Store pixels as 4 char hex blocks|Smaller file size than Char');
+   4:i2('Char Padded'                 ,[ia_xbm_char2]            ,'Data Type|Store pixels as 2 char hex blocks with format padding|Format padding increases file size|Larger file size than Short Padded');
+   5:i2('Short Padded (X10)'          ,[ia_xbm_short2]           ,'Data Type|Store pixels as 4 char hex blocks with format padding|Format padding increases file size|Smaller file size than Char Padded');
    end;//case
    end
 else
@@ -5603,7 +6075,7 @@ begin
 result:=ia__sfind(xactions,xfindname,svals);
 
 case result and (xvalindex>=0) and (xvalindex<=high(svals)) of
-true:xout:=strint(strdefb(svals[xvalindex],intstr32(xdefval)));
+true:xout:=strint32(strdefb(svals[xvalindex],intstr32(xdefval)));
 else xout:=xdefval;
 end;
 end;
@@ -5664,7 +6136,7 @@ for p:=0 to high(xvals) do xvals[p]:=0;
 result:=ia__find(xactions,xfindname,svals);
 if result then
    begin
-   for p:=0 to smallest32(high(svals),high(xvals)) do xvals[p]:=strint(svals[p]);
+   for p:=0 to smallest32(high(svals),high(xvals)) do xvals[p]:=strint32(svals[p]);
    end;
 end;
 
@@ -5698,7 +6170,7 @@ var
    begin
    //init
    vc:=0;
-   xlen:=low__len(x);
+   xlen:=low__len32(x);
 
    //check
    if (xlen<=0) then exit;
@@ -5734,16 +6206,16 @@ if (xfindname='') then
    end;
 
 //check
-xlen:=low__len(xactions);
+xlen:=low__len32(xactions);
 if (xlen<=0) then exit;
 
 //split name -> some actions have values as part of their name in order to share multiple different value types, such as quality:100: or quality:5 or quality:best
 fn:=xfindname;
 fv:='';
-for p:=1 to low__len(fn) do if (fn[p-1+stroffset]=ia_valsep) then
+for p:=1 to low__len32(fn) do if (fn[p-1+stroffset]=ia_valsep) then
    begin
    fn:=strcopy1(fn,1,p-1);
-   fv:=strcopy1(xfindname,p+1,low__len(xfindname));
+   fv:=strcopy1(xfindname,p+1,low__len32(xfindname));
    break;
    end;
 
@@ -5757,7 +6229,7 @@ if (c=ia_sep) or (p=1)then
    begin
    //extract last action -> first action
    if (c=ia_sep) then z:=strcopy1(xactions,p+1,lp-p) else z:=strcopy1(xactions,p,lp-p+1);
-   zlen:=low__len(z);
+   zlen:=low__len32(z);
 
    //examine extracted action
    if (zlen>=1) then
@@ -5772,7 +6244,7 @@ if (c=ia_sep) or (p=1)then
       if (c=ia_valsep) or (zp=zlen) then
          begin
          n:=strcopy1(z,1,zp-low__insint(1,(zp<>zlen)));
-         v:=strcopy1(z,low__len(n)+2,zlen);
+         v:=strcopy1(z,low__Len32(n)+2,zlen);
          break;
          end;
       end;//p2
@@ -5780,11 +6252,11 @@ if (c=ia_sep) or (p=1)then
       //match base name -> we now stop after this point, only difference is whether it's TRUE (name vals match if any) or FALSE (no match)
       if strmatch(n,fn) then
          begin
-         result:=strmatch(fv,strcopy1(v,1,low__len(fv)));
+         result:=strmatch(fv,strcopy1(v,1,low__Len32(fv)));
          if result then
             begin
             //read values from the end of the xfindname (e.g. past it's base name and it's name's vals)
-            xreadvals( strcopy1(v,low__len(fv)+low__insint(2,fv<>''),low__len(v)) );
+            xreadvals( strcopy1(v,low__Len32(fv)+low__insint(2,fv<>''),low__Len32(v)) );
             end;
 
          //stop
@@ -5797,6 +6269,419 @@ if (c=ia_sep) or (p=1)then
    end;
 
 end;//p
+end;
+
+
+//pic8 procs --------------------------------------------------------------------
+
+{$ifdef gamecore}
+
+function img8__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+label
+   skipend;
+var
+   a:tpiccore8;
+begin
+
+//defaults
+result :=false;
+e      :=gecTaskfailed;
+
+try
+
+//get
+if not pic8__fromdata(a,str__text(d)) then
+   begin
+
+   e:=gecUnknownFormat;
+   goto skipend;
+
+   end;
+
+//set
+if not pic8__toimage(a,s) then goto skipend;
+
+//ai information
+misai(s).count       :=1;
+misai(s).cellwidth   :=misw(s);
+misai(s).cellheight  :=mish(s);
+misai(s).delay       :=0;
+misai(s).transparent :=false;//alpha channel is used instead (if supplied image was 32bit)
+misai(s).bpp         :=8;
+
+//successful
+result:=true;
+
+skipend:
+except;end;
+
+end;
+
+function img8__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+var
+   a:tpiccore8;
+begin
+
+//defaults
+result :=false;
+e      :=gecTaskfailed;
+
+//get
+if pic8__fromimage2(a,s,true) then
+   begin
+
+   str__settext( d, pic8__todata(a) );
+   result:=true;
+
+   end;
+
+end;
+
+{$else}
+function img8__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+begin
+result :=false;
+e      :=gecTaskfailed;
+end;
+
+function img8__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+begin
+result :=false;
+e      :=gecTaskfailed;
+end;
+{$endif}
+
+
+
+
+
+
+
+//san procs --------------------------------------------------------------------
+
+function san__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+label
+   skipend;
+var
+   n,etmp:string;
+   vd:tstr8;
+   v32,sbits,sw,sh,xpos,xdelay,xcellcount,xcellwidth,p:longint;
+   u32,xmirror,xflip,xtransparent:boolean;
+
+   procedure xfinalisecell(xindex:longint);
+   var
+      da:twinrect;
+   begin
+
+   //init
+   da.left   :=xindex * xcellwidth;
+   da.right  :=da.left + xcellwidth - 1;
+   da.top    :=0;
+   da.bottom :=mish(s)-1;
+
+   //transparent -> only if source image is 24 bit etc, 32 bit already has alpha mask for transparency so do nothing in that case - 16sep2025
+   if xtransparent and (misai(s).bpp<32) then mask__makesimple0255b(s,da, mispixel32VAL(s,da.top,da.left) );
+
+   //mirror
+   if xmirror then mis__mirror82432b(s,da);
+
+   end;
+
+begin
+
+//defaults
+result :=false;
+e      :=gecTaskfailed;
+vd     :=nil;
+
+try
+//check
+if not str__lock(d)              then goto skipend;
+if not misok82432(s,sbits,sw,sh) then goto skipend;
+
+//init
+xpos         :=0;
+vd           :=str__new8;
+xmirror      :=false;
+xflip        :=false;
+xdelay       :=0;
+xcellcount   :=1;
+xtransparent :=false;
+misai(s).bpp :=24;
+missize(s,1,1);
+
+//header
+if (not obj__readitem(d,xpos,n,@vd,v32,u32)) or (not strmatch(vd.text,'tsan')) then
+   begin
+
+   e:=gecUnknownFormat;
+   goto skipend;
+
+   end;
+
+
+//data values
+while true do
+begin
+
+if not obj__readitem(d,xpos,n,@vd,v32,u32) then break;
+
+n:=strlow(n);
+
+if (n='pi') then
+   begin
+
+   //decode image strip -> also sets "misai(s).bpp"
+   if (not low__decompress(@vd)) or (not mis__fromdata(s,@vd,etmp)) then
+      begin
+
+      e:=gecDataCorrupt;
+      goto skipend;
+
+      end;
+
+   result   :=true;
+
+   end
+else if (n='pw')   then xcellwidth   :=frcmin32(v32,1)
+else if (n='pd')   then xdelay       :=frcmin32(v32,0)
+else if (n='pt')   then xtransparent :=(v32<>0)
+else if (n='pfv')  then xflip        :=(v32<>0)
+else if (n='pfh')  then xmirror      :=(v32<>0);
+
+end;//loop
+
+//finalise
+xcellcount:=frcmin32(misw(s) div xcellwidth,1);
+
+if xtransparent or xmirror then
+   begin
+
+   for p:=0 to pred(xcellcount) do xfinalisecell(p);
+
+   end;
+
+//flip
+if xflip then mis__flip82432(s);
+
+//ai information
+misai(s).count       :=xcellcount;
+misai(s).cellwidth   :=xcellwidth;
+misai(s).cellheight  :=mish(s);
+misai(s).delay       :=xdelay;
+misai(s).transparent :=false;//alpha channel is used instead (if supplied image was 32bit)
+
+skipend:
+except;end;
+
+//free
+str__uaf(d);
+str__free(@vd);
+
+end;
+
+function san__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
+label
+   skipend;
+var
+   vd:tstr8;
+   sbits,sw,sh,xdelay,xcellcount,xcellwidth:longint;
+   xtransparent:boolean;
+   scopy:tobject;
+
+   procedure wn(const x:string);
+   var
+      xlen:longint;
+   begin
+
+   xlen:=frcmax32(low__Len32(x),255);
+
+   str__addbyt1( d, xlen );
+   str__sadd( d, x );
+
+   end;
+
+   procedure wd(x:pobject);
+   begin
+
+   str__addbyt1( d, 12 );//vaLString
+   str__addint4( d, str__len32(x) );
+   str__add( d, x );
+
+   end;
+
+   procedure wi32(const x:longint);
+   begin
+
+   str__addbyt1( d, 4 );//vaInt32
+   str__addint4( d, x );
+
+   end;
+
+   procedure wb1(const x:boolean);
+   begin
+
+   str__addbyt1( d, low__aorb(8,9,x) );//8=vaFALSE, 9=vaTRUE
+
+   end;
+
+   function xmaketransparent:boolean;
+   label
+      skipend;
+   var// *** Transparency Note - 16sep2025 ***
+      // image strip is 32 bit but old SAN images expect 24 bit, so in order to support both, draw "grey" pixels where FULL
+      // transparency exists (a=0) and exclude the same color for non-transparent/semi-transparent pixels (a>=1), this provides
+      // 32 bit color support for modern SAN handlers and 24 bit color/1 bit transparency legacy support for old SAN handlers.
+      dx,dy,p:longint;
+      sr32:pcolorrow32;
+   begin
+
+   //defaults
+   result:=false;
+
+   //check
+   if not xtransparent then
+      begin
+
+      result:=true;
+      exit;
+
+      end;
+
+   //init
+   scopy:=misimg32(1,1);
+   if not mis__copy(s,scopy) then exit;
+
+   for dy:=0 to (sh-1) do
+   begin
+
+   if not misscan32(scopy,dy,sr32) then goto skipend;
+
+   for dx:=0 to (sw-1) do
+   begin
+
+   if (sr32[dx].a=0) then
+      begin
+
+      sr32[dx].r:=128;
+      sr32[dx].g:=128;
+      sr32[dx].b:=128;
+
+      end
+   else if ( sr32[dx].r=128 ) and ( sr32[dx].g=128 ) and ( sr32[dx].b=128 ) then
+      begin
+
+      sr32[dx].r:=127;
+      sr32[dx].g:=127;
+      sr32[dx].b:=127;
+
+      end;
+
+   end;//dx
+
+   end;//dy
+
+   //make the top-left pixel for each cell transparent as well
+   if not misscan32(scopy,0,sr32) then goto skipend;
+
+   for p:=0 to pred(xcellcount) do
+   begin
+
+   sr32[ p*xcellwidth ].r:=128;
+   sr32[ p*xcellwidth ].g:=128;
+   sr32[ p*xcellwidth ].b:=128;
+   sr32[ p*xcellwidth ].a:=0;
+
+   end;//p
+
+   //successful
+   result:=true;
+
+   skipend:
+
+   end;
+
+begin
+
+//defaults
+result :=false;
+e      :=gecTaskfailed;
+vd     :=nil;
+scopy  :=s;
+
+try
+//check
+if not str__lock(d)              then goto skipend;
+if not misok82432(s,sbits,sw,sh) then goto skipend;
+
+//init
+str__clear(d);
+vd           :=str__new8;
+xcellcount   :=frcmin32( misai(s).count, 1 );
+xcellwidth   :=frcmin32(sw div xcellcount,1);
+xdelay       :=frcmin32( misai(s).delay, 0 );
+xtransparent :=mask__hasTransparency32(s);
+
+
+//header
+str__aadd(d,[uuT,uuP,uuF,nn0, 4 ,uuT,uuS,uuA,uuN, 0]);
+
+//cellwidth
+wn('pW');
+wi32(xcellwidth);
+
+//delay
+wn('pD');
+wi32(xdelay);
+
+//image strip
+if not xmaketransparent         then goto skipend;
+if not bmp32__todata(scopy,@vd) then goto skipend;
+if (scopy<>s)                   then freeobj(@scopy);//reduce memory
+if not low__compress(@vd)       then goto skipend;
+wn('pI');
+wd( @vd );
+str__clear(@vd);
+
+//transparent
+wn('pT');
+wb1(xtransparent);
+
+//flip
+wn('pFV');
+wb1(false);
+
+//mirror
+wn('pFH');
+wb1(false);
+
+//misc
+wn('pF');
+wi32(0);
+
+wn('pSH');
+wi32(0);
+
+wn('pSV');
+wi32(0);
+
+//end - double null
+str__aadd(d,[0,0]);
+
+//successful
+result:=true;
+
+skipend:
+except;end;
+
+//clear on error
+if not result then str__clear(d);
+
+//free
+str__uaf(d);
+str__free(@vd);
+if (scopy<>s) then freeobj(@scopy);
+
 end;
 
 
@@ -5831,7 +6716,7 @@ try
 //check
 if not str__lock(d)              then goto skipend;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
-if (str__len(d)<22) then
+if (str__len32(d)<22) then
    begin
    e:=gecUnknownformat;
    goto skipend;
@@ -5859,7 +6744,7 @@ if (cw<1) or (ch<1) or (cc<1) then
    end;
 if (cms<0) then cms:=0;
 
-if (mult64(mult64(cc,cw),mult64(ch,4))>str__len(d)) then
+if (mult64(mult64(cc,cw),mult64(ch,4))>str__len32(d)) then
    begin
    e:=gecDatacorrupt;
    goto skipend;
@@ -6125,7 +7010,7 @@ if not misok82432(s,sbits,sw,sh) then goto skipend;
 
 {$ifdef jpeg}
 
-dlen:=str__len(d);
+dlen:=str__len32(d);
 if (dlen<22) then
    begin
    e:=gecUnknownformat;
@@ -6284,9 +7169,9 @@ var
 
    //get
    //if strmatch(daction,ia_fairquality) then
-   if (str__len(x)>=1) then
+   if (str__len32(x)>=1) then
       begin
-      for p:=0 to (str__len(x)-1) do
+      for p:=0 to (str__len32(x)-1) do
       begin
       if (xfast<>nil) then v:=xfast.pbytes[p] else v:=str__bytes0(x,p);
       if (v>=1) then
@@ -6397,8 +7282,8 @@ if not mis__todata3(ci,@cd,'jpg',daction,e) then goto skipend;
 if (i=0) then xqualityused:=ia__ifindvalb(daction,ia_info_quality,0,0);
 
 //add jpeg.len
-inc(xbytes_image,str__len(@cd));
-str__addint4(d,str__len(@cd));
+inc(xbytes_image,str__len32(@cd));
+str__addint4(d,str__len32(@cd));
 //add jpeg.data
 str__add(d,@cd);
 
@@ -6408,8 +7293,8 @@ xcrunch(@cd,daction);
 if not low__compress(@cd) then goto skipend;
 
 //mask.len
-inc(xbytes_mask,str__len(@cd));
-str__addint4(d,str__len(@cd));
+inc(xbytes_mask,str__len32(@cd));
+str__addint4(d,str__len32(@cd));
 //mask.data
 str__add(d,@cd);
 end;//i
@@ -6479,7 +7364,7 @@ if not str__lock(s)                  then goto skipend;
 if not misok82432(d,dbits,int1,int2) then goto skipend;
 
 //init
-slen      :=str__len(s);
+slen      :=str__len32(s);
 spos      :=0;
 if (slen<12) then goto skipend;
 
@@ -6662,7 +7547,7 @@ if not str__lock2(s,d) then goto skipend;
 s8:=str__as8(s);
 d8:=str__as8(d);
 
-slen      :=str__len(s);
+slen      :=str__len32(s);
 dbits     :=32;
 dw        :=500+random(5000);
 drowsize  :=dw*4;
@@ -6721,8 +7606,6 @@ str__uaf(d);
 except;end;
 end;
 
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx//111111111111111111111111111111111111
-
 function bmpXX__todata(s:tobject;d:pobject;dbits:longint):boolean;//14may2025
 begin
 case dbits of
@@ -6749,48 +7632,74 @@ end;
 function bmp32__todata3(s:tobject;d:pobject;dfullheader:boolean;dinfosize,dbits:longint):boolean;//11jun2025: dinfosize, 09jun2025, 28may2025, 15may2025
 label//Special Note: if (dbits=24) then V1 (hsW95) header should be used for Clipboard compatibility - 09jun2025
    skipend;
+   
 var
-   p,dcompression,ymax,dheadsize,dpos,dbytes,drowsize,sbits,sx,sy,sw,sh:longint;
-   d8  :tstr8;//pointer only
-   sr32:pcolorrow32;
-   sr24:pcolorrow24;
-   sr8 :pcolorrow8;
-   c32 :tcolor32;
-   c24 :tcolor24;
+   p                  :longint32;
+   dcompression       :longint32;
+   ymax               :longint32;
+   dheadsize          :longint32;
+   dpos               :longint32;
+   dbytes             :longint32;
+   drowsize           :longint32;
+   sbits              :longint32;
+   sx                 :longint32;
+   sy                 :longint32;
+   sw                 :longint32;
+   sh                 :longint32;
+   d8                 :tstr8;//pointer only
+   sr32               :pcolorrow32;
+   sr24               :pcolorrow24;
+   sr8                :pcolorrow8;
+   c32                :tcolor32;
+   c24                :tcolor24;
 
    procedure w1(const x:byte);
    begin
+
    if (dpos<dbytes) then
       begin
+
       if (d8<>nil) then d8.pbytes[dpos]:=x else str__setbyt1(d,dpos,x);
+
       end;
+
    inc(dpos,1);
+
    end;
 
    procedure w2(const x:word);
    begin
+
    w1(twrd2(x).bytes[0]);
    w1(twrd2(x).bytes[1]);
+
    end;
 
    procedure w4(const x:longint);
    begin
+
    w1(tint4(x).bytes[0]);
    w1(tint4(x).bytes[1]);
    w1(tint4(x).bytes[2]);
    w1(tint4(x).bytes[3]);
+
    end;
 
    procedure w16;//0..255 div 8 -> 0..31 (555 => 5 bit each for RGB)
    begin
+
    w2( (c32.b div 8) + ((c32.g div 8)*32) + ((c32.r div 8)*1024) );//15 bit
+
    end;
+
 begin
+
 //defaults
-result:=false;
-d8    :=nil;
+result                :=false;
+d8                    :=nil;
 
 try
+
 //check
 if not str__lock(d)                            then goto skipend;
 if not misok82432(s,sbits,sw,sh)               then goto skipend;
@@ -6816,8 +7725,10 @@ end;//case
 //range
 if (dinfosize=hsOS2) then//only handles 16bit width/height values
    begin
+
    sw:=frcmax32(sw,max16);
    sh:=frcmax32(sh,max16);
+
    end;
 
 //init
@@ -6936,116 +7847,178 @@ dpos:=dheadsize + (sy*drowsize);
 //.32 -> 32
 if (sbits=32) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
+
    w1(c32.b);
    w1(c32.g);
    w1(c32.r);
    w1(c32.a);
+
    end;//sx
+
    end
+
 //.32 -> 24
 else if (sbits=32) and (dbits=24) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
+
    w1(c32.b);
    w1(c32.g);
    w1(c32.r);
+
    end;//sx
+
    end
+
 //.32 -> 16
 else if (sbits=32) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
    w16;
+
    end;//sx
+
    end
+
 //.24 -> 32
 else if (sbits=24) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
+
    w1(c24.b);
    w1(c24.g);
    w1(c24.r);
    w1(255);
+
    end;//sx
+
    end
+
 //.24 -> 24
 else if (sbits=24) and (dbits=24) then//28may2025: fixed
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
+
    w1(c24.b);
    w1(c24.g);
    w1(c24.r);
+
    end;//sx
+
    end
+
 //.24 -> 16
 else if (sbits=24) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
+
    c32.r:=c24.r;
    c32.g:=c24.g;
    c32.b:=c24.b;
    w16;
+
    end;//sx
+
    end
+
 //.8 -> 32
 else if (sbits=8) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
+
    w1(c24.r);
    w1(c24.r);
    w1(c24.r);
    w1(255);
+
    end;//sx
+
    end
+
 //.8 -> 24
 else if (sbits=8) and (dbits=24) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
+
    w1(c24.r);
    w1(c24.r);
    w1(c24.r);
+
    end;//sx
+
    end
+
 //.8 -> 16
 else if (sbits=8) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
+
    c32.r:=c24.r;
    c32.g:=c24.r;
    c32.b:=c24.r;
    w16;
+
    end;//sx
+
    end;
 
 end;//sy
 
 //successful
-result:=true;
+result      :=true;
+
 skipend:
+
 except;end;
+
 //clear on error
-if not result then str__clear(d);
+if not result then
+   begin
+
+   str__clear(d);
+
+   end;
+
 //free
 str__uaf(d);
+
 end;
 
 function bmp24__todata(s:tobject;d:pobject):boolean;//14may2025
@@ -7797,72 +8770,72 @@ bitmap headers:
 4. BITMAPV5HEADER   = most advanced header
 
 1. bmpCOREheader (12b)
- DWORD bcSize;
+ dword32 bcSize;
  WORD  bcWidth;
  WORD  bcHeight;
  WORD  bcPlanes;
  WORD  bcBitCount;
 
 2. bmpINFOheader (40b)
- DWORD biSize;
+ dword32 biSize;
  LONG  biWidth;
  LONG  biHeight;
  WORD  biPlanes;
  WORD  biBitCount;
- DWORD biCompression;
- DWORD biSizeImage;
+ dword32 biCompression;
+ dword32 biSizeImage;
  LONG  biXPelsPerMeter;
  LONG  biYPelsPerMeter;
- DWORD biClrUsed;
- DWORD biClrImportant;
+ dword32 biClrUsed;
+ dword32 biClrImportant;
 
 3. bmpV4header (108b)
- DWORD        bV4Size;
+ dword32        bV4Size;
  LONG         bV4Width;
  LONG         bV4Height;
  WORD         bV4Planes;
  WORD         bV4BitCount;
- DWORD        bV4V4Compression;
- DWORD        bV4SizeImage;
+ dword32        bV4V4Compression;
+ dword32        bV4SizeImage;
  LONG         bV4XPelsPerMeter;
  LONG         bV4YPelsPerMeter;
- DWORD        bV4ClrUsed;
- DWORD        bV4ClrImportant;//0..39
- DWORD        bV4RedMask;
- DWORD        bV4GreenMask;
- DWORD        bV4BlueMask;
- DWORD        bV4AlphaMask;
- DWORD        bV4CSType;
+ dword32        bV4ClrUsed;
+ dword32        bV4ClrImportant;//0..39
+ dword32        bV4RedMask;
+ dword32        bV4GreenMask;
+ dword32        bV4BlueMask;
+ dword32        bV4AlphaMask;
+ dword32        bV4CSType;
  CIEXYZTRIPLE bV4Endpoints;//36b
- DWORD        bV4GammaRed;
- DWORD        bV4GammaGreen;
- DWORD        bV4GammaBlue;
+ dword32        bV4GammaRed;
+ dword32        bV4GammaGreen;
+ dword32        bV4GammaBlue;
 
 4. bmpV5header (124b)
- DWORD        bV5Size;
+ dword32        bV5Size;
  LONG         bV5Width;
  LONG         bV5Height;
  WORD         bV5Planes;
  WORD         bV5BitCount;
- DWORD        bV5Compression;
- DWORD        bV5SizeImage;
+ dword32        bV5Compression;
+ dword32        bV5SizeImage;
  LONG         bV5XPelsPerMeter;
  LONG         bV5YPelsPerMeter;
- DWORD        bV5ClrUsed;
- DWORD        bV5ClrImportant;//0..39
- DWORD        bV5RedMask;
- DWORD        bV5GreenMask;
- DWORD        bV5BlueMask;
- DWORD        bV5AlphaMask;
- DWORD        bV5CSType;
+ dword32        bV5ClrUsed;
+ dword32        bV5ClrImportant;//0..39
+ dword32        bV5RedMask;
+ dword32        bV5GreenMask;
+ dword32        bV5BlueMask;
+ dword32        bV5AlphaMask;
+ dword32        bV5CSType;
  CIEXYZTRIPLE bV5Endpoints;//60+36b
- DWORD        bV5GammaRed;
- DWORD        bV5GammaGreen;
- DWORD        bV5GammaBlue;
- DWORD        bV5Intent;//108..111
- DWORD        bV5ProfileData;//112..115
- DWORD        bV5ProfileSize;//116..119
- DWORD        bV5Reserved;//120..123
+ dword32        bV5GammaRed;
+ dword32        bV5GammaGreen;
+ dword32        bV5GammaBlue;
+ dword32        bV5Intent;//108..111
+ dword32        bV5ProfileData;//112..115
+ dword32        bV5ProfileSize;//116..119
+ dword32        bV5Reserved;//120..123
 {}
 
 function bmp32__fromdata(d:tobject;s:pobject):boolean;//11jun2025: supports DIB +12b patch, 15may2025
@@ -8017,7 +8990,9 @@ var
       c32.b:=r1;
       c32.g:=r1;
       c32.r:=r1;
-      c32.a:=r1;
+
+      r1;//value not used - alpha only valud with bi_bitfields
+      c32.a:=255;//09nov2025,
       end;
    end;
 begin
@@ -8043,7 +9018,7 @@ if not misok82432(d,dbits,int1,int2) then goto skipend;
 
 //init
 s8        :=str__as8(s);
-slen      :=str__len(s);
+slen      :=str__len32(s);
 spos      :=0;
 if (slen<12) then goto skipend;
 
@@ -8108,6 +9083,7 @@ else if (sheadstyle=hsOS2) then
 //.hsW95, hsV04_nocolorspace, hsV04 and hsV05
 else if (sheadstyle>=hsW95) then
    begin
+
    //common fields to all 3 remaining headers
 
    //.width4
@@ -8151,7 +9127,7 @@ else if (sheadstyle>=hsW95) then
       begin
 
       //.sdib_patchmode_12 -> there is no clear indication when this is to be used only the total bytes is +12 more than expected - 12jun2025
-      if sdib and sallow_dib_patch_12 and ( (sinfosize+simagesize+12)=str__len(s) ) then
+      if sdib and sallow_dib_patch_12 and ( (sinfosize+simagesize+12)=str__len32(s) ) then
          begin
          sdib_patchmode_12:=true;
          inc(sinfosize,12);
@@ -8164,11 +9140,11 @@ else if (sheadstyle>=hsW95) then
          //.DIB only - invalid for BMP
          if sdib_patchmode_12 then
             begin
-            spos:=sinfosize-12;
-            rmask:=r4;
-            gmask:=r4;
-            bmask:=r4;
-            amask:=0;
+            spos  :=sinfosize-12;
+            rmask :=r4;
+            gmask :=r4;
+            bmask :=r4;
+            amask :=0;
             end;
 
          end
@@ -8653,7 +9629,7 @@ if not misok82432(d,dbits,int1,int2) then goto skipend;
 
 //init
 s8        :=str__as8(s);
-slen      :=str__len(s);
+slen      :=str__len32(s);
 spos      :=0;
 if (slen<12) then goto skipend;
 
@@ -9271,7 +10247,7 @@ while true do
 begin
 if xcompress(v) then
    begin
-   if (v<=1) or (xsizelimitBytes=0) or (str__len(d)<=xsizelimitBytes) then
+   if (v<=1) or (xsizelimitBytes=0) or (str__len32(d)<=xsizelimitBytes) then
       begin
       result:=true;
       goto skipend;
@@ -9296,15 +10272,15 @@ begin
 if xcompress(v) then
    begin
    //assume successful (value is stored in "d" by default)
-   result:=(str__len(d)>=1);
+   result:=(str__len32(d)>=1);
 
-   if (v<=1) or (xsizelimitBytes=0) or (str__len(d)<=xsizelimitBytes) then
+   if (v<=1) or (xsizelimitBytes=0) or (str__len32(d)<=xsizelimitBytes) then
       begin
       str__clear(@vlastdata);
       str__add(@vlastdata,d);
       end;
 
-   if (v<=1) or (xsizelimitBytes=0) or (str__len(d)<=xsizelimitBytes) then
+   if (v<=1) or (xsizelimitBytes=0) or (str__len32(d)<=xsizelimitBytes) then
       begin
       //scan to see if new jpeg "d" via "i" is too different from source image "s"
       if not mis__fromdata(sref,d,e)               then goto skipend;
@@ -9313,13 +10289,13 @@ if xcompress(v) then
       //quality has dropped from the last attempt so use previous value as final value
       if (v<=1) or (xpert<xscanquality) then
          begin
-         if (str__len(@vlastdata)>=1) then
+         if (str__len32(@vlastdata)>=1) then
             begin
             str__clear(d);
             str__add(d,@vlastdata);
             end;
 
-         result:=(str__len(d)>=1);
+         result:=(str__len32(d)>=1);
          goto skipend;
          end;
       end;
@@ -9340,7 +10316,7 @@ except;end;
 try
 //reply info
 daction:=ia__iadd(daction,ia_info_quality,[low__aorb(0,xqualityused,result)]);
-daction:=ia__iadd(daction,ia_info_bytes_image,[str__len(d)]);
+daction:=ia__iadd(daction,ia_info_bytes_image,[str__len32(d)]);
 
 //free
 if (not result) then str__clear(d);
@@ -9799,7 +10775,7 @@ if not str__lock(d) then goto skipend;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
 
 //header - 18b
-if (str__len(d)<18) then
+if (str__len32(d)<18) then
    begin
    e:=gecUnknownformat;
    goto skipend;
@@ -10265,7 +11241,7 @@ if not misok82432(s,dbits,dw,dh) then goto skipend;
 
 //read header
 e:=gecUnknownformat;
-xlen:=str__len(d);
+xlen:=str__len32(d);
 if (xlen<=2) then goto skipend;
 
 dw:=0;
@@ -10300,15 +11276,15 @@ if (v=10) or (v=13) then
             end;
          1:begin
             if (str1='') then goto skipend;
-            for p2:=1 to low__len(str1) do if (str1[p2-1+stroffset]=#32) then
+            for p2:=1 to low__Len32(str1) do if (str1[p2-1+stroffset]=#32) then
                begin
-               dw:=strint(strcopy1(str1,1,p2-1));
-               dh:=strint(strcopy1(str1,p2+1,low__len(str1)));
+               dw:=strint32(strcopy1(str1,1,p2-1));
+               dh:=strint32(strcopy1(str1,p2+1,low__Len32(str1)));
                break;
                end;
             end;
          2:begin
-            xdepth:=strint(str1);
+            xdepth:=strint32(str1);
             if (xdepth<>255) then goto skipend;
             xpos:=p+1;
             break;
@@ -10590,7 +11566,7 @@ if not misok82432(s,dbits,dw,dh) then goto skipend;
 
 //read header
 e:=gecUnknownformat;
-xlen:=str__len(d);
+xlen:=str__len32(d);
 if (xlen<=2) then goto skipend;
 
 dw:=0;
@@ -10625,15 +11601,15 @@ if (v=10) or (v=13) then
             end;
          1:begin
             if (str1='') then goto skipend;
-            for p2:=1 to low__len(str1) do if (str1[p2-1+stroffset]=#32) then
+            for p2:=1 to low__Len32(str1) do if (str1[p2-1+stroffset]=#32) then
                begin
-               dw:=strint(strcopy1(str1,1,p2-1));
-               dh:=strint(strcopy1(str1,p2+1,low__len(str1)));
+               dw:=strint32(strcopy1(str1,1,p2-1));
+               dh:=strint32(strcopy1(str1,p2+1,low__Len32(str1)));
                break;
                end;
             end;
          2:begin
-            xdepth:=strint(str1);
+            xdepth:=strint32(str1);
             if (xdepth<>255) then goto skipend;
             xpos:=p+1;
             break;
@@ -10966,7 +11942,7 @@ if not misok82432(s,dbits,dw,dh) then goto skipend;
 
 //read header
 e:=gecUnknownformat;
-xlen:=str__len(d);
+xlen:=str__len32(d);
 if (xlen<=2) then goto skipend;
 
 dw:=0;
@@ -11000,10 +11976,10 @@ if (v=10) or (v=13) then
             end;
          1:begin
             if (str1='') then goto skipend;
-            for p2:=1 to low__len(str1) do if (str1[p2-1+stroffset]=#32) then
+            for p2:=1 to low__Len32(str1) do if (str1[p2-1+stroffset]=#32) then
                begin
-               dw:=strint(strcopy1(str1,1,p2-1));
-               dh:=strint(strcopy1(str1,p2+1,low__len(str1)));
+               dw:=strint32(strcopy1(str1,1,p2-1));
+               dh:=strint32(strcopy1(str1,p2+1,low__Len32(str1)));
                break;
                end;
             xpos:=p+1;
@@ -11197,19 +12173,22 @@ end;
 function xbm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
 label
    skipend;
+
 const
-   xnewlinetrigger=12;
+   //output modes
+   dmchar  =0;
+   dmshort =1;
+   dmmax   =1;
+
 var
-   n:string;
-   xcount,dbitcount,xmax,ymax,sbits,sw,sh,sx,sy:longint;
-   dval:byte;
-   s32:tcolor32;
-   s24:tcolor24;
-   s8:tcolor8;
+   xtab,xsep,n:string;
+   hv:array[0..3] of byte;
+   int1,lcount,llimit,hbit,hc,hlimit,sw0,dmode,sbits,sw,sh,sx,sy:longint;
+   dpad:boolean;
    sr32:pcolorrow32;
    sr24:pcolorrow24;
    sr8 :pcolorrow8;
-   ibitlist:array[0..7] of byte;
+   s8  :tcolor8;
 
    function xsafename(x:string):string;
    var
@@ -11220,7 +12199,7 @@ var
    if (result<>'') then
       begin
 
-      for p:=1 to low__len(result) do
+      for p:=1 to low__Len32(result) do
       begin
       case byte(result[p-1+stroffset]) of
       48..57,65..90,97..122,95:;//0..9, A..Z, a..z
@@ -11231,347 +12210,594 @@ var
       end;
    end;
 
-   procedure a;//ascii
+   function dstype:string;
    begin
-   if (s8>=1) then inc(dval,ibitlist[dbitcount]);
 
-   if (dbitcount>=7) or (sx=xmax) then
+   case dmode of
+   dmChar  :result:='unsigned char';
+   dmShort :result:='unsigned short';
+   end;//case
+
+   end;
+
+   procedure hclear;
+   begin
+
+   hv[0]:=0;
+   hv[1]:=0;
+
+   if (hlimit=4)then
       begin
-      if (xcount=0) then str__sadd(d,#32+#32+#32);//3 space indent
 
-      inc(xcount);
+      hv[2]:=0;
+      hv[3]:=0;
 
-      if      (sx=xmax) and (sy=ymax)  then str__sadd(d,'0x'+low__hex_lowercase(dval)+' };'+#10)
-      else if (xcount<xnewlinetrigger) then str__sadd(d,'0x'+low__hex_lowercase(dval)+', ')
-      else                                  str__sadd(d,'0x'+low__hex_lowercase(dval)+',');
+      end;
 
-      dval:=0;
-      dbitcount:=0;
+   end;
 
-      if (xcount>=xnewlinetrigger) then
+   procedure dsetmode(const xmode:longint;xpadding:boolean);
+   var
+      sw4:longint;
+   begin
+
+   dpad:=xpadding;
+
+   case xpadding of
+   true:begin
+      xtab:='   ';
+      xsep:=',';
+      end;
+   else begin
+      xtab:='';
+      xsep:=',';
+      end;
+   end;//case
+
+   dmode  :=frcrange32( xmode, 0, dmMax);
+
+   case dmode of
+   dmChar  :hlimit:=2;
+   dmShort :hlimit:=4;
+   end;//case
+
+   sw4:=trunc( sw div (4*hlimit) ) * (4*hlimit);
+   if (sw4<>sw) then inc( sw4, (4*hlimit) );
+
+   sw0    :=sw4-sw;
+   hbit   :=4;
+   hc     :=hlimit;
+
+   case dmode of
+   dmChar :llimit:=12;//12 hex blocks per line
+   dmShort:llimit:= 9;// 9 hex blocks per line
+   end;//case
+
+   lcount :=0;
+
+   hclear;
+
+   end;
+
+   function hx(const xindex:byte):char;
+   begin
+
+   case hv[xindex] of
+   0..9   :result:=char( nn0 + hv[xindex] );
+   10..15 :result:=char( llA + hv[xindex] - 10 );
+   else    result:='0';
+   end;//case
+
+   end;
+
+   procedure p1(const v:boolean);
+   begin
+
+   case hbit of
+   4:if v then inc( hv[hc-1], 1);
+   3:if v then inc( hv[hc-1], 2);
+   2:if v then inc( hv[hc-1], 4);
+   1:if v then inc( hv[hc-1], 8);
+   end;//case
+
+   dec(hbit);
+   if (hbit<=0) then
+      begin
+
+      hbit:=4;
+
+      dec(hc);
+      if (hc<=0) then
          begin
-         if not ((sx=xmax) and (sy=ymax)) then str__aadd(d,[10]);
-         xcount:=0;
+
+         case hlimit of
+         4:str__sadd( d, '0x'+hx(0)+hx(1)+hx(2)+hx(3) + xsep + insstr(#32, dpad and (lcount<(llimit-1))) );
+         2:str__sadd( d, '0x'+hx(0)+hx(1)             + xsep + insstr(#32, dpad and (lcount<(llimit-1))) );
+         end;//case
+
+         hc:=hlimit;
+         hclear;
+
+         //hex blockes per line counter
+         inc(lcount);
+         if (lcount>=llimit) then
+            begin
+
+            str__sadd(d, #10 + xtab );
+            lcount:=0;
+
+            end;
+
          end;
 
-      end
-   else inc(dbitcount);
+      end;
+
    end;
+
+   procedure p8(const c:tcolor8);
+   begin
+
+   p1(c<128);
+
+   end;
+
+   procedure p24(const c:tcolor24);
+   begin
+
+   s8:=c.r;
+   if (c.g>s8) then s8:=c.g;
+   if (c.b>s8) then s8:=c.b;
+   p8(s8);
+
+   end;
+
+   procedure p32(const c:tcolor32);
+   begin
+
+   s8:=c.r;
+   if (c.g>s8) then s8:=c.g;
+   if (c.b>s8) then s8:=c.b;
+   p8(s8);
+
+   end;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
+result  :=false;
+e       :=gecTaskfailed;
 
 try
 //check
-if not str__lock(d) then goto skipend;
+if not str__lock(d)              then goto skipend;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
 
 //range
-sw:=frcrange32(sw,1,max16);
-sh:=frcrange32(sh,1,max16);
+sw      :=frcrange32(sw,1,max16);
+sh      :=frcrange32(sh,1,max16);
+
+//init
+str__clear(d);
 
 //style
 if ia__sfindval(daction,ia_info_filename,0,'image',n) then n:=io__remlastext(io__extractfilename(n));
 n:=xsafename(strdefb(n,'image'));
 
-//init
-str__clear(d);
-
-//.bit list
-ibitlist[0]:=1;
-ibitlist[1]:=2;
-ibitlist[2]:=4;
-ibitlist[3]:=8;
-ibitlist[4]:=16;
-ibitlist[5]:=32;
-ibitlist[6]:=64;
-ibitlist[7]:=128;
+if      ia__found(daction,ia_xbm_char)   then dsetmode( dmchar,  false )
+else if ia__found(daction,ia_xbm_short)  then dsetmode( dmshort, false )
+else if ia__found(daction,ia_xbm_char2)  then dsetmode( dmchar,  true )
+else if ia__found(daction,ia_xbm_short2) then dsetmode( dmshort, true )
+else                                          dsetmode( dmchar,  true );//largest file size by default -> most compatible - 18sep2025
 
 //header
 str__sadd(d,
  '#define '+n+'_width '+intstr32(sw)+#10+
  '#define '+n+'_height '+intstr32(sh)+#10+
- 'static unsigned char '+n+'_bits[] = {'+#10);
+ 'static '+dstype+#32+n+'_bits[] = {'+#10+
+ xtab );
 
-//pixels
-ymax:=sh-1;
-xmax:=sw-1;
-xcount:=0;
-
+//write pixels
 for sy:=0 to (sh-1) do
 begin
+
 if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
-dbitcount:=0;//bit counter
-dval:=0;
 
 //.32
 if (sbits=32) then
    begin
-   for sx:=0 to (sw-1) do
-   begin
-   s32:=sr32[sx];
 
-   s8:=s32.r;
-   if (s32.g>s8) then s8:=s32.g;
-   if (s32.b>s8) then s8:=s32.b;
-   if (s8>=128) then s8:=0 else s8:=1;
+   for sx:=0 to pred(sw) do p32(sr32[sx]);
 
-   a;
-   end;
    end
 //.24
 else if (sbits=24) then
    begin
-   for sx:=0 to (sw-1) do
-   begin
-   s24:=sr24[sx];
 
-   s8:=s24.r;
-   if (s24.g>s8) then s8:=s24.g;
-   if (s24.b>s8) then s8:=s24.b;
-   if (s8>=128) then s8:=0 else s8:=1;
+   for sx:=0 to pred(sw) do p24(sr24[sx]);
 
-   a;
-   end;
    end
 //.8
 else if (sbits=8) then
    begin
-   for sx:=0 to (sw-1) do
-   begin
-   s8:=sr8[sx];
-   if (s8>=128) then s8:=0 else s8:=1;
-   a;
+
+   for sx:=0 to pred(sw) do p8(sr8[sx]);
+
    end;
-   end;
+
+//.sw0 -> padding pixels
+if (sw0>=1) then for sx:=0 to pred(sw0) do p1(false);
+
 end;//sy
+
+//remove last sep "comma" 
+int1:=str__len32(d);
+if (int1>=1) then
+   begin
+
+   for sx:=int1 downto (int1-4) do if  (str__bytes1(d,sx)=ssComma) then
+      begin
+
+      str__setbytes1(d, sx , ssSpace);
+      break;
+
+      end;//p
+
+   end;
+
+
+//finalise
+str__sadd(d, '};' + #10 );
+
 
 //successful
 result:=true;
 skipend:
+
 except;end;
-try;str__uaf(d);except;end;
+
+//free
+str__uaf(d);
+
 end;
 
-function xbm__fromdata(s:tobject;d:pobject;var e:string):boolean;
-label
-   dobinary,doascii,skipdone,skipend;
+function xbm__fromdata(s:tobject;d:pobject;var e:string):boolean;//18sep2025
+label//does not alter "s" until valid data is found -> thus does not require a buffer
+   redo,skipdone,skipend;
 var
-   xlen:longint;
    v:byte;
-   xpos,xcount,lp,p,p2,dbits,dw,dh,dx,dy:longint;
-   str1:string;
-   xbinary:boolean;
-   s32:tcolor32;
-   s24:tcolor24;
+   hv:array[0..3] of byte;
+   sw4,hc,dx,dy,xpos,xlen,sbits,sw,sh:longint;
+   xhexok,xindata:boolean;
    sr32:pcolorrow32;
    sr24:pcolorrow24;
    sr8 :pcolorrow8;
+   b32,w32 :tcolor32;
+   b24,w24 :tcolor24;
+   b8, w8  :tcolor8;
 
-   function ps(y:longint):boolean;
+   function v1:byte;
    begin
-   result:=misscan82432(s,y,sr8,sr24,sr32);
+
+   result:=str__bytes0(d,xpos);
+   inc(xpos);
+
    end;
 
-   procedure pp(dval:boolean);//push pixel
+   function sp(const xnewpos:longint):boolean;
    begin
-   //check
-   if (dy>=dh) then exit;
 
-   //range
-   if dval then s24.r:=0 else s24.r:=255;
+   result  :=true;
+   xpos    :=xnewpos;
+
+   end;
+
+   function sfrom(xpos,slen:longint):string;
+   begin
+
+   result:=str__str0(d,xpos,slen);
+
+   end;
+
+   function sfrom2(xpos:longint;xstoplist:array of byte):string;//read to stop list char is detected
+   var
+      v,p,s:longint;
+      xpastspaces:boolean;
+   begin
+
+   //defaults
+   result      :='';
+   xpastspaces :=false;
 
    //get
-   //.32
-   if (dbits=32) then
-      begin
-      s32.r:=s24.r;
-      s32.g:=s24.r;
-      s32.b:=s24.r;
-      s32.a:=255;
-      sr32[dx]:=s32;
-      end
-   //.24
-   else if (dbits=24) then
-      begin
-      s24.g:=s24.r;
-      s24.b:=s24.r;
-      sr24[dx]:=s24;
-      end
-   //.8
-   else if (dbits=8) then
-      begin
-      sr8[dx]:=s24.r;
-      end;
+   for p:=xpos to pred(xlen) do
+   begin
 
-   //inc
+   v:=str__bytes0(d,p);
+
+   //.read past spaces
+   if (v<>ssSpace) and (v<>ssTab) then xpastspaces:=true;
+
+   //.read upto to stop list
+   if xpastspaces then for s:=low(xstoplist) to high(xstoplist) do if (v=xstoplist[s]) then
+      begin
+
+      result:=str__str0(d,xpos,p-xpos);
+      exit;
+
+      end;//s
+
+   end;//p
+
+   end;
+
+   function xfind32(const xname:string;var xout:longint):boolean;
+   var
+      xmode,nlen:longint;
+   begin
+
+   //defaults
+   result    :=false;
+   xout      :=0;
+   xpos      :=0;
+   nlen      :=low__Len32(xname);
+   xmode     :=0;
+
+   //check
+   if (nlen<1) then exit;
+
+   //find -> limit to 1st 1,000 characters
+   while (xpos<frcmax32(xlen,1000)) do
+   begin
+
+   case v1 of
+   ssHash        :if (xmode<=0) and strmatch(sfrom(xpos-1,8),'#define ') and sp(xpos+7) then xmode:=1;
+   ssSpace,ssTab :if (xmode=2) then
+      begin
+
+      case strmatch( sfrom2(xpos-1-nlen,[ssSpace,ssTab,10,13]), xname ) of
+      true:begin
+
+         xout   :=strint32(sfrom2(xpos,[ssSpace,ssTab,10,13]));
+         result :=(xout>=1);
+         break;
+
+         end;
+      else xmode:=3;//wait for new line to reset
+      end;//case
+
+      end;
+   10,13         :xmode:=0;//reset for new line
+   else if (xmode=1) then xmode:=2;//non-space detected
+   end;//case
+
+   end;//loop
+
+   end;
+
+   function xfindstr(const xname:string):boolean;
+   var
+      nlen:longint;
+   begin
+
+   //defaults
+   result    :=false;
+   nlen      :=low__Len32(xname);
+   xpos      :=0;
+
+   //check
+   if (nlen<1) then exit;
+
+   //find -> limit to 1st 1,000 characters
+   while (xpos<frcmax32(xlen,1000)) do
+   begin
+
+   case v1 of
+   ssSpace,ssTab,10,13:;
+   else if strmatch(sfrom(xpos,nlen),xname) then
+      begin
+
+      result:=true;
+      break;
+
+      end;
+   end;//case
+
+   end;//loop
+
+   end;
+
+   procedure hadd(const x:byte);
+   begin
+
+   if (hc<=high(hv)) then
+      begin
+
+      hv[hc]:=x;
+      inc(hc);
+
+      end
+
+   end;
+
+   procedure p1(v:boolean);//push pixel 1bit
+   begin
+
+   //inc dx
    inc(dx);
-   if (dx>=dw) then
+   if (dx>=sw4) then
       begin
+
       dx:=0;
+
       inc(dy);
-      if (dy<dh) then ps(dy);
+      if (dy>=sh) then dy:=sh-1;//enforce safe range
+
       end;
+
+   if (dx>=sw) or (dy<0) then exit;
+
+   //read scanline for this row of pixels
+   if (dx=0) and (not misscan82432(s,dy,sr8,sr24,sr32)) then
+      begin
+
+      dy:=-1;//prevent further processing of pixels
+      exit;
+
+      end;
+
+   //write pixel
+   case sbits of
+   32:if v then sr32[dx]:=b32 else sr32[dx]:=w32;
+   24:if v then sr24[dx]:=b24 else sr24[dx]:=w24;
+    8:if v then  sr8[dx]:=b8  else  sr8[dx]:=w8;
+   end;//case
+
    end;
 
-   procedure pb;//push binary pixel
-   var
-      v:byte;
-      oy:longint;
+   procedure p4(const v:byte);
    begin
-   v:=str__bytes0(d,xpos);
-   oy:=dy;
 
-   pp(v>=128);
-   if (v>=128) then dec(v,128);
-   if (dy<>oy) then exit;
+   p1( (v and 1)<>0 );
+   p1( (v and 2)<>0 );
+   p1( (v and 4)<>0 );
+   p1( (v and 8)<>0 );
 
-   pp(v>=64);
-   if (v>=64) then dec(v,64);
-   if (dy<>oy) then exit;
-
-   pp(v>=32);
-   if (v>=32) then dec(v,32);
-   if (dy<>oy) then exit;
-
-   pp(v>=16);
-   if (v>=16) then dec(v,16);
-   if (dy<>oy) then exit;
-
-   pp(v>=8);
-   if (v>=8) then dec(v,8);
-   if (dy<>oy) then exit;
-
-   pp(v>=4);
-   if (v>=4) then dec(v,4);
-   if (dy<>oy) then exit;
-
-   pp(v>=2);
-   if (v>=2) then dec(v,2);
-   if (dy<>oy) then exit;
-
-   pp(v>=1);
    end;
 
-   procedure pa;//push ascii pixel
-   var
-      v:byte;
+   procedure pv;
    begin
-   v:=str__bytes0(d,xpos);
-   if (v>=48) and (v<=49) then pp(v=49);
+
+   if (sw4=0) then
+      begin
+
+      //variable rounding rate depending on whether we are in char "1b mode" or "short" 2b mode
+      sw4     :=trunc( sw div (4*hc) ) * (4*hc);
+      if (sw4<>sw) then inc( sw4, (4*hc) );
+
+      end;
+
+
+   case hc of
+   2:begin
+
+      p4( hv[1] );
+      p4( hv[0] );
+
+      end;
+   4:begin
+
+      p4( hv[3] );
+      p4( hv[2] );
+      p4( hv[1] );
+      p4( hv[0] );
+
+      end;
+   end;//case
+
+   hc:=0;
+
    end;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
+result :=false;
+e      :=gecTaskfailed;
 
 try
+
 //check
-if not str__lock(d) then goto skipend;
-if not misok82432(s,dbits,dw,dh) then goto skipend;
+if not str__lock(d)              then goto skipend;
+if not misok82432(s,sbits,sw,sh) then goto skipend;
 
-//read header
-e:=gecUnknownformat;
-xlen:=str__len(d);
-if (xlen<=2) then goto skipend;
+//init
+xlen        :=str__len32(d);
+xpos        :=0;
+xindata     :=false;
+xhexok      :=false;
 
-dw:=0;
-dh:=0;
-dx:=0;
-dy:=0;
-xbinary:=false;
-
-lp:=0;
-xcount:=0;
-
-for p:=0 to (xlen-1) do
-begin
-v:=str__bytes0(d,p);
-
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-
-if (v=10) or (v=13) then
-   begin
-   str1:=str__str0(d,lp,p-lp);
-   if (str1<>'') then
-      begin
-      if (strcopy1(str1,1,1)='#') then
-         begin
-         //jump over comments
-         end
-      else
-         begin
-         case xcount of
-         0:begin
-            if (not strmatch(str1,'p1')) and (not strmatch(str1,'p4')) then goto skipend;
-            xbinary:=strmatch(str1,'p4');
-            end;
-         1:begin
-            if (str1='') then goto skipend;
-            for p2:=1 to low__len(str1) do if (str1[p2-1+stroffset]=#32) then
-               begin
-               dw:=strint(strcopy1(str1,1,p2-1));
-               dh:=strint(strcopy1(str1,p2+1,low__len(str1)));
-               break;
-               end;
-            xpos:=p+1;
-            break;
-            end;
-         end;//case
-
-         inc(xcount);
-         end;
-      end;
-
-   //reset
-   lp:=p+1;
+case sbits of
+32:begin
+   b32:=rgba__c32(0,0,0,255);
+   w32:=rgba__c32(255,255,255,0);
    end;
-end;//p
+24:begin
+   b24:=rgb__c24(0,0,0);
+   w24:=rgb__c24(255,255,255);
+   end;
+8:begin
+   b8:=0;
+   w8:=255;
+   end;
+end;//case
 
 
-//check
-if (dw<1) or (dh<1) then goto skipend;
+//find width/height
+if not xfind32('width',sw)   then goto skipend;
+if not xfind32('height',sh)  then goto skipend;
 
-//size
-e:=gecTaskfailed;
-if not missize(s,dw,dh) then goto skipend;
-if not miscls(s,clwhite) then goto skipend;
-
-//ai information
-misai(s).count:=1;
-misai(s).cellwidth:=misw(s);
-misai(s).cellheight:=mish(s);
-misai(s).delay:=0;
-misai(s).transparent:=false;//alpha channel is used instead (if supplied image was 32bit)
-misai(s).bpp:=1;
-
-//decide
-ps(0);
-if xbinary then goto dobinary else goto doascii;
+//size + cls
+if not missize(s,sw,sh)            then goto skipend;
+if not mis__cls(s,255,255,255,255) then goto skipend;
 
 
-//binary -----------------------------------------------------------------------
-dobinary:
-pb;
-inc(xpos);
-if (xpos<xlen) then goto dobinary;
-goto skipdone;
+//------------------------------------------------------------------------------
+//read data pixels -------------------------------------------------------------
+
+//init
+xpos    :=0;
+dx      :=-1;
+dy      :=0;
+hc      :=0;
+sw4     :=0;//set on first pixel to be rendered -> pv
 
 
+redo:
+v       :=v1;
 
-//ascii ------------------------------------------------------------------------
-doascii:
-pa;
-inc(xpos);
-if (xpos<xlen) then goto doascii;
+case v of
+ssLCurlyBracket:if xindata then goto skipdone else xindata:=true;
+ssRCurlyBracket:begin
+
+   pv;
+   goto skipdone;
+
+   end;//begin
+
+llX,uuX:xhexok:=xindata;//start of hex block
+ssComma:if xhexok then
+   begin
+
+   pv;
+   xhexok:=false;
+
+   end;
+
+nn0..nn9:if xhexok then hadd(v-nn0);//0..9
+lla..llf:if xhexok then hadd(10+v-lla);//a..f
+uuA..uuF:if xhexok then hadd(10+v-uuA);//A..F
+
+end;//case
+
+//loop
+if (xpos<xlen) then goto redo;
+
 
 skipdone:
+
+//ai information
+misai(s).count       :=1;
+misai(s).cellwidth   :=misw(s);
+misai(s).cellheight  :=mish(s);
+misai(s).delay       :=0;
+misai(s).transparent :=false;//alpha channel is used instead (if supplied image was 32bit)
+misai(s).bpp         :=1;
+
 //successful
 result:=true;
 skipend:
+
 except;end;
-try;str__uaf(d);except;end;
 end;
 
 
@@ -11673,7 +12899,7 @@ begin
 result:=ico32__todata3(s,d,false,false,0,0,dbits);
 end;
 
-function ico32__todata3(s:tobject;d:pobject;dpng,dcursor:boolean;dhotX,dhotY,dbits:longint):boolean;//28may2025
+function ico32__todata3(s:tobject;d:pobject;dpng,dcursor:boolean;dhotX,dhotY,dbits:longint):boolean;//19jun2026, 28may2025
 label
    skipend;
 var
@@ -11774,18 +13000,22 @@ if dpng or (sw>=257) or (sh>=257) then
    if not result then goto skipend;
 
    //.finish ico header
-   w4(dimg.len);
+   w4(dimg.len32);
    w4(22);//6 + 16 = 22
 
    //.store png
    str__add(d,@dimg);
+
+   result             :=true;//19jun2026
+
    goto skipend;
+
    end;
 
 
 //ico - store icon + mask ------------------------------------------------------
 //.finish ico header
-w4(40 + dimg.len + dmask.len);
+w4(40 + dimg.len32 + dmask.len32);
 w4(22);//6 + 16 = 22
 
 //.image header (40)
@@ -11795,7 +13025,7 @@ w4(sh * 2);//biHeight (x2 = image + trailing 1bit mask)
 w2(1);//biPlanes
 w2(dbits);//biBitCount
 w4(0);//compression=0
-w4(dimg.len + dmask.len);
+w4(dimg.len32 + dmask.len32);
 w4(0);
 w4(0);
 w4(dcolorsused);//# of colors used
@@ -11806,15 +13036,25 @@ str__add(d,@dimg);
 str__add(d,@dmask);
 
 //successful
-result:=true;
+result      :=true;
+
 skipend:
+
 except;end;
+
 //clear on error
-if not result then str__clear(d);
+if not result then
+   begin
+
+   str__clear(d);
+
+   end;
+   
 //free
 str__free(@dimg);
 str__free(@dmask);
 str__uaf(d);
+
 end;
 
 function ico__fromdata(d:tobject;s:pobject;var e:string):boolean;
@@ -11830,44 +13070,80 @@ begin
 result:=ico32__fromdata2(s,d,hx,hy);
 end;
 
-function ico32__fromdata2(s:tobject;d:pobject;var dhotX,dhotY:longint):boolean;//08jun2025, 27may2025
+function ico32__fromdata2(s:tobject;d:pobject;var dhotX,dhotY:longint):boolean;//30aug2026 - xfindLargest count mismatch, 19jun2026 - added xfindLargest, 02jun2026, 08jun2025, 27may2025
 label
    skipend;
+
 var
-   str1,etmp:string;
-   plist:array[0..255] of tcolor32;
-   d8:tstr8;//pointer only
-   b:tstr8;
-   ymax,px,pval,p,dstartofdata,drowsize1,drowsize,ddatalen,dcount,dlen,dpos,pcount,dbits,sbits,sw,sh,dw,dh,dx,dy:longint;
-   dcursor:boolean;
-   sr32:pcolorrow32;
-   sr24:pcolorrow24;
-   sr8 :pcolorrow8;
-   c32:tcolor32;
-   c24:tcolor24;
+   str1               :string;
+   etmp               :string;
+   plist              :array[0..255] of tcolor32;
+   d8                 :tstr8;//pointer only
+   b                  :tstr8;
+   ymax               :longint32;
+   px                 :longint32;
+   pval               :longint32;
+   p                  :longint32;
+   dstartofdata       :longint32;
+   drowsize1          :longint32;
+   drowsize           :longint32;
+   ddatalen           :longint32;
+   dcount             :longint32;
+   dlen               :longint32;
+   dpos               :longint32;
+   pcount             :longint32;
+   dbits              :longint32;
+   sbits              :longint32;
+   sw                 :longint32;
+   sh                 :longint32;
+   dw                 :longint32;
+   dh                 :longint32;
+   dx                 :longint32;
+   dy                 :longint32;
+   dcursor            :boolean;
+   sr32               :pcolorrow32;
+   sr24               :pcolorrow24;
+   sr8                :pcolorrow8;
+   c32                :tcolor32;
+   c24                :tcolor24;
 
    function r1:byte;
    begin
+
    case (dpos<dlen) of
-   true:if (d8<>nil) then result:=d8.pbytes[dpos] else result:=str__byt1(d,dpos);
+
+   true:begin
+
+      if (d8<>nil) then result:=d8.pbytes[dpos]
+      else              result:=str__byt1(d,dpos);
+
+      end;
+
    else result:=0;
+
    end;//case
+
    //inc
    inc(dpos);
+
    end;
 
    function r2:word;
    begin
-   twrd2(result).bytes[0]:=r1;
-   twrd2(result).bytes[1]:=r1;
+
+   twrd2(result).bytes[0]    :=r1;
+   twrd2(result).bytes[1]    :=r1;
+
    end;
 
    function r4:longint;
    begin
-   tint4(result).bytes[0]:=r1;
-   tint4(result).bytes[1]:=r1;
-   tint4(result).bytes[2]:=r1;
-   tint4(result).bytes[3]:=r1;
+
+   tint4(result).bytes[0]    :=r1;
+   tint4(result).bytes[1]    :=r1;
+   tint4(result).bytes[2]    :=r1;
+   tint4(result).bytes[3]    :=r1;
+
    end;
 
    function r1_bol:boolean;
@@ -11876,12 +13152,17 @@ var
 
       procedure v(xdiv:byte);
       begin
+
       i:=pval div xdiv;
       dec(pval,i*xdiv);
+
       end;
+
    begin
+
    //inc
    inc(px);
+
    if (px>=9) then px:=1;
    if (px=1)  then pval:=r1;
 
@@ -11898,12 +13179,14 @@ var
    end;//case
 
    result:=(i<>0);//transparent pixel in 1bit mask
+
    end;
 
    procedure r4_32;
    var
       i:byte;
    begin
+
    //inc
    inc(px);
    if (px>=3) then px:=1;
@@ -11924,17 +13207,20 @@ var
 
    //set
    c32:=plist[i];
+
    end;
 
    procedure r8_32;
    var
       i:byte;
    begin
+
    //enforce upper limit
    i:=r1;
    if (i>=pcount) then i:=pcount-1;
 
    c32:=plist[i];
+
    end;
 
    procedure r16;//555 = 15bit
@@ -11945,34 +13231,119 @@ var
       var
          z:word;
       begin
+
       z:=v div xfactor;
       dec(v,z*xfactor);
+
       z:=z*8;
+
       if (z>255) then z:=255;
+
       dcol:=z;
+
       end;
+
    begin
+
    v:=r2;
+
    p(c24.r,1024);
    p(c24.g,32);
    p(c24.b,1);
+
    end;
 
    procedure r24;
    begin
+
    c24.b:=r1;
    c24.g:=r1;
    c24.r:=r1;
+
    end;
 
    procedure r32;
    begin
+
    c32.b:=r1;
    c32.g:=r1;
    c32.r:=r1;
    c32.a:=r1;
+
    end;
+
+   function xfindLargest:longint32;
+   label
+      redo;
+
+   var
+      spos            :longint32;
+      fw              :longint32;
+      fh              :longint32;
+      fpos            :longint32;
+      lw              :longint32;
+      lh              :longint32;
+      fcount          :longint32;
+
+   begin
+
+   //defaults
+   result             :=0;
+   dpos               :=0;
+   fcount             :=0;
+   lw                 :=0;
+   lh                 :=0;
+
+   //search all images
+   r2;
+   dcursor            :=(r2=2);//0=stockicon, 1=icon (default for icons), 2=cursor
+   dcount             :=r2;
+
+   redo:
+
+   //.icon header (16)
+   spos               :=dpos;
+   fw                 :=r1;//width
+   fh                 :=r1;//height
+
+   if (fw<=0) then fw :=256;
+   if (fh<=0) then fh :=256;
+
+   r2;//colors
+   r2;//hotX
+   r2;//hotY
+   r4;//length of image data
+
+   fpos               :=r4;//start of image
+
+   if (fpos>=22) then
+      begin
+
+      if ( (fw*fh)>(lw*lh) ) then
+         begin
+
+         lw           :=fw;
+         lh           :=fh;
+         result       :=spos;
+
+         end;
+
+      //loop
+      inc( fcount );
+
+      if (fcount<dcount) then//fixed: 30aug2026
+         begin
+
+         goto redo;
+
+         end;
+
+      end;
+
+   end;
+
 begin
+
 //defaults
 result :=false;
 dhotX  :=0;
@@ -11987,55 +13358,76 @@ if not misok82432(s,sbits,sw,sh) then goto skipend;
 
 //init
 d8           :=str__as8(d);
-dlen         :=str__len(d);
-dpos         :=0;
+dlen         :=str__len32(d);
+dpos         :=xfindLargest;
 
-//get
-//.type header (6)
-r2;
-dcursor :=(r2=2);//0=stockicon, 1=icon (default for icons), 2=cursor
-dcount  :=r2;
+//.type header (6) -> now done within "xfindLargest"
+//r2;
+//dcursor      :=(r2=2);//0=stockicon, 1=icon (default for icons), 2=cursor
+//dcount       :=r2;
 
 //.icon header (16)
+
 r1;//width
 r1;//height
 r2;//colors
 
 case dcursor of
+
 true:begin
-   dhotX:=r2;
-   dhotY:=r2;
+
+   dhotX    :=r2;
+   dhotY    :=r2;
+
    end;
+
 else begin
+
    r2;//reserved1
    r2;//reserved2
+
    end;
+
 end;//case
 
-ddatalen:=r4;//40 + dimg.len + dmask.len;
+ddatalen    :=r4;//40 + dimg.len + dmask.len;
 
 //.jump to beginning of 1st image
-dpos:=r4;
+dpos        :=r4;
+
 if (dpos<22) then goto skipend;
 
 
 //image is a "png" -------------------------------------------------------------
 str1:=io__anyformat2b(d,dpos);
+
 if strmatch(str1,'PNG') then
    begin
-   b:=str__new8;
+
+   b        :=str__new8;
+
    str__add3(@b,d,dpos,ddatalen);
-   result:=png__fromdata(s,@b,etmp);
+
+   result   :=png__fromdata(s,@b,etmp);
+
    str__free(@b);//reduce memory
+
    goto skipend;
+
    end
 else if strmatch(str1,'JPG') then//08jun2025
    begin
-   b:=str__new8;
+
+   b        :=str__new8;
+
    str__add3(@b,d,dpos,ddatalen);
-   result:=jpg__fromdata(s,@b,etmp);
+
+   result   :=jpg__fromdata(s,@b,etmp);
+
    str__free(@b);//reduce memory
+
    goto skipend;
+
    end;
 
 
@@ -12280,7 +13672,7 @@ if result then
    begin
    misai(s).count       :=1;
    misai(s).cellwidth   :=misw(s);
-   misai(s).cellheight  :=misw(s);
+   misai(s).cellheight  :=mish(s);//fixed - 02jun2026
    misai(s).delay       :=0;
    misai(s).transparent :=false;//alpha channel is used instead (if supplied image was 32bit)
    misai(s).bpp         :=dbits;
@@ -12336,7 +13728,7 @@ skipend:
 except;end;
 end;
 
-function bmp32__toicondata(s:tobject;d:pobject;dbits:longint):boolean;//27may2025
+function bmp32__toicondata(s:tobject;d:pobject;dbits:longint):boolean;//19jun2026, 27may2025
 label
    skipend;
 var
@@ -12378,6 +13770,7 @@ result:=false;
 d8    :=nil;
 
 try
+
 //check
 if not str__lock(d)                            then goto skipend;
 if not misok82432(s,sbits,sw,sh)               then goto skipend;
@@ -12396,129 +13789,187 @@ d8:=str__as8(d);
 //get
 for sy:=0 to (sh-1) do
 begin
+
 if not misscan82432(s,ymax-sy,sr8,sr24,sr32) then goto skipend;
 
-dpos:=(sy*drowsize);
+dpos        :=sy * drowsize;
 
 //.32 -> 32
 if (sbits=32) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
+
    if (c32.a<=0) then
       begin
       c32.r:=0;
       c32.g:=0;
       c32.b:=0;
       end;
+
    w1(c32.b);
    w1(c32.g);
    w1(c32.r);
    w1(c32.a);
+
    end;//sx
+
    end
+
 //.32 -> 24
 else if (sbits=32) and (dbits=24) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
+
    if (c32.a<=0) then
       begin
       c32.r:=0;
       c32.g:=0;
       c32.b:=0;
       end;
+
    w1(c32.b);
    w1(c32.g);
    w1(c32.r);
+
    end;//sx
+
    end
+
 //.32 -> 16
 else if (sbits=32) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c32:=sr32[sx];
+
    if (c32.a<=0) then
       begin
       c32.r:=0;
       c32.g:=0;
       c32.b:=0;
       end;
+
    w16;
+
    end;//sx
+
    end
+
 //.24 -> 32
 else if (sbits=24) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
+
    w1(c24.b);
    w1(c24.g);
    w1(c24.r);
    w1(255);
+
    end;//sx
+
    end
+
 //.24 -> 24
 else if (sbits=24) and (dbits=24) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
-   w1(c32.b);
-   w1(c32.g);
-   w1(c32.r);
+
+   w1(c24.b);//fixed - 19jun2026
+   w1(c24.g);
+   w1(c24.r);
+
    end;//sx
+
    end
+
 //.24 -> 16
 else if (sbits=24) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24:=sr24[sx];
+
    c32.r:=c24.r;
    c32.g:=c24.g;
    c32.b:=c24.b;
+
    w16;
+
    end;//sx
+
    end
+
 //.8 -> 32
 else if (sbits=8) and (dbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
+
    w1(c24.r);
    w1(c24.r);
    w1(c24.r);
    w1(255);
+
    end;//sx
+
    end
+
 //.8 -> 24
 else if (sbits=8) and (dbits=24) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
-   w1(c32.r);
-   w1(c32.r);
-   w1(c32.r);
+
+   w1(c24.r);//fixed - 19jun2026
+   w1(c24.r);
+   w1(c24.r);
+
    end;//sx
+
    end
+
 //.8 -> 16
 else if (sbits=8) and (dbits=16) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    c24.r:=sr8[sx];
    c32.r:=c24.r;
    c32.g:=c24.r;
    c32.b:=c24.r;
+
    w16;
+
    end;//sx
+
    end;
 
 end;//sy
@@ -13101,12 +14552,16 @@ begin
 result:=cur__todata3(s,d,daction,e);
 end;
 
-function cur__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//27may2025
+function cur__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//09jun2026, 27may2025
 label
    skipend;
+
 var
-   dbits:longint;
-   xsimple0255:boolean;
+   dbits              :longint32;
+   dhotx              :longint32;
+   dhoty              :longint32;
+   xsimple0255        :boolean;
+
 begin
 //defaults
 result       :=false;
@@ -13130,8 +14585,12 @@ if (not mask__hasTransparency322(s,xsimple0255)) or xsimple0255 then
    end;//case
    end;
 
+//set hotspot optionally via ia_action - 23may2026
+dhotx                 :=ia__ifindvalb( daction ,ia_hotspot ,0 ,-1 );//x
+dhoty                 :=ia__ifindvalb( daction ,ia_hotspot ,1 ,-2 );//y
+
 //set
-result:=curXX__todata(s,d,dbits);
+result                :=curXX__todata2(s,d,dhotx,dhoty,dbits);//09jun2026
 
 skipend:
 except;end;
@@ -13231,19 +14690,20 @@ begin
 result:=ani__todata5(s,slist,d,dformat,daction,dforceBPP,dsize,0,dhotX,dhotY,xonehotspot,xoutbpp,xouttransparent,e);
 end;
 
-function ani__todata5(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:string;dforceBPP,dsize:longint;ddelay,dhotX,dhotY:longint;xonehotspot:boolean;var xoutbpp:longint;var xouttransparent:boolean;var e:string):boolean;
+function ani__todata5(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:string;dforceBPP,dsize:longint;ddelay,dhotX,dhotY:longint;xonehotspot:boolean;var xoutbpp:longint;var xouttransparent:boolean;var e:string):boolean;//23may2026
 label
    //Note: Known anirec.flags: 1=win7/ours, 3=ms old/our
    //uses alpha channel to write transparency - 15feb2022
    //Force to dBPP when >=1, 0=automatic bpp
    skipend;
+
 var
    b:tstr8;
    dfast:tstr8;//pointer only
-   int1,int2,dw,dh,p:integer;
+   int1,int2,dw,dh,p:longint32;
    anirec:tanirec;
    xicon,xiconlist:tstr8;
-   dpng,dcursor,xonce:boolean;
+   dfastProc,dpng,dcursor,xonce:boolean;
    xfoundhotX,xfoundhotY,dbpp,scellcount:longint;
    dcell:tbasicimage;//temp image for each icon to be read onto - 14feb2022
    //.mask support
@@ -13258,14 +14718,17 @@ var
       xtranscol,xbits,xcellw,xcellh,xw,xh,int1,int2,int3,xdelay:longint;
       xhasai,xtransparent:boolean;
    begin
+
    //defaults
-   result:=false;
-   xcell:=s;
+   result   :=false;
+   xcell    :=s;
 
    try
+
    //get
    if assigned(slist) then
       begin
+
       int1:=1;
       slist(nil,dformat,x,int1,xtranscol,xcell);
       scellcount:=frcmin32(int1,1);
@@ -13273,146 +14736,208 @@ var
       xcellw:=xw;
       xcellh:=xh;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(0,0,xcellw-1,xcellh-1),dcell,xcell)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(0,0,xcellw-1,xcellh-1),0,0,dw,dh,xcell,dcell)) then goto skipend;
+
       end
    else
       begin
+
       if not miscells(s,xbits,xw,xh,scellcount,xcellw,xcellh,xdelay,xhasai,xtransparent) then goto skipend;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),dcell,s)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),0,0,dw,dh,s,dcell)) then goto skipend;
+
       end;
+
    //.val defaults
    if xonce then
       begin
+
       xonce:=false;
       if (ddelay<=0) then ddelay:=xdelay;
       if (dsize<=0) then dsize:=(xcellw+xcellh) div 2;//vals set by call to "xpullcell(0)" above
+
       end;
+
    //successful
    result:=true;
    skipend:
    except;end;
    end;
+
+   function xlow__toico32(s:tobject;dcursor,dpng:boolean;dsize,dBPP,dhotX,dhotY:longint;var xouthotX,xouthotY,xoutBPP:longint;xdata:tstr8;var e:string):boolean;
+   begin
+
+   //new proc -> 200% faster
+   if dfastProc then
+      begin
+
+      result   :=ico32__todata3(s,@xdata,dpng,dcursor,dhotX,dhotY,dbpp);
+      xouthotX :=dhotx;
+      xouthotY :=dhoty;
+      e        :='';
+
+      end
+
+   //old proc
+   else begin
+
+      result:=low__toico32(s,dcursor,dpng,dsize,dBPP,dhotX,dhotY,xouthotX,xouthotY,xoutBPP,xdata,e);
+
+      end;
+
+   end;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
-xoutbpp:=1;
-xouttransparent:=false;
-xonce:=true;
-xicon:=nil;
-xiconlist:=nil;
-dcell:=nil;
-b:=nil;
+result                :=false;
+e                     :=gecTaskfailed;
+xoutbpp               :=1;
+xouttransparent       :=false;
+xonce                 :=true;
+xicon                 :=nil;
+xiconlist             :=nil;
+dcell                 :=nil;
+b                     :=nil;
 
 try
+
 //check
-if not str__lock(d) then goto skipend;
-if str__is8(d) then dfast:=d^ as tstr8 else dfast:=nil;
+if not str__lock(d)       then goto skipend;
+
+if str__is8(d) then dfast:=d^ as tstr8
+else                dfast:=nil;
+
 if not xpullcell(0,false) then goto skipend;
 
 //range
-dforceBPP:=frcrange32(dforceBPP,0,32);
+dforceBPP             :=frcrange32(dforceBPP,0,32);
 
 //init
 str__clear(d);
 fillchar(anirec,sizeof(anirec),0);
 
-dpng:=false;//off for now -> need more info to implement - 22nov2024
+dpng                  :=false;//off for now -> need more info to implement - 22nov2024
+ddelay                :=frcmin32(ddelay,1);
+dsize                 :=low__icosizes(dsize);//16..256
+dw                    :=dsize;
+dh                    :=dsize;
+dcell                 :=misimg32(dw,dh);
+dbpp                  :=1;
+xicon                 :=str__new8;
+xiconlist             :=str__new8;
+dformat               :=io__extractfileext3(dformat,dformat);//accepts filename and extension only - 12apr2021
+dcursor               :=(dformat='cur') or (dformat='ico');
 
-ddelay:=frcmin32(ddelay,1);
-dsize:=low__icosizes(dsize);//16..256
-dw:=dsize;
-dh:=dsize;
-dcell:=misimg32(dw,dh);
-dbpp:=1;
-xicon:=str__new8;
-xiconlist:=str__new8;
-dformat:=io__extractfileext3(dformat,dformat);//accepts filename and extension only - 12apr2021
-dcursor:=(dformat='cur') or (dformat='ico');
-
+//set hotspot optionally via ia_action - 23may2026
+dhotx                 :=ia__ifindvalb( daction ,ia_hotspot ,0 ,dhotx );//x
+dhoty                 :=ia__ifindvalb( daction ,ia_hotspot ,1 ,dhoty );//y
+dfastProc             :=(dhotx>=0) and (dhoty>=0) and ia__found( daction ,ia_fast );
 
 //-- GET -----------------------------------------------------------------------
 //.dbpp - scan each cell and return the highest BPP rating to cover ALL cells - 22JAN2012
-dbpp:=1;
+dbpp                  :=1;
+
 for p:=0 to (scellcount-1) do
 begin
+
 if (dforceBPP>=1) then
    begin
-   dbpp:=dforceBPP;
+
+   dbpp               :=dforceBPP;
    break;
+
    end;
 
 if not xpullcell(p,true) then goto skipend;
 
-int1:=low__findbpp82432(dcell,area__make(0,0,dw-1,dh-1),false);
+int1                  :=low__findbpp82432(dcell,area__make(0,0,dw-1,dh-1),false);
+
 if (int1>dbpp) then dbpp:=int1;
 
 if mask__range2(dcell,v0,v255,vother,xmin,xmax) then
    begin
+
    if vother then dbpp:=32;
    if v0 or vother then xouttransparent:=true;
+
    end;
 
 if (dbpp>=32) then break;
 
 if (p=0) and dcursor then break;//only need first reported cell for a static cursor/icon
+
 end;//p
 
 
 //.dpng
 if (misb(s)<>32) then dpng:=false;//23may2022
-if dpng then dbpp:=32;//23may2022
+if dpng          then dbpp:=32;//23may2022
 
 
 //decide
 //.cur + ico
 if (dformat='cur') or (dformat='ico') then
    begin
+
    if not xpullcell(0,true) then goto skipend;
 
-   b:=str__new8;
-   result:=low__toico32(dcell,(dformat='cur'),dpng,dsize,dBPP,dhotX,dhotY,xfoundhotX,xfoundhotY,int2,b,e);
+   b                  :=str__new8;
+   result             :=xlow__toico32(dcell,(dformat='cur'),dpng,dsize,dBPP,dhotX,dhotY,xfoundhotX,xfoundhotY,int2,b,e);
+
    str__add(d,@b);
 
    if (int2>xoutbpp) then xoutbpp:=int2;
+
    goto skipend;
+
    end
+
 //.ani
 else if (dformat='ani') then
    begin
+
    //drop below to finish
+
    end
+
 //.unsupported format
 else goto skipend;
 
 //.anirec - do last
-anirec.cbsizeof:=sizeof(anirec);
-anirec.cframes:=scellcount;//number of unique images
-anirec.csteps:=scellcount;//number of cells in anmiation
-anirec.cbitcount:=dbpp;
-anirec.jifrate:=frcmin32(round(ddelay/16.666),1);
-anirec.flags:=1;//win7/some of ours
+anirec.cbsizeof       :=sizeof(anirec);
+anirec.cframes        :=scellcount;//number of unique images
+anirec.csteps         :=scellcount;//number of cells in anmiation
+anirec.cbitcount      :=dbpp;
+anirec.jifrate        :=frcmin32(round(ddelay/16.666),1);
+anirec.flags          :=1;//win7/some of ours
 
 //.cells -> icons
 for p:=0 to (scellcount-1) do
 begin
+
 //.get cell
 if not xpullcell(p,true) then goto skipend;
+
 //.make icon
-if not low__toico32(dcell,true,dpng,dsize,dBPP,dhotX,dhotY,xfoundhotX,xfoundhotY,int2,xicon,e) then goto skipend;
+if not xlow__toico32(dcell,true,dpng,dsize,dBPP,dhotX,dhotY,xfoundhotX,xfoundhotY,int2,xicon,e) then goto skipend;
 if (int2>xoutbpp) then xoutbpp:=int2;
+
 //.hotspot -> reuse 1st hotspot (cell 1) for all remaining cells - 15feb2022
 if xonehotspot and ((dhotX<0) or (dhotY<0)) then
    begin
-   dhotX:=xfoundhotX;
-   dhotY:=xfoundhotY;
+
+   dhotX              :=xfoundhotX;
+   dhotY              :=xfoundhotY;
+
    end;
+
 //.add icon -> 'icon'+from32bit(length(imgs.items[p]^))+imgs.items[p]^
 xiconlist.addstr('icon');
-xiconlist.addint4(xicon.len);
+xiconlist.addint4(xicon.len32);
 xiconlist.add(xicon);
 xicon.clear;
+
 end;//p
 
 
@@ -13426,26 +14951,30 @@ str__addint4(d,sizeof(anirec));
 str__addrec(d,@anirec,sizeof(anirec));
 //._list
 str__sadd(d,'LIST');
-str__addint4(d,4+xiconlist.len);
+str__addint4(d,4+xiconlist.len32);
 str__sadd(d,'fram');
 str__add(d,@xiconlist);
 //.reduce mem
 xiconlist.clear;
 //.set overal size
-str__setint4(d,4,frcmin32(str__len(d)-4,0));
+str__setint4(d,4,frcmin32(str__len32(d)-4,0));
 
 //successful
-result:=true;
+result                :=true;
+
 skipend:
 except;end;
+
 //clear on error
 if (not result) then str__clear(d);
+
 //free
 str__free(@xicon);
 str__free(@xiconlist);
 freeobj(@dcell);
 str__uaf(d);
 str__free(@b);
+
 end;
 
 
@@ -13709,7 +15238,7 @@ try
 if not low__true2(str__lock(x),str__lock(imgdata)) then goto skipend;
 
 //init
-xlen:=str__len(x);
+xlen:=str__len32(x);
 str__clear(imgdata);
 if (xlenpos1<1) or (xlenpos1>xlen) then goto skipend;
 //get
@@ -13798,30 +15327,36 @@ function gif__compress(x:pobject;var e:string):boolean;//12SEP2007
 var
    z:tobject;
 begin
+
 //defaults
-result:=false;
+result      :=false;
+z           :=nil;
 
 try
-z:=nil;
+
 if not str__lock(x) then exit;
-z:=str__newsametype(x);
+z           :=str__newsametype(x);
+
 //get
 if gif__compressex(x,@z,e) then
    begin
+
    str__clear(x);
    str__add(x,@z);
-   result:=true;
+   result   :=true;
+
    end;
 except;end;
-try
+
+//free
 str__free(@z);
 str__uaf(x);
-except;end;
+
 end;
 
-function gif__compressex(x,imgdata:pobject;e:string):boolean;//12SEP2007
+function gif__compressex(x,imgdata:pobject;e:string):boolean;//12mar2026, 12SEP2007
 label
-   skipend;
+   skipend,skipfailed;
 const
    EndBlockByte=$00;			// End of block marker
 var
@@ -13845,10 +15380,10 @@ begin//"x=nil" => flush
 //get
 str__addbyt1(@buf,x);
 //set
-if (str__len(@buf)>=255) then
+if (str__len32(@buf)>=255) then
    begin
    //was:pushb(imglen,imgdata,char(length(buf))+buf);
-   str__addbyt1(imgdata,byte(str__len(@buf)));
+   str__addbyt1(imgdata,byte(str__len32(@buf)));
    str__add(imgdata,@buf);
    str__clear(@buf);
    end;
@@ -13856,10 +15391,10 @@ end;
 
 procedure writecharfinish;
 begin//"x=nil" => flush
-if (str__len(@buf)>=1) then
+if (str__len32(@buf)>=1) then
    begin
    //was:pushb(imglen,imgdata,char(length(buf))+buf);
-   str__addbyt1(imgdata,str__len(@buf));
+   str__addbyt1(imgdata,str__len32(@buf));
    str__add(imgdata,@buf);
    str__clear(@buf);
    end;
@@ -13875,144 +15410,205 @@ const
      $1FFF, $3FFF, $7FFF, $FFFF);
 begin
 try
+
 //get
-if (OutputBits > 0) then OutputBucket := (OutputBucket AND BitBucketMask[OutputBits]) OR (longInt(Value) SHL OutputBits)
+case (OutputBits > 0) of
+true:OutputBucket := (OutputBucket AND BitBucketMask[OutputBits]) OR (longInt(Value) SHL OutputBits)
 else OutputBucket := Value;
+end;//case
+
 inc(OutputBits, BitsPerCode);
+
 //set
 while (OutputBits >= 8) do
 begin
+
 writechar(OutputBucket and $FF);//was: writechar(char(OutputBucket and $FF));
 OutputBucket:=OutputBucket shr 8;
 dec(OutputBits,8);
+
 end;
+
 //check
 if (Value = EOFCode) then
    begin
+
    // At EOF, write the rest of the buffer.
    while (OutputBits > 0) do
    begin
+
    writechar(OutputBucket and $FF);//was: writechar(char(OutputBucket and $FF));
    OutputBucket := OutputBucket shr 8;
    dec(OutputBits, 8);
+
    end;
+
    end;
+
 // If the next entry is going to be too big for the code size,
 // then increase it, if possible.
-if (FreeEntry > MaxCode) or (ClearFlag) then
+if (FreeEntry > MaxCode) or ClearFlag then
    begin
-   if (ClearFlag) then
-      begin
-      BitsPerCode := InitialBitsPerCode;
-      MaxCode := MaxCodesFromBits(BitsPerCode);
-      ClearFlag := False;
+
+   case ClearFlag of
+   true:begin
+
+      BitsPerCode     :=InitialBitsPerCode;
+      MaxCode         :=MaxCodesFromBits(BitsPerCode);
+      ClearFlag       :=false;
       end
-   else
-      begin
+   else begin
+
       inc(BitsPerCode);
-      if (BitsPerCode=GIFCodeBits) then MaxCode:=GIFTableMaxMaxCode
+
+      case (BitsPerCode=GIFCodeBits) of
+      true:MaxCode:=GIFTableMaxMaxCode;
       else MaxCode:=MaxCodesFromBits(BitsPerCode);
+      end;//case
+
       end;
+   end;//case
+
    end;
+
 except;end;
 end;
 
 begin
+
 //defaults
-result:=false;
-e:=gecUnexpectedError;
-h:=nil;
-buf:=nil;
+result      :=false;
+e           :=gecUnexpectedError;
+h           :=nil;
+buf         :=nil;
+
+//.clear bit bucket
+OutputBucket:=0;
+OutputBits  :=0;
 
 try
 //check
-if not low__true2(str__lock(x),str__lock(imgdata)) then goto skipend;
+if not low__true2(str__lock(x),str__lock(imgdata)) then goto skipfailed;
 
 //init
 str__clear(imgdata);
-xlen:=str__len(x);
-xpos:=1;
-if (xlen<=2) then goto skipend;
-h:=thashtable.create;
-buf:=str__new8;
-maxcolor:=256;
-BitsPerPixel:=8;//bits per pixel - fixed at 8, don't go below 2
-InitialBitsPerCode:=BitsPerPixel+1;
-BitsPerCode:=InitialBitsPerCode;
-MaxCode:=MaxCodesFromBits(BitsPerCode);
-ClearCode:=(1 SHL (InitialBitsPerCode-1));
-EOFCode:=ClearCode+1;
-BaseCode:=EOFCode+1;
-//.clear bit bucket
-OutputBucket:=0;
-OutputBits:=0;
+xlen                  :=str__len32(x);
+xpos                  :=1;
+
+//check -> allow down to 1x1 pixel (len=1) - 12mar2026
+if (xlen<=0) then goto skipend;//skipfailed;
+
+h                     :=thashtable.create;
+buf                   :=str__new8;
+maxcolor              :=256;
+BitsPerPixel          :=8;//bits per pixel - fixed at 8, don't go below 2
+InitialBitsPerCode    :=BitsPerPixel+1;
+BitsPerCode           :=InitialBitsPerCode;
+MaxCode               :=MaxCodesFromBits(BitsPerCode);
+ClearCode             :=(1 SHL (InitialBitsPerCode-1));
+EOFCode               :=ClearCode+1;
+BaseCode              :=EOFCode+1;
+
 str__addbyt1(imgdata,BitsPerPixel);//was: pushb(imglen,imgdata,char(BitsPerPixel));
 
 //clear - hash table and sync decoder
-clearflag:=true;
+clearflag             :=true;
+
 output(clearcode);
 h.clear;
-freeentry:=clearcode+2;
+
+freeentry             :=clearcode+2;
+
 //get
-prefix:=smallint(str__bytes1(x,xpos));//was: x[xpos]);
+prefix                :=smallint(str__bytes1(x,xpos));//was: x[xpos]);
+
 if (Prefix>=MaxColor) then
    begin
-   e:=gecIndexOutOfRange;
+
+   e                  :=gecIndexOutOfRange;
    goto skipend;
+
    end;
+
 while true do
 begin
+
 //.inc
 inc(xpos);
 if (xpos>xlen) then break;
+
 //.get
-color:=str__bytes1(x,xpos);//was: x[xpos];
+color                 :=str__bytes1(x,xpos);//was: x[xpos];
+
 if (color>=maxcolor) then
    begin
-   e:=gecIndexOutOfRange;
+
+   e                  :=gecIndexOutOfRange;
    goto skipend;
+
    end;
+
 //append postfix to prefix and lookup in table...
-NewKey := (longint(Prefix) SHL 8) OR Color;
-NewCode := h.lookup(NewKey);
+NewKey                :=(longint(Prefix) SHL 8) OR Color;
+NewCode               :=h.lookup(NewKey);
+
 if (NewCode >= 0) then
    begin
+
    // ...if found, get next pixel
-   prefix:=newcode;
+   prefix             :=newcode;
+
    //skip to next item
    continue;
+
    end;
+
 // ...if not found, output and start over
 output(prefix);
-prefix:=smallint(color);
+prefix                :=smallint(color);
+
 if (FreeEntry < GIFTableMaxFill) then
    begin
+
    h.insert(NewKey, FreeEntry);
    inc(FreeEntry);
+
    end
 else
    begin
+
    //clear
-   clearflag:=true;
+   clearflag          :=true;
    output(clearcode);
    h.clear;
-   freeentry:=clearcode+2;
+   freeentry          :=clearcode+2;
+
    end;
 end;//loop
+
 output(prefix);
+
 skipend:
+
 //finalise - 15SEP2007
 output(EOFCode);
 writecharfinish;
 str__addbyt1(imgdata,EndBlockByte);//was: //writechar('');pushb(imglen,imgdata,char(EndBlockByte));pushb(imglen,imgdata,'');
+
 //successful
-result:=true;
+result                :=true;
+
+skipfailed:
 except;end;
+
 try
+
+//free
 freeobj(@h);
 str__free(@buf);
 str__uaf(x);
 str__uaf(imgdata);
+
 except;end;
 end;
 
@@ -14077,42 +15673,61 @@ hashtable[hkey]:=(key shl gifcodebits) or (code and gifcodemask);
 except;end;
 end;
 
-function thashtable.lookup(key:longInt):smallint;
+function thashtable.lookup(key:longInt):smallint;//updated - 16apr2026
 var
 // Search for key in hash table.
 // Returns value if found or -1 if not
   hkey:smallint;
-  htkey:longInt;
+  xlimit,htkey:longint32;
+
 begin
-result:=-1;
+
+//defaults
+result      :=-1;
 
 try
+
 // Create hash key from prefix string
-HKey := HashKey(Key);
+HKey        :=HashKey(Key);
+
 // Scan table for key
 // HTKey := HashTable[HKey] SHR GIFCodeBits; { Unoptimized }
-Key := Key SHL GIFCodeBits; { Optimized }
-HTKey := HashTable[HKey] AND (HashEmpty SHL GIFCodeBits); { Optimized }
+Key         :=Key SHL GIFCodeBits; { Optimized }
+HTKey       :=HashTable[HKey] AND (HashEmpty SHL GIFCodeBits); { Optimized }
+xlimit      :=HashSize + 10;
+
 // while (HTKey <> HashEmpty) do { Unoptimized }
 while (HTKey <> HashEmpty SHL GIFCodeBits) do { Optimized }
 begin
+
 if (Key = HTKey) then
    begin
+
    // Extract and return value
-   Result := HashTable[HKey] AND GIFCodeMask;
+   result   :=HashTable[HKey] AND GIFCodeMask;
    exit;
+
    end;
+
 // Try next slot
-HKey := NextHashKey(HKey);
+HKey        :=NextHashKey(HKey);
+
 // HTKey := HashTable[HKey] SHR GIFCodeBits; { Unoptimized }
-HTKey := HashTable[HKey] AND (HashEmpty SHL GIFCodeBits); { Optimized }
+HTKey       :=HashTable[HKey] AND (HashEmpty SHL GIFCodeBits); { Optimized }
+
+//patch -> this loop fails to end under Lazarus 2+
+dec(xlimit);
+if (xlimit<0) then break;
+
 end;
+
 // Found empty slot - key doesn't exist
-Result := -1;
+result      :=-1;
+
 except;end;
 end;
 
-function gif__fromdata(ss:tobject;ds:pobject;var e:string):boolean;//06aug2024, 28jul2021, 20JAN2012, 22SEP2009
+function gif__fromdata(ss:tobject;ds:pobject;var e:string):boolean;//08aug2025, 06aug2024, 28jul2021, 20JAN2012, 22SEP2009
 label
    skipone,skipend;
    //ss      = image that will accept the animation cells as a horizontal image strip (best to use a 32bit image for transparency etc)
@@ -14134,7 +15749,7 @@ type
    pgifpal=^tgifpal;
    tgifpal=record
     c:array[0..255] of tcolor24;
-    count:integer;
+    count:longint32;
     init:boolean;
     end;
 var
@@ -14207,7 +15822,7 @@ if (sbits<>8) and (sbits<>24) and (sbits<>32) then goto skipend;
 if not mis__resizable(simage) then simage:=misraw(sbits,sw,sh);
 
 //init
-dslen:=str__len(ds);
+dslen:=str__len32(ds);
 if (dslen<6) then exit;
 imgcount:=0;
 imglimit:=0;
@@ -14312,13 +15927,13 @@ else if (v<>0) then
       else break;
       end;//loop
 
-      if (str__len(@tmp)=0) then goto skipone;
+      if (str__len32(@tmp)=0) then goto skipone;
 
       //set
       case v2 of
       249:begin//control - for image handling
 
-         if (str__len(@tmp)<4) then goto skipone;
+         if (str__len32(@tmp)<4) then goto skipone;
          if xstr8ok then tmp2:=(tmp as tstr8).pbytes[0] else tmp2:=str__bytes1(@tmp,1);
 
          //.defaults
@@ -14348,7 +15963,7 @@ else if (v<>0) then
          end;
 
       255:begin//loop
-         loops:=str__sml2(@tmp,str__len(@tmp)-1-1);
+         loops:=str__sml2(@tmp,str__len32(@tmp)-1-1);
          end;
 
       254:begin//comment
@@ -14520,7 +16135,7 @@ else if (v<>0) then
 
       //draw
       p:=1;
-      len:=str__len(@imgdata);
+      len:=str__len32(@imgdata);
 
       for dy:=0 to (id.h-1) do
       begin
@@ -14654,6 +16269,7 @@ case gp.count of
 end;//case
 
 //.update animation information
+misai(simage).format       :='GIF';//08aug2025
 misai(simage).delay        :=ddelay;
 misai(simage).count        :=dcellcount;
 misai(simage).cellwidth    :=dcellwidth;
@@ -14681,7 +16297,7 @@ begin
 result:=gif__todata2(s,ds,'',e);
 end;
 
-function gif__todata2(s:tobject;ds:pobject;daction:string;var e:string):boolean;
+function gif__todata2(s:tobject;ds:pobject;daction:string;var e:string):boolean;//04may2026
 label
    skipend;
    //s       = image strip (one or more cells in a horizontal line) that forms the animation (best to use a 32bit image for transparency etc)
@@ -14692,21 +16308,26 @@ var
    int1,p,sbits,sw,sh,cms,cc,cw,ch,cmaketrans:longint;
    bol1,cloop:boolean;
 begin
-result:=false;
-gs:=nil;
-c32:=nil;
+
+result      :=false;
+gs          :=nil;
+c32         :=nil;
 
 try
+
+
 //check
 if not str__lock(ds)             then goto skipend;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
 
+
 //init
 mis__calccells2(s,cms,cc,cw,ch);//safe animation information -> recalculates cellwidth/cellheight to match "s" current dimensions
-gs:=tgifsupport.create;
-c32:=misraw32(cw,ch);
-cloop:=true;
-cmaketrans:=clnone;
+gs          :=tgifsupport.create;
+c32         :=misraw32(cw,ch);
+cloop       :=true;
+cmaketrans  :=clnone;
+
 
 //actions
 if ia__ifindval(daction,ia_delay,0,500,int1)                      then cms:=frcmin32(int1,0);//override cell delay with new delay
@@ -14717,37 +16338,49 @@ if ia__ifindval(daction,ia_transparentcolor,0,clnone,int1)        then cmaketran
 //start GIF data stream
 if not gif__start(gs,ds,cw,ch,cloop) then goto skipend;
 
+
 //add cells to GIF data stream "ds"
 for p:=1 to cc do
 begin
+
 //.clear cell buffer -> in cases where image strip "s" falls short of last cell, that area will be transparent
 mis__cls(c32,0,0,0,0);
 
 //.copy pixels over to cell -> "s.cells[p-1] --> c32"
-if not miscopyarea32(0,0,cw,ch,area__make( cw*(p-1), 0, cw*(p-1) + (cw-1), (ch-1) ), c32 , s) then goto skipend;
+if not mis__copyfast( maxarea ,area__make( cw*(p-1), 0, cw*(p-1) + (cw-1), (ch-1) ) ,0 ,0 ,cw ,ch  ,s ,c32 ) then goto skipend;
 
 //.find a color and make that color transparent -> all previous transparency is removed
 if (cmaketrans<>clnone) then
    begin
+
    mis__cls8(c32,255);//remove previous transparency
    mask__maketrans32(c32,cmaketrans);//create new transparency mask from color
-   end;
+
+   end
+//.when transitioning from 32-bit to 8-bit GIF, force simple mask transparency of 0 or 255 with threshold of 127 - 04may2026
+else if (sbits=32) then mask__forcesimple2(c32,127);
 
 //.add cell "c32" to GIF data stream
 if not gif__addcell82432(gs,ds,c32,cms) then goto skipend;
+
 end;//p
+
 
 //finalise GIF data stream
 if not gif__stop(ds) then goto skipend;
+
 
 //successful
 result:=true;
 skipend:
 except;end;
 try
+
+//free
 str__uaf(ds);
 freeobj(@gs);
 freeobj(@c32);
+
 except;end;
 end;
 
@@ -14774,9 +16407,12 @@ const
 var
    s:tgifscreen;
 begin
-result:=false;
+
+//defaults
+result      :=false;
 
 try
+
 //check
 if not str__lock(ds)       then goto skipend;
 if zznil(gs,123)           then goto skipend;
@@ -14793,6 +16429,7 @@ str__clear(ds);
 //get --------------------------------------------------------------------------
 //header
 str__aadd(ds,[uuG,uuI,uuF,nn8,nn9,lla]);//was: pushb(ylen,y,'GIF89a');
+
 //screen info - no global palette - 31dec2022
 fillchar(s,sizeof(s),0);
 s.w:=(gs as tgifsupport).sw;
@@ -14808,9 +16445,11 @@ str__addbyt1(ds,s.ar);
 //loop       //unknown code block [78..3..1]                       //0=loop forever
 if dloop then
    begin
+
    str__aadd(ds,[33,255,11,78,69,84,83,67,65,80,69,50,46,48,3,1]);
    str__addsmi2(ds,0);
    str__addbyt1(ds,0);
+
    end;
 
 //size support images
@@ -14818,9 +16457,13 @@ if not (gs as tgifsupport).size((gs as tgifsupport).sw,(gs as tgifsupport).sh) t
 
 //successful
 result:=true;
+
 skipend:
 except;end;
-try;str__uaf(ds);except;end;
+
+//free
+str__uaf(ds);
+
 end;
 
 function gif__addcell82432(gs:tobject;ds:pobject;c:tobject;cms:longint):boolean;//06aug2024: auto. optimises GIF data stream on-the-fly
@@ -14831,6 +16474,7 @@ label//06aug2024: Automatically optimises the GIF data stream on-the-fly.  Suppo
      //c   = cell image to add to GIF -> supports 8/24 and 32 bit cells with 32bit supporting transparency with "alpha<255"
      //cms = delay in milliseconds to wait before painting next cell in animation sequence
    skipend;
+
 var
    gss:tgifsupport;
    ddata:tobject;
@@ -14850,24 +16494,27 @@ var
    s32 :tcolor32;
    n32 :tcolor32;
    e:string;
+
 begin
+
 //defaults
-result:=false;
-ddata:=nil;
+result      :=false;
+ddata       :=nil;
 
 try
+
 //check
 //.data stream
 if not str__lock(ds)             then goto skipend;
-if (str__len(ds)<12)             then goto skipend;
+if (str__len32(ds)<12)             then goto skipend;
 
 //.gif support object
 if zznil(gs,122)                 then goto skipend;
 if (gs is tgifsupport)           then gss:=(gs as tgifsupport) else goto skipend;
 
 //.screen info
-sw:=gss.sw;
-sh:=gss.sh;
+sw          :=gss.sw;
+sh          :=gss.sh;
 if (sw<1) or (sh<1)              then goto skipend;
 
 //.inbound cell
@@ -14887,15 +16534,15 @@ if (lw<sw) or (lh<sh)            then goto skipend;
 
 
 //init
-dd32:=gss.d32;
-gss.cc:=frcmin32(gss.cc+1,1);//first cell is cc=1
-cc:=gss.cc;
-cms:=frcrange32(cms div 10,0,32767);//divide inbound millisecond delay by 10 for GIF delay number -> side note: does a "cms=0" produce a multi-image 1st frame for preview systems => answer is NO - 05jan2023
+dd32        :=gss.d32;
+gss.cc      :=frcmin32(gss.cc+1,1);//first cell is cc=1
+cc          :=gss.cc;
+cms         :=frcrange32(cms div 10,0,32767);//divide inbound millisecond delay by 10 for GIF delay number -> side note: does a "cms=0" produce a multi-image 1st frame for preview systems => answer is NO - 05jan2023
 
-n32.r:=0;
-n32.g:=0;
-n32.b:=0;
-n32.a:=0;
+n32.r       :=0;
+n32.g       :=0;
+n32.b       :=0;
+n32.a       :=0;
 
 //clear the smart write buffer "s32" at start (cc=1) -> default to black(r=0,g=0,b=0) and fully transparent(a=0)
 if (cc<=1) then mis__cls(gss.s32,0,0,0,0);
@@ -14910,6 +16557,7 @@ xsubcount:=0;
 
 for sy:=0 to (sh-1) do
 begin
+
 if not misscan82432(c,sy,cr8,cr24,cr32) then goto skipend;//inbound cell buffer
 if not misscan32(gss.s32,sy,sr32)       then goto skipend;//smart buffer
 if not misscan32(gss.d32,sy,dr32)       then goto skipend;//difference buffer
@@ -14921,91 +16569,112 @@ begin
 //.c8/24/32
 case cbits of
 32:begin
-   c32:=cr32[sx];
+
+   c32      :=cr32[sx];
+
    //.alpha level as 0 or 255 -> no middle levels
    if (c32.a<255) then c32.a:=0;
+
    end;
 24:begin
-   c24:=cr24[sx];
-   c32.r:=c24.r;
-   c32.g:=c24.g;
-   c32.b:=c24.b;
-   c32.a:=255;
+
+   c24      :=cr24[sx];
+   c32.r    :=c24.r;
+   c32.g    :=c24.g;
+   c32.b    :=c24.b;
+   c32.a    :=255;
+
    end;
 8:begin
-   c32.r:=cr8[sx];
-   c32.g:=c32.r;
-   c32.b:=c32.r;
-   c32.a:=255;
+
+   c32.r    :=cr8[sx];
+   c32.g    :=c32.r;
+   c32.b    :=c32.r;
+   c32.a    :=255;
+
    end;
 end;//case
-//.s32
-s32:=sr32[sx];
 
+//.s32
+s32         :=sr32[sx];
 
 //decide
 //.subtracting transparent pixel -> requires a full repaint from s32
 if (c32.a<s32.a) then
    begin
+
    inc(xsubcount);
    bol1:=true;
+
    end
+
 //.adding a colored pixel -> requires only a partial repaint from d32
 else if (c32.a>s32.a) or (c32.r<>s32.r) or (c32.g<>s32.g) or (c32.b<>s32.b) then
    begin
+
    inc(xaddcount);
    bol1:=true;
-   end
-//.neither -> no change -> store a blank image
-else bol1:=false;
 
+   end
+
+//.neither -> no change -> store a blank pixel
+else bol1:=false;
 
 //set
 if bol1 then
    begin
+
    sr32[sx]:=c32;
    dr32[sx]:=c32;
+
    end;
 
 end;//sx
-end;//sy
 
+end;//sy
 
 //analyse outbound cell and calculate render flags - 06aug2024
 //.all modes and indicators off by default
-dtrans :=false;
-dmode4 :=false;//overwrite screen pixels -> leave screen intact -> add only mode
-dmode8 :=false;//clear background to transparent -> subtract and repaint mode
+dtrans      :=false;
+dmode4      :=false;//overwrite screen pixels -> leave screen intact -> add only mode
+dmode8      :=false;//clear background to transparent -> subtract and repaint mode
 
 case (xsubcount>=1) of
 true:begin
+
    //.use the smart buffer to render what we have SO FAR for the screen
-   dd32:=gss.s32;
-   dmode4:=true;
+   dd32     :=gss.s32;
+   dmode4   :=true;
+
    //need to reach back to previous frame and set it's mode to 8 or 9, as this flag requires a whole frame to pass by BEFORE it wipes the background clear - 06aug2024
    if (gss.flags__lastpos>=1) then
       begin
+
       case gss.flags__lastval of
       4:str__setbytes0(ds,gss.flags__lastpos,8);//flag was: add + solid
       5:str__setbytes0(ds,gss.flags__lastpos,9);//flag was: add + transparent
+      end;//case
+
       end;
-      end;
+
    end;
 else begin
+
    //.use the difference buffer to render only the CHANGES on the screen
-   dd32:=gss.d32;
-   dmode4:=true;
+   dd32     :=gss.d32;
+   dmode4   :=true;
+
    end;
 end;//case
 
 
 //is cell transparent -> scan it's mask for any values not 255
 mask__range(dd32,mmin,mmax);
-dtrans:=(mmin<255);//at least one pixel's alpha dipped below 255 so it's considered transparent
+dtrans      :=(mmin<255);//at least one pixel's alpha dipped below 255 so it's considered transparent
 
 
 //gif render flags
-dflags:=0;
+dflags      :=0;
 if dtrans  then inc(dflags);//cell is transparent
 if dmode4  then inc(dflags,4);//cell's pixels are to be drawn over the top of the current screen's pixels (add)
 if dmode8  then inc(dflags,8);//cell's pixels are to be drawn to the screen ONCE the screen has been WIPED clean (sub/cleared)
@@ -15014,7 +16683,7 @@ if dmode8  then inc(dflags,8);//cell's pixels are to be drawn to the screen ONCE
 //graphic control block
 str__aadd(ds,[33,249,4]);
 str__addbyt1(ds,dflags);
-gss.flags__lastpos:=str__len(ds)-1;//store this frame's flags value and position in case a future frame needs to "reach-back" to change it
+gss.flags__lastpos:=str__len32(ds)-1;//store this frame's flags value and position in case a future frame needs to "reach-back" to change it
 gss.flags__lastval:=dflags;
 str__addsmi2(ds,cms);
 str__aadd(ds,[0,0]);//transparent color index = 0 AND block terminator 0
@@ -15022,11 +16691,12 @@ str__aadd(ds,[0,0]);//transparent color index = 0 AND block terminator 0
 
 //image information - Note: pf=0 (no local color table, not interlaced, not sorted)
 fillchar(ddes,sizeof(ddes),0);
-ddes.sep:=44;
-ddes.w:=sw;
-ddes.h:=sh;
-ddes.dx:=0;
-ddes.dy:=0;
+
+ddes.sep    :=44;
+ddes.w      :=sw;
+ddes.h      :=sh;
+ddes.dx     :=0;
+ddes.dy     :=0;
 str__addbyt1(ds,ddes.sep);//2C = OK
 str__addwrd2(ds,ddes.dx);
 str__addwrd2(ds,ddes.dy);
@@ -15057,75 +16727,98 @@ end;
 //store local palette colors - 22sep2021
 for p:=0 to (gss.pcount-1) do
 begin
+
 str__addbyt1(ds,gss.ppal[p].r);
 str__addbyt1(ds,gss.ppal[p].g);
 str__addbyt1(ds,gss.ppal[p].b);
+
 end;//p
 
 
 //image data
-ddata:=str__newsametype(ds);//create a temporary data stream to write compressed image data to -> uses same data stream type as supplied by host
+ddata       :=str__newsametype(ds);//create a temporary data stream to write compressed image data to -> uses same data stream type as supplied by host
 str__setlen(@ddata,sw*sh);//size the stream to fit the uncompressed image
 
-p:=1;
+p           :=1;
+
 for sy:=0 to (sh-1) do
 begin
+
 //.use "p8" as a rapid lookup matrix for palette colors
 if not misscan8(gss.p8,sy,pr8) then goto skipend;
 
 //.access tstr8 directly for faster performance
 if str__is8(@ddata) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    (ddata as tstr8).pbytes[p-1]:=pr8[sx];//r-b elements are reversed in pal items
    inc(p);
-   end;
+
+   end;//sx
+
    end
 //.indirect access for larger capacity at the expense of performance
 else
    begin
+
    for sx:=0 to (sw-1) do
    begin
+
    str__setbytes0(@ddata,p-1,pr8[sx]);//r-b elements are reversed in pal items
    inc(p);
-   end;
+
+   end;//sx
+
    end;
 end;//sy
 
 //compress image data
 if not gif__compress(@ddata,e) then goto skipend;
 
+
 //append image data
 str__add(ds,@ddata);
 
+
 //successful
-result:=true;
+result      :=true;
 skipend:
 except;end;
-try
+
+//free
 str__free(@ddata);
 str__uaf(ds);
-except;end;
+
 end;
 
 function gif__stop(ds:pobject):boolean;
 begin
-result:=false;
+
+//defaults
+result      :=false;
 
 //check
 if not str__lock(ds) then exit;
 
 //write the terminator code "59" - 31dec2022: fixed
 try
-if (str__len(ds)>=12) then
+
+if (str__len32(ds)>=12) then
    begin
+
    str__aadd(ds,[59]);
    result:=true;
+
    end;
+
 except;end;
+
 //free
 str__uaf(ds);
+
 end;
 
 
@@ -15273,6 +16966,68 @@ end;//sy
 //successful
 result:=true;
 skipend:
+except;end;
+end;
+
+function mask__count(s:tobject):longint;//24oct2025
+var
+   sx,sy,sw,sh,sbits:longint;
+   xlist :array[0..255] of boolean;
+   sr32  :pcolorrow32;
+   sr8   :pcolorrow8;
+begin
+
+//defaults
+result :=0;
+
+try
+
+//check
+if (not misok82432(s,sbits,sw,sh)) or (sbits=24) then exit;
+
+//init
+low__cls(@xlist,sizeof(xlist));
+
+//get
+
+//.sy
+for sy:=0 to (sh-1) do
+begin
+if not misscan832(s,sy,sr8,sr32) then break;
+
+//.32
+if (sbits=32) then
+   begin
+
+   for sx:=0 to (sw-1) do if not xlist[ sr32[sx].a ] then
+      begin
+
+      xlist[ sr32[sx].a ]:=true;
+      inc(result);
+
+      end;
+
+   end
+
+//.8
+else if (sbits=8) then
+   begin
+
+   for sx:=0 to (sw-1) do if not xlist[ sr8[sx] ] then
+      begin
+
+      xlist[ sr8[sx] ]:=true;
+      inc(result);
+
+      end;
+
+   end;
+
+//check
+if (result>=256) then break;
+
+end;//sy
+
 except;end;
 end;
 
@@ -15808,57 +17563,81 @@ skipend:
 except;end;
 end;
 
-function mask__forcesimple0255(s:tobject):boolean;//21nov2024
-label//Converts a mask with shades into 0=transparent and 255=opaque so that the mask only contents the values 0 or 255
+function mask__forcesimple(s:tobject):boolean;//18mar2026, 21nov2024
+begin
+
+result:=mask__forcesimple2( s ,1 );
+
+end;
+
+function mask__forcesimple2(s:tobject;const xthreshold:byte):boolean;//04may2026, 18mar2026, 21nov2024
+label//Converts a mask with shades into 0=transparent and 255=opaque so that the mask only contains the values 0 or 255
    skipend;
+
 var
    sx,sy,sw,sh,sbits:longint;
    sr32:pcolorrow32;
    sr24:pcolorrow24;
    sr8:pcolorrow8;
+
 begin
+
 //defaults
-result:=false;
+result      :=false;
 
 //check
 if not misok82432(s,sbits,sw,sh) then exit;
 
 try
+
 //get
 for sy:=0 to (sh-1) do
 begin
+
 if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
 
 //.32
 if (sbits=32) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
-   case sr32[sx].a of
-   1..254:sr32[sx].a:=255;
-   end;
+
+   if (sr32[sx].a>=xthreshold) then sr32[sx].a:=255
+   else                             sr32[sx].a:=0;
+
    end;//sx
+
    end
 //.8
 else if (sbits=8) then
    begin
+
    for sx:=0 to (sw-1) do
    begin
-   case sr8[sx] of
-   1..254:sr8[sx]:=255;
-   end;
+
+   if (sr8[sx]>=xthreshold)    then sr8[sx]:=255
+   else                             sr8[sx]:=0;
+
    end;//sx
+
    end
 else break;
 end;//dy
 
 //successful
-result:=true;
+result      :=true;
 skipend:
+
 except;end;
 end;
 
-function mask__makesimple0255(s:tobject;tc:longint):boolean;//21nov2024
+function mask__makesimple0255(s:tobject;tc:longint):boolean;//08aug2025, 21nov2024
+begin
+result:=mask__makesimple0255b(s,area__make(0,0,max32,max32),tc);
+end;
+
+function mask__makesimple0255b(s:tobject;sa:twinrect;tc:longint):boolean;//16sep2025, 08aug2025, 21nov2024
 label//Creates a mask using the transparent color "tc" into 0=transparent or 255=opaque, 1..254 are not used
    skipend;
 var
@@ -15866,15 +17645,14 @@ var
    sr32:pcolorrow32;
    sr24:pcolorrow24;
    sr8:pcolorrow8;
-   sc32:tcolor32;
 begin
+
 //defaults
 result:=false;
 
 //check
 if not misok82432(s,sbits,sw,sh) then exit;
 
-try
 //init
 if (tc=clnone) then//set mask to all zeros "0"
    begin
@@ -15891,35 +17669,40 @@ else
    if (tb>t8) then t8:=tb;
    end;
 
+//range
+sa.left   :=frcrange32(sa.left,0,sw-1);
+sa.right  :=frcrange32(sa.right,sa.left,sw-1);
+sa.top    :=frcrange32(sa.top,0,sh-1);
+sa.bottom :=frcrange32(sa.bottom,sa.top,sh-1);
+
 //get
-for sy:=0 to (sh-1) do
+for sy:=sa.top to sa.bottom do
 begin
+
 if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
 
 //.32
 if (sbits=32) then
    begin
-   for sx:=0 to (sw-1) do
-   begin
-   sc32:=sr32[sx];
-   if (sc32.r=tr) and (sc32.g=tg) and (sc32.b=tb) then sr32[sx].a:=0 else sr32[sx].a:=255;//09jan2025: blue effort - fixed
-   end;//sx
+
+   for sx:=sa.left to sa.right do if (sr32[sx].r=tr) and (sr32[sx].g=tg) and (sr32[sx].b=tb) then sr32[sx].a:=0 else sr32[sx].a:=255;//09jan2025: blue effort - fixed
+
    end
 //.8
 else if (sbits=8) then
    begin
-   for sx:=0 to (sw-1) do
-   begin
-   if (sr8[sx]=t8) then sr8[sx]:=0 else sr8[sx]:=255;
-   end;//sx
+
+   for sx:=sa.left to sa.right do if (sr8[sx]=t8) then sr8[sx]:=0 else sr8[sx]:=255;
+
    end
 else break;
+
 end;//dy
 
 //successful
 result:=true;
 skipend:
-except;end;
+
 end;
 
 function mask__feather(s,d:tobject;sfeather,stranscol:longint;var xouttranscol:longint):boolean;//20jan2021
@@ -17162,7 +18945,7 @@ if not str__lock(d)              then goto skipend;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
 
 //init
-dlen            :=str__len(d);
+dlen            :=str__len32(d);
 dshortfall255   :=frcrange32(donshortfall,0,255);
 
 if (dlen<=0) and (donshortfall<0)then goto skipend;
@@ -17237,67 +19020,338 @@ except;end;
 str__uaf(d);
 end;
 
+function mask__blur32(const s:tobject;const xdepth100,xpower255:longint32):boolean;//10apr2026 - fast version
+begin//Optimisation pathway: 1,149ms -> 1,066ms -> 687ms -> 572ms -> 527ms (2.18x faster)
 
-//graphics procs ---------------------------------------------------------------
-function low__cornerMaxwidth:longint;//used by some patch systems to work around corner restrictions such as "statusbar.cellpert.round/square" - 07ul2021
-begin
-result:=3;
+//defaults
+result      :=false;
+
+//get
+if (s<>nil) then
+   begin
+
+   if      (xpower255<=0  ) then result:=true
+   else if (xpower255>=255) then result:=xmask__blur32( s ,xdepth100 )
+   else                          result:=xmask__blur32_power255( s ,xdepth100 ,xpower255 );
+
+   end;
+
 end;
 
-function low__cornersolid(xdynamicCorners:boolean;var a:twinrect;amin,ay,xmin,xmax,xroundstyle:longint;xround:boolean;var lx,rx:longint):boolean;//29mar2021
+function xmask__blur32(const s:tobject;const xdepth100:longint32):boolean;
+label
+   skipend;
+
 var
-   ax,ax2:longint;
+   s8:tbasicimage;
+   sr8 :pcolorrows8;
+   sr32:pcolorrows32;
+   vr8,vr8T,vr8B:pcolorrow8;
+   vr32:pcolorrow32;
+   d,ddepth,a,ac,sx,sy,sw,sh:longint32;
+
+   procedure xcopyto8;
+   var
+      sx,sy:longint32;
+      vr8 :pcolorrow8;
+      vr32:pcolorrow32;
+   begin
+
+   for sy:=0 to pred(sh) do
+   begin
+
+   vr8      :=sr8 [sy];
+   vr32     :=sr32[sy];
+
+   for sx:=0 to pred(sw) do
+   begin
+
+   vr8[sx]  :=vr32[sx].a;
+
+   end;//sx
+
+   end;//sy
+
+   end;
+
 begin
-//defaults
-result:=true;
+
+
+//defaults ---------------------------------------------------------------------
+
+result      :=false;
+s8          :=nil;
+
+
+//check ------------------------------------------------------------------------
+
+if not misok32(s,sw,sh)  then exit;
+if not misrows32(s,sr32) then exit;
 
 try
-ax :=a.left;
-ax2:=a.right;
-lx :=xmin;
-rx :=xmax;
 
-//square corner ----------------------------------------------------------------
-if (not xround) or ((amin<3) and xdynamicCorners) or (xmax<xmin) then exit;//check
+//init -------------------------------------------------------------------------
 
-//rounded corner ---------------------------------------------------------------
-//17mar2021
-if (xroundstyle=corSlight) or (xroundstyle=corSlight2) or (xroundstyle=corToSquare) then amin:=3//slight corner
-else if not xdynamicCorners then amin:=11;//29mar2021
+ddepth      :=frcrange32( xdepth100 ,1 ,100 );
+s8          :=misimg8(sw,sh);
+if not misrows8(s8,sr8)    then goto skipend;
 
-case amin of
-3..10:begin
-   if (ay=a.top) or (ay=a.bottom) then
+
+//get --------------------------------------------------------------------------
+
+for d:=1 to ddepth do
+begin
+
+xcopyto8;
+
+for sy:=0 to pred(sh) do
+begin
+
+vr8         :=sr8 [sy];
+vr32        :=sr32[sy];
+
+if (sy>=1) then
+   begin
+
+   vr8T     :=sr8 [sy-1];
+
+   end;
+
+if (sy<pred(sh)) then
+   begin
+
+   vr8B     :=sr8 [sy+1];
+
+   end;
+
+for sx:=0 to pred(sw) do
+begin
+
+if (vr8[sx]>=1) then
+   begin
+
+   //start
+   a        :=vr8[sx];
+   ac       :=1;
+
+   //left
+   if (sx>=1) then
       begin
-      lx:=ax +1;
-      rx:=ax2-1;
+
+      inc( a ,vr8[sx-1] );
+      inc( ac           );
+
       end;
-   end;//begin
-11..max32:begin//multi-pixel curved corner
-   if (ay=a.top) or (ay=a.bottom) then
+
+   //right
+   if (sx<pred(sw)) then
       begin
-      lx:=ax +3;
-      rx:=ax2-3;
-      end
-   else if (ay=(a.top+1)) or (ay=(a.bottom-1)) then
-      begin
-      lx:=ax +2;
-      rx:=ax2-2;
-      end
-   else if (ay=(a.top+2)) or (ay=(a.bottom-2)) or (ay=(a.top+3)) or (ay=(a.bottom-3)) or (ay=(a.top+4)) or (ay=(a.bottom-4)) then
-      begin
-      lx:=ax +1;
-      rx:=ax2-1;
+
+      inc( a ,vr8[sx+1] );
+      inc( ac           );
+
       end;
-   end;//begin
-end;//case
-//detect usuability
-result:=(lx<=rx);
-//enforce range -> must do this else fatal error can occur when a window is dragged offscreen - 29mar2021
-lx:=frcrange32(lx,xmin,xmax);
-rx:=frcrange32(rx,xmin,xmax);
+
+   //top
+   if (sy>=1) then
+      begin
+
+      inc( a ,vr8T[sx] );
+      inc( ac          );
+
+      end;
+
+   //bottom
+   if (sy<pred(sh)) then
+      begin
+
+      inc( a ,vr8B[sx] );
+      inc( ac          );
+
+      end;
+
+   //set
+   if (ac>=2) then vr32[sx].a:=a div ac
+
+   end;
+
+end;//sx
+
+end;//sy
+
+end;//d
+
+//successful
+result:=true;
+skipend:
+
 except;end;
+
+//free
+freeobj(@s8);
+
 end;
+
+function xmask__blur32_power255(const s:tobject;const xdepth100,xpower255:longint32):boolean;
+label
+   skipend;
+
+var
+   s8:tbasicimage;
+   sr8 :pcolorrows8;
+   sr32:pcolorrows32;
+   vr8,vr8T,vr8B:pcolorrow8;
+   vr32:pcolorrow32;
+   d,ddepth,ca,cainv,a,ac,sx,sy,sw,sh:longint32;
+
+   procedure xcopyto8;
+   var
+      sx,sy:longint32;
+      vr8 :pcolorrow8;
+      vr32:pcolorrow32;
+   begin
+
+   for sy:=0 to pred(sh) do
+   begin
+
+   vr8      :=sr8 [sy];
+   vr32     :=sr32[sy];
+
+   for sx:=0 to pred(sw) do
+   begin
+
+   vr8[sx]  :=vr32[sx].a;
+
+   end;//sx
+
+   end;//sy
+
+   end;
+
+begin
+
+
+//defaults ---------------------------------------------------------------------
+
+result      :=false;
+s8          :=nil;
+
+
+//check ------------------------------------------------------------------------
+
+if (xpower255<1)         then exit;
+if not misok32(s,sw,sh)  then exit;
+if not misrows32(s,sr32) then exit;
+
+try
+
+//init -------------------------------------------------------------------------
+
+ddepth      :=frcrange32( xdepth100 ,1 ,100 );
+ca          :=frcrange32( xpower255 ,0 ,255 );
+cainv       :=255-ca;
+s8          :=misimg8(sw,sh);
+if not misrows8(s8,sr8)    then goto skipend;
+
+
+//get --------------------------------------------------------------------------
+
+for d:=1 to ddepth do
+begin
+
+xcopyto8;
+
+for sy:=0 to pred(sh) do
+begin
+
+vr8         :=sr8 [sy];
+vr32        :=sr32[sy];
+
+if (sy>=1) then
+   begin
+
+   vr8T     :=sr8 [sy-1];
+
+   end;
+
+if (sy<pred(sh)) then
+   begin
+
+   vr8B     :=sr8 [sy+1];
+
+   end;
+
+for sx:=0 to pred(sw) do
+begin
+
+if (vr8[sx]>=1) then
+   begin
+
+   //start
+   a        :=vr8[sx];
+   ac       :=1;
+
+   //left
+   if (sx>=1) then
+      begin
+
+      inc( a ,vr8[sx-1] );
+      inc( ac           );
+
+      end;
+
+   //right
+   if (sx<pred(sw)) then
+      begin
+
+      inc( a ,vr8[sx+1] );
+      inc( ac           );
+
+      end;
+
+   //top
+   if (sy>=1) then
+      begin
+
+      inc( a ,vr8T[sx] );
+      inc( ac          );
+
+      end;
+
+   //bottom
+   if (sy<pred(sh)) then
+      begin
+
+      inc( a ,vr8B[sx] );
+      inc( ac          );
+
+      end;
+
+   //set
+   if (ac>=2) then vr32[sx].a  :=(  ( cainv * vr8[sx] ) + ( (ca*a) div ac )  ) shr 8;
+
+   end;
+
+end;//sx
+
+end;//sy
+
+end;//d
+
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+
+//free
+freeobj(@s8);
+
+end;
+
+
+//graphics procs ---------------------------------------------------------------
 
 function misscreenresin248K:longint;//returns 2(K), 4(K) or 8(K)
 var
@@ -17324,77 +19378,80 @@ end;
 
 //standardised 32bit graphic procs ---------------------------------------------
 //26jul2024: created
-function mis__format(xdata:pobject;var xformat:string;var xbase64:boolean):boolean;//26jul2024: created to handle tstr8 and tstr9
+function mis__format(xdata:pobject;var xformat:string;var xbase64:boolean):boolean;//06mar2026, 18sep2025, 26jul2024: created to handle tstr8 and tstr9
 label
    skipend,redo;
 var
    a:tobject;
    str1:string;
-   xmustfree,xonce:boolean;
+   xmustfree,xonce,xcanwrite:boolean;
 
-   function sm(ext:string):boolean;
-   begin
-   result:=strmatch(str1,ext);
-   end;
 begin
+
 //defaults
-result:=false;
-xmustfree:=false;
-xformat:='';
-xbase64:=false;
-a:=nil;
+result      :=false;
+xmustfree   :=false;
+xformat     :='';
+xbase64     :=false;
+a           :=nil;
 
 try
+
 //lock
 if not str__lock(xdata) then goto skipend;
 
 //length check
-a:=xdata^;//a pointer at this stage
-if (str__len(@a)<=0) then goto skipend;
+a           :=xdata^;//a pointer at this stage
+if (str__len32(@a)<=0) then goto skipend;
 
 //init
-xonce:=true;
+xonce       :=true;
 redo:
+
 //get
 if io__anyformat(@a,str1) then
    begin
-   if (str1='B64') then
-      begin
+
+   case (str1='B64') of
+
+   true:begin
+
       if xonce then
          begin
-         xonce:=false;
-         xbase64:=true;
+
+         xonce        :=false;
+         xbase64      :=true;
+
          //.duplicate "a" using same string handler
-         xmustfree:=true;
-         a:=str__newsametype(xdata);
+         xmustfree    :=true;
+         a            :=str__newsametype(xdata);
+
          str__fromb642(xdata,@a,1);
+
          goto redo;
+
          end;
+
       end
-   else
-      begin
-      //get
-      xformat:=str1;
 
-      //detect known format ----------------------------------------------------
-      if not result then result:=sm('png') or sm('tea') or sm('img32') or sm('tga') or sm('ppm') or sm('pgm') or sm('pbm') or sm('pnm') or sm('bmp') or sm('dib');
+   else begin
 
-      {$ifdef jpeg}
-      if not result then result:=sm('jpg') or sm('tj32');
-      {$endif}
+      xformat         :=str1;
+      result          :=io__imageExtSupported2(str1,xcanwrite);//06mar2026
 
-      if not result then result:=sm('gif');
-
-      if not result then result:=sm('ico') or sm('cur') or sm('ani');
       end;
+
+   end;//case
+
    end;
 
 skipend:
 except;end;
-try
+
+//free
 if xmustfree and str__ok(@a) then str__free(@a);
 str__uaf(xdata);
-except;end;
+
 end;
 
 function mis__clear(s:tobject):boolean;
@@ -17411,7 +19468,9 @@ function mis__copy(s,d:tobject):boolean;
    if result and (not misaicopy(s,d)) then misaiclear(misai(d)^);
    end;
 begin
-result:=missize(d,misw(s),mish(s)) and miscopyarea322(maxarea,0,0,misw(s),mish(s),area__make(0,0,misw(s)-1,mish(s)-1),d,s,0,0) and xaicopy(s,d);
+
+result:=missize(d,misw(s),mish(s)) and mis__copyfast( maxarea,area__make(0,0,misw(s)-1,mish(s)-1),0,0,misw(s),mish(s),s,d ) and xaicopy(s,d);
+
 end;
 
 function mis__tofile(s:tobject;dfilename,dformat:string;var e:string):boolean;//09jul2021
@@ -17438,7 +19497,10 @@ daction:=ia__spreadd(daction,ia_info_filename,[dfilename]);
 if ia__found(daction,ia_usestr9) or (mult64(misw(s),mish(s))>dsizeThreshold) then d:=str__new9 else d:=str__new8;
 result:=mis__todata3(s,@d,dformat,daction,e) and io__tofile(dfilename,@d,e);
 except;end;
-try;str__free(@d);except;end;
+
+//free
+str__free(@d);
+
 end;
 
 function mis__fromfile(s:tobject;sfilename:string;var e:string):boolean;//09jul2021
@@ -17474,71 +19536,150 @@ begin
 result:=mis__todata3(s,sdata,dformat,daction,e);
 end;
 
-function mis__todata3(s:tobject;sdata:pobject;dformat:string;var daction,e:string):boolean;//19feb2025, 14dec2024: ia_nonAnimatedFormatsSaveImageStrip, 25jul2024
+function mis__todata3(s:tobject;sdata:pobject;dformat:string;var daction,e:string):boolean;//23may2026, 18mar2026, 19feb2025, 14dec2024: ia_nonAnimatedFormatsSaveImageStrip, 25jul2024
 label
    skipend;
 var
    sa:twinrect;
-   d:tbasicimage;
+   d1,d2:tbasicimage;
 
    function m(x:string):boolean;
    begin
+
    result:=strmatch(dformat,x);
+
    end;
+
+   procedure xconvertFromRLE;//18mar2026
+   var
+      e:string;
+   begin
+
+   if (s is tbasicrle6) then
+      begin
+
+      d1    :=misimg32(1,1);
+      rle6__fromdata (d1,@s,e);
+      s     :=d1;
+
+      end
+   else if (s is tbasicrle8) then
+      begin
+
+      d1    :=misimg32(1,1);
+      rle8__fromdata (d1,@s,e);
+      s     :=d1;
+
+      end
+   else if (s is tbasicrle32) then
+      begin
+
+      d1    :=misimg32(1,1);
+      rle32__fromdata (d1,@s,e);
+      s     :=d1;
+
+      end;
+
+   end;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
-d:=nil;
+result      :=false;
+e           :=gecTaskfailed;
+d1          :=nil;
+d2          :=nil;
 
 
 try
+
 //init
-dformat:=io__extractfileext2(dformat,dformat,true);//accepts filename and extension only - 22nov2024
+dformat     :=io__extractfileext2(dformat,dformat,true);//accepts filename and extension only - 22nov2024
+
+
+//convert from RLE6/8/32 to native buffer -> uses "d" buffer
+xconvertFromRLE;
+
 
 //animated image -> image strip OR single cell
 if (misai(s).count>=2) and (not ia__found(daction,ia_nonAnimatedFormatsSaveImageStrip)) then
    begin
-   if (not m(feimg32)) and (not m(fetj32)) and (not m(feani)) and (not m(fegif)) then
+
+   if (not m(feimg32)) and (not m(fetj32)) and (not m(feani)) and (not m(fegif)) and (not m(fesan)) then//08nov2025
       begin
-      d:=misimg32(1,1);
+
+      d2              :=misimg32(1,1);
       if not miscell(s,0,sa) then goto skipend;
-      if not missize(d,sa.right-sa.left+1,sa.bottom-sa.top+1) then goto skipend;
-      if not miscopyarea32(0,0,misw(d),mish(d),sa,d,s) then goto skipend;
-      if not misaicopy(s,d) then goto skipend;
-      misai(d).count:=1;
-      s:=d;
+      if not missize(d2,sa.right-sa.left+1,sa.bottom-sa.top+1) then goto skipend;
+      if not mis__copyfast(maxarea,sa,0,0,misw(d2),mish(d2),s,d2) then goto skipend;
+      if not misaicopy(s,d2) then goto skipend;
+      misai(d2).count :=1;
+      s               :=d2;
+
       end;
+
    end;
 
 
 //get
-if      m(feimg32)      then result:=img32__todata3(s,sdata,daction,e)
-else if m(fetj32)       then result:=tj32__todata3(s,sdata,daction,e)
-else if m(fejpg)        then result:=jpg__todata3(s,sdata,daction,e)
-else if m(fejif)        then result:=jpg__todata3(s,sdata,daction,e)
-else if m(fejpeg)       then result:=jpg__todata3(s,sdata,daction,e)
-else if m(feani)        then result:=ani__todata2(s,sdata,'',e)
-else if m(fecur)        then result:=cur__todata2(s,sdata,daction,e)
-else if m(feico)        then result:=ico__todata3(s,sdata,daction,e)//27may2025, 19feb2025
+
+//.a
+if      m(feani)        then result:=ani__todata2(s,sdata,daction,e)//23may2026
+
+//.b
 else if m(febmp)        then result:=bmp__todata3(s,sdata,daction,e)
+
+//.c
+else if m(fecur)        then result:=cur__todata2(s,sdata,daction,e)
+
+//.d
 else if m(fedib)        then result:=bmp__todata3(s,sdata,daction,e)//14may2025: file based DIBs are BMPs, only memory DIBs are true DIBs
+
+//.g
 else if m(fegif)        then result:=gif__todata2(s,sdata,daction,e)//06aug2024
-else if m(fetga)        then result:=tga__todata3(s,sdata,daction,e)//20dec2024
-else if m(fetea)        then result:=tea__todata2(s,misai(s).transparent,false,0,0,sdata,e)//01may2025
+
+//.i
+else if m(feico)        then result:=ico__todata3(s,sdata,daction,e)//27may2025, 19feb2025
+else if m(feimg32)      then result:=img32__todata3(s,sdata,daction,e)
+
+//.j
+else if m(fejif)        then result:=jpg__todata3(s,sdata,daction,e)
+else if m(fejpg)        then result:=jpg__todata3(s,sdata,daction,e)
+else if m(fejpeg)       then result:=jpg__todata3(s,sdata,daction,e)
+
+//.p
+else if m(fepic8)       then result:=img8__todata(s,sdata,e)//16sep2025
+else if m(fepbm)        then result:=pbm__todata3(s,sdata,daction,e)//02jan2025
+else if m(fepgm)        then result:=pgm__todata3(s,sdata,daction,e)//02jan2025
 else if m(fepng)        then result:=png__todata3(s,sdata,daction,e)//06may2025, 19nov2024
 else if m(feppm)        then result:=ppm__todata3(s,sdata,daction,e)//02jan2025
-else if m(fepgm)        then result:=pgm__todata3(s,sdata,daction,e)//02jan2025
-else if m(fepbm)        then result:=pbm__todata3(s,sdata,daction,e)//02jan2025
 else if m(fepnm)        then result:=pnm__todata3(s,sdata,daction,e)//02jan2025
+
+//.r
+else if m(ferle6)       then result:=rle6__todata(s,sdata,e)//06mar2026
+else if m(ferle8)       then result:=rle8__todata(s,sdata,e)//25feb2026
+
+//.s
+else if m(fesan)        then result:=san__todata(s,sdata,e)//16sep2025
+
+//.t
+else if m(fetea)        then result:=tea__todata2(s,misai(s).transparent,false,0,0,sdata,e)//01may2025
+else if m(fetga)        then result:=tga__todata3(s,sdata,daction,e)//20dec2024
+else if m(fetj32)       then result:=tj32__todata3(s,sdata,daction,e)
+
+//.x
 else if m(fexbm)        then result:=xbm__todata3(s,sdata,daction,e)//02jan2025
+
 
 else                         result:=false;//str__is8(sdata) and mistodata(s,sdata^ as tstr8,dformat,e);
 
 skipend:
 except;end;
+
 //free
-freeobj(@d);
+if (d1<>nil) then freeobj(@d1);
+if (d2<>nil) then freeobj(@d2);
+
 end;
 
 function mis__browsersupports(dformat:string):boolean;
@@ -17574,6 +19715,182 @@ xdelay      :=frcmin32(misai(s).delay,0);//ms
 xcount      :=frcmin32(misai(s).count,1);
 xcellwidth  :=frcmin32(misw(s) div xcount,1);
 xcellheight :=mish(s);
+end;
+
+function mis__fromarrayBYTE(const d:tobject;const s:pobject):boolean;//18mar2026
+label
+   skipend;
+
+var
+   dv,v,p,slen:longint;
+   a:tstr8;
+   xstartOnceR,xstartOnceS:boolean;
+   e:string;
+
+begin
+
+//defaults
+result      :=false;
+a           :=nil;
+xstartOnceR :=true;//round start
+xstartOnceS :=true;//square start
+
+//check
+if not misokk82432(d) then exit;
+if not str__ok(s)     then exit;
+
+slen        :=str__len32(s);
+
+if (slen<=1)          then exit;
+
+try
+
+//init
+dv          :=-1;//off
+a           :=str__new8;
+
+//get
+for p:=1 to slen do
+begin
+
+v           :=str__bytes1(s,p);
+
+case v of
+
+//"0".."9"
+nn0..nn9:begin
+
+   case (dv>=0) of
+   true:begin
+
+      dv    :=dv*10;
+      inc(dv,v-nn0);
+
+      end;
+   else dv:=v-nn0;
+   end;//case
+
+   end;
+
+//"("
+ssLRoundbracket:begin
+
+   case xstartOnceR of
+   true:begin
+
+      xstartOnceR     :=false;
+      a.clear;
+      dv              :=-1;
+
+      end;
+   else begin
+
+      a.clear;
+      goto skipend;
+
+      end;
+   end;//case
+
+   end;
+
+//"["
+ssLSquarebracket:begin
+
+   case xstartOnceS of
+   true:begin
+
+      xstartOnceS     :=false;
+      a.clear;
+      dv              :=-1;
+
+      end;
+   else begin
+
+      a.clear;
+      goto skipend;
+
+      end;
+   end;//case
+
+   end;
+
+//","
+ssComma:begin
+
+   if (dv>=0) and (dv<=255) then a.addbyt1(dv);
+
+   dv       :=-1;
+
+   end;
+
+//")" or "]"
+ssRRoundbracket,ssRSquarebracket:begin
+
+   if (dv>=0) and (dv<=255) then a.addbyt1(dv);
+
+   end;
+
+//ignore
+9,10,13:;
+
+//reset
+else begin
+
+   dv       :=-1;
+
+   end;
+
+end;//case
+
+end;//p
+
+//successful
+result:=mis__fromdata(d,@a,e);
+
+skipend:
+except;end;
+
+//free
+str__free(@a);
+
+end;
+
+function mis__frombase64(const d:tobject;const s:pobject):boolean;//18mar2026
+var
+   i,p,slen:longint;
+   e:string;
+begin
+
+//defaults
+result      :=false;
+
+//check
+if not misokk82432(d) then exit;
+if not str__ok(s)     then exit;
+
+i           :=1;
+slen        :=str__len32(s);
+
+if (slen<=1)          then exit;
+
+//get
+for p:=1 to frcmax32(100,slen) do
+begin
+
+case str__bytes1(s,p) of
+ssComma:begin
+
+   i        :=p+1;//start position
+   break;
+
+   end;
+end;//case
+
+end;//p
+
+//set
+result:=str__fromb642(s,s,i) and mis__fromdata(d,s,e);
+
 end;
 
 function mis__fromadata(s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
@@ -17636,15 +19953,17 @@ var
    else result:=true;
    end;
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
-d:=s;
-ddataobj:=nil;
-ddata:=@ddataobj;
-dbuffered:=false;
+result      :=false;
+e           :=gecTaskfailed;
+d           :=s;
+ddataobj    :=nil;
+ddata       :=@ddataobj;
+dbuffered   :=false;
 
 try
+
 //check
 if not str__lock(sdata)          then goto skipend else ddata:=sdata;
 if not misok82432(s,sbits,sw,sh) then goto skipend;
@@ -17652,119 +19971,242 @@ if not misok82432(s,sbits,sw,sh) then goto skipend;
 //detect data format #1
 if not mis__format(sdata,sformat,sbase64) then
    begin
+
    //detect data format #2 -> unzip data and run 2nd format detection - 26jul2024
    case strmatch(sformat,'zip') of
    true:begin
+
       ddataobj:=str__newsametype(sdata);//same type
       ddata:=@ddataobj;
+
       if (not str__add(ddata,sdata)) or (not low__decompress(ddata)) then
          begin
          e:=gecDatacorrupt;
          goto skipend;
          end;
+
       //failed again -> quit
       if not mis__format(ddata,sformat,sbase64) then
          begin
          e:=gecUnknownformat;
          goto skipend;
          end;
+
       end;
+
    else begin
+
       e:=gecUnknownformat;
       goto skipend;
+
       end;
+
    end;//case
+
    end;
 
 //double buffer to protect "s" from corruption -> we overwrite "s" only when we have good data
 if sbuffer then
    begin
-   d:=misraw(sbits,sw,sh);
+   d        :=misraw(sbits,sw,sh);
    if not miscopy(s,d) then goto skipend;
    end;
 
 //get
-if (sformat='PNG') then
+
+//.a
+if (sformat='ANI') then
    begin
-   if not startbuffer then goto skipend;
-   if not png__fromdata(d,ddata,e) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
-else if (sformat='ICO') then
-   begin
-   if not startbuffer then goto skipend;
-   if (not ico__fromdata(d,ddata,e)) and (not low__fromico322(d,ddata,0,true,e)) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
-else if (sformat='CUR') then
-   begin
-   if not startbuffer then goto skipend;
-   if (not cur__fromdata(d,ddata,e)) and (not low__fromico322(d,ddata,0,true,e)) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
-else if (sformat='ANI') then
-   begin
+
    //update this to sub-proc handling -> ico__fromdata()
    if not startbuffer then goto skipend;
    if not low__fromani322(d,ddata,0,true,e) then goto skipend;
    if not stopbuffer then goto skipend;
+
    end
-else if (sformat='TEA') then
-   begin
-   if not startbuffer then goto skipend;
-   if not tea__fromdata32(d,ddata,int1,int2) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
-else if (sformat='IMG32') then
-   begin
-   if not startbuffer then goto skipend;
-   if not img32__fromdata(d,ddata,e) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
+
+//.b
 else if (sformat='BMP') then//does not require a buffer - 25jul2024
    begin
+
    if not bmp__fromdata(d,ddata,e) then goto skipend;
+
    end
+
+//.c
+else if (sformat='CUR') then
+   begin
+
+   if not startbuffer then goto skipend;
+   if (not cur__fromdata(d,ddata,e)) and (not low__fromico322(d,ddata,0,true,e)) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+//.d
 else if (sformat='DIB') then//does not require a buffer - 25jul2024
    begin
+
    if not dib__fromdata(d,ddata,e) then goto skipend;
+
    end
-else if (sformat='TJ32') then
-   begin
-   if not startbuffer then goto skipend;
-   if not tj32__fromdata(d,ddata,e) then goto skipend;
-   if not stopbuffer then goto skipend;
-   end
-else if (sformat='JPG') then//requires both BMP and JPEG support
-   begin
-   if not jpg__fromdata(d,ddata,e) then goto skipend;
-   end
+
+//.g
 else if (sformat='GIF') then
    begin
+
    if not startbuffer then goto skipend;
    if not gif__fromdata(d,ddata,e) then goto skipend;//06aug2024
    if not stopbuffer then goto skipend;
+
    end
-else if (sformat='TGA') then
+
+//.i
+else if (sformat='ICO') then
    begin
-   if not tga__fromdata(d,ddata,e) then goto skipend;
+
+   if not startbuffer then goto skipend;
+   if (not ico__fromdata(d,ddata,e)) and (not low__fromico322(d,ddata,0,true,e)) then goto skipend;
+   if not stopbuffer then goto skipend;
+
    end
-else if (sformat='PPM') then
+
+else if (sformat='IMG32') then
    begin
-   if not ppm__fromdata(d,ddata,e) then goto skipend;
+
+   if not startbuffer then goto skipend;
+   if not img32__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
    end
-else if (sformat='PGM') then
+
+//.j
+else if (sformat='JPG') then//requires both BMP and JPEG support
    begin
-   if not pgm__fromdata(d,ddata,e) then goto skipend;
+
+   if not jpg__fromdata(d,ddata,e) then goto skipend;
+
    end
+
+//.p
 else if (sformat='PBM') then
    begin
+
    if not pbm__fromdata(d,ddata,e) then goto skipend;
+
    end
+
+else if (sformat='PGM') then
+   begin
+
+   if not pgm__fromdata(d,ddata,e) then goto skipend;
+
+   end
+
+else if (sformat='PIC8') then//16sep2025
+   begin
+
+   if not startbuffer then goto skipend;
+   if not img8__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+else if (sformat='PNG') then
+   begin
+
+   if not startbuffer then goto skipend;
+   if not png__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
 else if (sformat='PNM') then
    begin
+
    if not pnm__fromdata(d,ddata,e) then goto skipend;
+
    end
+
+else if (sformat='PPM') then
+   begin
+
+   if not ppm__fromdata(d,ddata,e) then goto skipend;
+
+   end
+
+//.r
+else if (sformat='RLE6') then//06mar2026
+   begin
+
+   if not startbuffer then goto skipend;
+   if not rle6__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+else if (sformat='RLE8') then//25feb2026
+   begin
+
+   if not startbuffer then goto skipend;
+   if not rle8__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+//.s
+else if (sformat='SAN') then//16sep2025
+   begin
+
+   if not startbuffer then goto skipend;
+   if not san__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+//.t
+else if (sformat='TEA') then
+   begin
+
+   if not startbuffer then goto skipend;
+   if not tea__fromdata322(d,ddata,true,int1,int2) then goto skipend;//23mar2026
+   if not stopbuffer then goto skipend;
+
+   end
+
+else if (sformat='TEP') then//10mar2026
+   begin
+
+   if not startbuffer then goto skipend;
+   if not tep__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+else if (sformat='TGA') then
+   begin
+
+   if not tga__fromdata(d,ddata,e) then goto skipend;
+
+   end
+
+else if (sformat='TJ32') then
+   begin
+
+   if not startbuffer then goto skipend;
+   if not tj32__fromdata(d,ddata,e) then goto skipend;
+   if not stopbuffer then goto skipend;
+
+   end
+
+//.x
+else if (sformat='XBM') then//does not require a buffer - 18sep2025
+   begin
+
+   if not xbm__fromdata(d,ddata,e) then goto skipend;
+
+   end
+
 else
    begin
    goto skipend;
@@ -17775,10 +20217,13 @@ result:=true;
 skipend:
 except;end;
 try
+
 //cellwidth and cellheight -> default to 0x0 when no "ai" present, such with jpeg/bitmap - 26jul2024
 if mishasai(s) and ((misai(s).cellwidth=0) or (misai(s).cellheight=0)) then
    begin
+
    mis__nocells(s);
+
    end;
 
 //free double buffers
@@ -17856,32 +20301,44 @@ if (sarea.right<sarea.left) or (sarea.bottom<sarea.top) or (sarea.bottom<0) or (
    result:=true;
    exit;
    end;
-da.left:=frcrange32(sarea.left,0,sw-1);
-da.right:=frcrange32(sarea.right,0,sw-1);
-da.top:=frcrange32(sarea.top,0,sh-1);
-da.bottom:=frcrange32(sarea.bottom,0,sh-1);
+
+da.left      :=frcrange32(sarea.left,0,sw-1);
+da.right     :=frcrange32(sarea.right,0,sw-1);
+da.top       :=frcrange32(sarea.top,0,sh-1);
+da.bottom    :=frcrange32(sarea.bottom,0,sh-1);
 
 //init
 //.color
 if (xcolor <>clnone) and (xcolor2=clnone) then xcolor2:=xcolor;
 if (xcolor2<>clnone) and (xcolor =clnone) then xcolor:=xcolor2;
-xcolorok:=(xcolor<>clnone) and (xcolor2<>clnone);
+
+xcolorok     :=(xcolor<>clnone) and (xcolor2<>clnone);
+
 if xcolorok then
    begin
-   sc:=int__c24(xcolor);
-   sc2:=int__c24(xcolor2);
+
+   sc        :=int__c24(xcolor);
+   sc2       :=int__c24(xcolor2);
+
    end;
+
 //.alpha
 if (xalpha <>clnone) and (xalpha2=clnone) then xalpha2:=xalpha;
 if (xalpha2<>clnone) and (xalpha =clnone) then xalpha:=xalpha2;
-xalphaok:=(xalpha<>clnone) and (xalpha2<>clnone);
+
+xalphaok     :=(xalpha<>clnone) and (xalpha2<>clnone);
+
 if xalphaok then
    begin
-   xalpha:=frcrange32(xalpha,0,255);
-   xalpha2:=frcrange32(xalpha2,0,255);
+
+   xalpha    :=frcrange32(xalpha,0,255);
+   xalpha2   :=frcrange32(xalpha2,0,255);
+
    end;
+
 //check
 if (not xcolorok) and (not xalphaok) then goto skipdone;
+
 //get
 for dy:=da.top to da.bottom do
 begin
@@ -17934,6 +20391,7 @@ if xalphaok and ((xalpha<>xalpha2) or (dy=da.top)) then//fixed error - 22apr2021
       xa:=byte(frcrange32(round( (xalpha*(1-xpert))+(xalpha2*xpert) ),0,255));
       end;
    end;
+
 //.scan
 if not misscan2432(s,dy,sr24,sr32) then goto skipend;
 
@@ -17973,9 +20431,11 @@ case sbits of
    end;
 end;//case
 end;//dy
+
 //successful
 skipdone:
 result:=true;
+
 skipend:
 except;end;
 end;
@@ -18103,6 +20563,7 @@ end;
 
 function mis__ai(s:tobject):panimationinformation;
 begin
+
 result:=@system_default_ai;//always return a pointer to a valid structure
 
 if zznil(s,2078)           then misaiclear(system_default_ai)
@@ -18110,6 +20571,7 @@ else if (s is tbasicimage) then result:=@(s as tbasicimage).ai
 else if (s is trawimage)   then result:=@(s as trawimage).ai
 else if (s is twinbmp)     then result:=@(s as twinbmp).ai
 else                            misaiclear(system_default_ai);
+
 end;
 
 function mis__onecell(s:tobject):boolean;//06aug2024, 26apr2022
@@ -18154,13 +20616,14 @@ else begin//image can't be resized without data loss so we need to buffer off a 
    a:=misimg(misb(s),xcellwidth,xcellheight);
 
    //copy s.cell(0) to "a"
-   if not miscopyarea32(0,0,xcellwidth,xcellheight,area__make(0,0,xcellwidth-1,xcellheight-1),a,s) then goto skipend;
+   if not mis__copyfast(maxarea,area__make(0,0,xcellwidth-1,xcellheight-1),0,0,xcellwidth,xcellheight,s,a) then goto skipend;
 
    //resize "s" to one cell dimensions
    if not missize(s,xcellwidth,xcellheight) then goto skipend;
 
    //copy "a" back to "s"
-   if not miscopyarea32(0,0,xcellwidth,xcellheight,area__make(0,0,xcellwidth-1,xcellheight-1),s,a) then goto skipend;
+   if not mis__copyfast(maxarea,area__make(0,0,xcellwidth-1,xcellheight-1),0,0,xcellwidth,xcellheight,a,s) then goto skipend;
+
    end;
 end;
 
@@ -18195,6 +20658,315 @@ if ((result*8)<>(ximagewidth*xbitsPERpixel)) then inc(result);
 result:=int__round4(result);
 end;
 
+function mis__reducecolors256(s:tobject;xMaxColorCount:longint):boolean;//17sep2025
+label
+   redo,skipend;
+
+const
+   dvLimit=240;
+
+var
+   ppal:array[0..255] of tcolor32;
+   sbits,sw,sh,pdiv,pcount,plimit,sx,sy:longint;
+   strans:boolean;
+   sr32:pcolorrow32;
+   sr24:pcolorrow24;
+   sr8 :pcolorrow8;
+   c32 :tcolor32;
+
+   function padd:boolean;
+   var
+      p:longint;
+   begin
+
+   //defaults
+   result:=false;
+
+   //transparent colors goto into slot #0
+   if (c32.a<=0) then
+      begin
+
+      result:=true;
+      exit;
+
+      end;
+
+   //search to see if color already exists
+   for p:=1 to (pcount-1) do if (c32.r=ppal[p].r) and (c32.g=ppal[p].g) and (c32.b=ppal[p].b) and (c32.a=ppal[p].a) then
+      begin
+
+      result:=true;
+      break;
+
+      end;
+
+   //add
+   if (not result) and (pcount<plimit) then
+      begin
+
+      ppal[pcount]:=c32;
+      inc(pcount);
+      result:=true;
+
+      end;
+
+   end;
+
+   procedure r32;//read pixel
+   begin
+
+   if (sbits=32) then
+      begin
+
+      c32:=sr32[sx];
+
+      end
+   else if (sbits=24) then
+      begin
+
+      c32.r:=sr24[sx].r;
+      c32.g:=sr24[sx].g;
+      c32.b:=sr24[sx].b;
+      c32.a:=255;
+
+      end
+
+   else if (sbits=8) then
+      begin
+
+      c32.r:=sr8[sx];
+      c32.g:=c32.r;
+      c32.b:=c32.r;
+      c32.a:=255;
+
+      end;
+
+   end;
+
+   procedure w32;//write pixel
+   begin
+
+   if (sbits=32) then
+      begin
+
+      sr32[sx]:=c32;
+
+      end
+   else if (sbits=24) then
+      begin
+
+      sr24[sx].r:=c32.r;
+      sr24[sx].g:=c32.g;
+      sr24[sx].b:=c32.b;
+
+      end
+
+   else if (sbits=8) then
+      begin
+
+      if (c32.g>c32.r) then c32.r:=c32.g;
+      if (c32.b>c32.r) then c32.r:=c32.b;
+      sr8[sx]:=c32.r;
+
+      end;
+
+   end;
+
+   procedure s32;//shrink color bandwidth
+   begin
+
+   //all other colors go into remaining slots
+   c32.r:=(c32.r div pdiv)*pdiv;
+   c32.g:=(c32.g div pdiv)*pdiv;
+   c32.b:=(c32.b div pdiv)*pdiv;
+   if (c32.a<=127) then c32.a:=0 else c32.a:=255;
+
+   end;
+
+begin
+
+//defaults
+result:=false;
+
+try
+//check
+if not misok82432(s,sbits,sw,sh) then goto skipend;
+
+//init
+plimit :=frcrange32(xMaxColorCount,1,256);
+strans :=mask__hastransparency32(s);
+
+
+
+//build palette (entries 0..255)
+pdiv:=1;
+
+redo:
+pcount :=insint(1,strans);
+
+for sy:=0 to (sh-1) do
+begin
+if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+
+for sx:=0 to (sw-1) do
+begin
+
+r32;
+s32;
+
+//pallete is full -> we need to shrink the color bandwidth and start over
+if not padd then
+   begin
+
+   //used up all bandwidth shrinkage and palette still can't be built -> quit -> task failed
+   if (pdiv>=dvlimit) then goto skipend;
+
+   //try again by shrinking color bandwidth using "pdiv" -> increment by powers of two for fast division
+   pdiv:=frcmax32(pdiv+low__aorb(1,10,pdiv>30),dvlimit);//smoother and faster - 25dec2022
+   goto redo;
+   end;
+
+end;//sx
+
+end;//sy
+
+//finalise -> adjust image colors to new levels
+for sy:=0 to (sh-1) do
+begin
+if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+
+for sx:=0 to (sw-1) do
+begin
+
+r32;
+s32;
+w32;
+
+end;//sx
+
+end;//sy
+
+//successful
+result:=true;
+skipend:
+
+except;end;
+end;
+
+procedure mis__checkerAndcolor(const d:tobject;const r,g,b,a:byte);//23jun2026
+const
+   clen                         =7;
+
+var
+   dw                           :longint32;
+   dh                           :longint32;
+   dx                           :longint32;
+   dy                           :longint32;
+   c1                           :tcolor32;
+   c2                           :tcolor32;
+   sc                           :tcolor32;
+   xon                          :boolean;
+   yon                          :boolean;
+   xpos                         :longint32;
+   ypos                         :longint32;
+   ainv                         :longint32;
+   dbits                        :longint32;
+   dr32                         :pcolorrow32;
+   dr24                         :pcolorrow24;
+   dr8                          :pcolorrow8;
+
+begin
+
+//check
+if not misok( d ,dbits ,dw ,dh ) then exit;
+
+//init
+c1.r                            :=190;
+c1.g                            :=190;
+c1.b                            :=190;
+c1.a                            :=255;
+
+c2.r                            :=140;
+c2.g                            :=140;
+c2.b                            :=140;
+c2.a                            :=255;
+
+ainv                            :=255 - a;
+
+ypos                            :=clen;
+yon                             :=false;
+
+//get
+
+//.dy
+for dy:=0 to pred(dh) do
+begin
+
+if not misscan82432( d ,dy ,dr8 ,dr24 ,dr32 ) then break;
+
+inc( ypos );
+
+if (ypos>=clen) then
+   begin
+
+   yon                          :=not yon;
+   ypos                         :=0;
+
+   end;
+
+xpos                            :=clen;
+xon                             :=yon;
+
+//.dx
+for dx:=0 to pred(dw) do
+begin
+
+inc( xpos );
+
+if (xpos>=clen) then
+   begin
+
+   xpos                         :=0;
+   xon                          :=not xon;
+
+   if xon then sc               :=c1
+   else        sc               :=c2;
+
+   end;
+
+case dbits of
+
+32:begin
+
+   dr32[dx].r                   :=(  (a * r) + (ainv * sc.r)  ) shr 8;
+   dr32[dx].g                   :=(  (a * g) + (ainv * sc.g)  ) shr 8;
+   dr32[dx].b                   :=(  (a * b) + (ainv * sc.b)  ) shr 8;
+   dr32[dx].a                   :=255;
+
+   end;
+
+24:begin
+
+   dr24[dx].r                   :=(  (a * r) + (ainv * sc.r)  ) shr 8;
+   dr24[dx].g                   :=(  (a * g) + (ainv * sc.g)  ) shr 8;
+   dr24[dx].b                   :=(  (a * b) + (ainv * sc.b)  ) shr 8;
+
+   end;
+
+8:begin
+
+   dr8[dx]                      :=(  (a * r) + (ainv * sc.r)  ) shr 8;
+
+   end;
+
+end;//case
+
+end;//dx
+
+end;//dy
+
+end;
+
 function mis__cls(s:tobject;r,g,b,a:byte):boolean;//04aug2024
 begin
 result:=mis__cls2(s,misarea(s),r,g,b,a);
@@ -18205,11 +20977,12 @@ begin
 result:=mis__cls2(s,sa,scolor32.r,scolor32.g,scolor32.b,scolor32.a);
 end;
 
-function mis__cls2(s:tobject;sa:twinrect;r,g,b,a:byte):boolean;//04aug2024
+function mis__cls2(s:tobject;sa:twinrect;r,g,b,a:byte):boolean;//04jun2026, 04aug2024
 label
    skipdone,skipend;
 var
   sr8 :pcolorrow8;
+  sr16:pcolorrow16;
   sr24:pcolorrow24;
   sr32:pcolorrow32;
   c8  :tcolor8;
@@ -18221,7 +20994,7 @@ result:=false;
 
 try
 //check
-if not misok82432(s,sbits,sw,sh) then exit;
+if not misok8162432(s,sbits,sw,sh) then exit;
 
 if not mis__canarea(s,sa,sa) then
    begin
@@ -18246,10 +21019,11 @@ c32.a:=a;
 //get
 for sy:=sa.top to sa.bottom do
 begin
-if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+if not misscan8162432(s,sy,sr8,sr16,sr24,sr32) then goto skipend;
 
 case sbits of
 8 :for sx:=sa.left to sa.right do sr8[sx] :=c8;
+16:for sx:=sa.left to sa.right do sr16[sx]:=0;
 24:for sx:=sa.left to sa.right do sr24[sx]:=c24;
 32:for sx:=sa.left to sa.right do sr32[sx]:=c32;
 end;
@@ -18313,11 +21087,16 @@ except;end;
 end;
 
 function mis__mirror82432(x:tobject):boolean;//left-right - 08may2025
+begin
+result:=mis__mirror82432b(x,area__make(0,0,max32,max32));
+end;
+
+function mis__mirror82432b(x:tobject;xa:twinrect):boolean;//left-right - 16sep2026, 08may2025
 label
    skipend;
 var
    s:tbasicimage;
-   xmax,dx,dy,xbits,xw,xh:longint;
+   dx,dy,xbits,xw,xh:longint;
    sr8,xr8:pcolorrow8;
    sr24,xr24:pcolorrow24;
    sr32,xr32:pcolorrow32;
@@ -18334,57 +21113,66 @@ if not misok82432(x,xbits,xw,xh) then exit;
 
 try
 //init
-s   :=misimg(xbits,xw,1);
-xmax:=xw-1;
+s         :=misimg(xbits,xw,1);
+xa.left   :=frcrange32(xa.left,0,xw-1);
+xa.right  :=frcrange32(xa.right,xa.left,xw-1);
+xa.top    :=frcrange32(xa.top,0,xh-1);
+xa.bottom :=frcrange32(xa.bottom,xa.top,xh-1);
 
 if not misscan82432(s,0,sr8,sr24,sr32) then goto skipend;
 
 //get
-for dy:=0 to (xh-1) do
+for dy:=xa.top to xa.bottom do
 begin
 if not misscan82432(x,dy,xr8,xr24,xr32) then goto skipend;
 
 if (xbits=32) then
    begin
-   for dx:=0 to (xw-1) do
+
+   for dx:=xa.left to xa.right do
    begin
    c32:=xr32[dx];
-   sr32[xmax-dx]:=c32;
+   sr32[xa.right+xa.left-dx]:=c32;
    end;
 
-   for dx:=0 to (xw-1) do
+   for dx:=xa.left to xa.right do
    begin
    c32:=sr32[dx];
    xr32[dx]:=c32;
    end;
+
    end
 else if (xbits=24) then
    begin
-   for dx:=0 to (xw-1) do
+
+   for dx:=xa.left to xa.right do
    begin
    c24:=xr24[dx];
-   sr24[xmax-dx]:=c24;
+   sr24[xa.right+xa.left-dx]:=c24;
    end;
 
-   for dx:=0 to (xw-1) do
+   for dx:=xa.left to xa.right do
    begin
    c24:=sr24[dx];
    xr24[dx]:=c24;
    end;
+
    end
 else if (xbits=8) then
    begin
-   for dx:=0 to (xw-1) do
+
+   for dx:=xa.left to xa.right do
    begin
    c8:=xr8[dx];
-   sr8[xmax-dx]:=c8;
+   sr8[xa.right+xa.left-dx]:=c8;
    end;
 
-   for dx:=0 to (xw-1) do
+   for dx:=xa.left to xa.right do
    begin
    c8:=sr8[dx];
    xr8[dx]:=c8;
    end;
+
    end;
 
 end;//dy
@@ -18393,16 +21181,23 @@ end;//dy
 result:=true;
 skipend:
 except;end;
+
 //free
 freeobj(@s);
+
 end;
 
 function mis__flip82432(x:tobject):boolean;//up-down - 08may2025
+begin
+result:=mis__flip82432b(x,area__make(0,0,max32,max32));
+end;
+
+function mis__flip82432b(x:tobject;xa:twinrect):boolean;//up-down - 16sep2025, 08may2025
 label
    skipend;
 var
    s:tbasicimage;
-   ymax,dx,dy,xbits,xw,xh:longint;
+   dx,dy,xbits,xw,xh:longint;
    xrs8,srs8:pcolorrows8;
    xrs24,srs24:pcolorrows24;
    xrs32,srs32:pcolorrows32;
@@ -18410,6 +21205,7 @@ var
    c24:tcolor24;
    c8 :tcolor8;
 begin
+
 //defaults
 result:=false;
 s     :=nil;
@@ -18419,57 +21215,66 @@ if not misok82432(x,xbits,xw,xh) then exit;
 
 try
 //init
-s   :=misimg(xbits,1,xh);
-ymax:=xh-1;
+s         :=misimg(xbits,1,xh);
+xa.left   :=frcrange32(xa.left,0,xw-1);
+xa.right  :=frcrange32(xa.right,xa.left,xw-1);
+xa.top    :=frcrange32(xa.top,0,xh-1);
+xa.bottom :=frcrange32(xa.bottom,xa.top,xh-1);
 
 if not misrows82432(s,srs8,srs24,srs32) then goto skipend;
 if not misrows82432(x,xrs8,xrs24,xrs32) then goto skipend;
 
 //get
-for dx:=0 to (xw-1) do
+for dx:=xa.left to xa.right do
 begin
 
 if (xbits=32) then
    begin
-   for dy:=0 to (xh-1) do
+
+   for dy:=xa.top to xa.bottom do
    begin
    c32:=xrs32[dy][dx];
-   srs32[ymax-dy][0]:=c32;
+   srs32[xa.bottom+xa.top-dy][0]:=c32;
    end;
 
-   for dy:=0 to (xh-1) do
+   for dy:=xa.top to xa.bottom do
    begin
    c32:=srs32[dy][0];
    xrs32[dy][dx]:=c32;
    end;
+
    end
 else if (xbits=24) then
    begin
-   for dy:=0 to (xh-1) do
+
+   for dy:=xa.top to xa.bottom do
    begin
    c24:=xrs24[dy][dx];
-   srs24[ymax-dy][0]:=c24;
+   srs24[xa.bottom+xa.top-dy][0]:=c24;
    end;
 
-   for dy:=0 to (xh-1) do
+   for dy:=xa.top to xa.bottom do
    begin
    c24:=srs24[dy][0];
    xrs24[dy][dx]:=c24;
    end;
+
    end
 else if (xbits=8) then
    begin
-   for dy:=0 to (xh-1) do
+
+   for dy:=xa.top to xa.bottom do
    begin
    c8:=xrs8[dy][dx];
-   srs8[ymax-dy][0]:=c8;
+   srs8[xa.bottom+xa.top-dy][0]:=c8;
    end;
 
-   for dy:=0 to (xh-1) do
+   for dy:=xa.top to xa.bottom do
    begin
    c8:=srs8[dy][0];
    xrs8[dy][dx]:=c8;
    end;
+
    end;
 
 end;//dy
@@ -18478,8 +21283,10 @@ end;//dy
 result:=true;
 skipend:
 except;end;
+
 //free
 freeobj(@s);
+
 end;
 
 function mis__rotate82432(x:tobject;xangle:longint):boolean;//-90, 90, -180, 180, -270, or 270 deg - 09may2025
@@ -18560,7 +21367,7 @@ end;//case
 s   :=misimg(xbits,xw,xh);
 
 //.copy x => s
-if not mis__copyfast82432(maxarea,0,0,xw,xh,misarea(x),s,x) then goto skipend;
+if not mis__copyfast(maxarea,misarea(x),0,0,xw,xh,x,s) then goto skipend;
 
 //.size
 if xr90                 then low__swapint(dw,dh);
@@ -19100,314 +21907,6 @@ result:=nilrect;
 if zzok(s,7008) then result:=area__make(0,0,misw(s)-1,mish(s)-1);
 end;
 
-function miscopyarea32(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//can copy ALL 32bits of color
-begin
-result:=miscopyarea322(maxarea,ddx,ddy,ddw,ddh,sa,d,s,0,0);
-end;
-
-function miscopyarea321(da,sa:twinrect;d,s:tobject):boolean;//can copy ALL 32bits of color
-begin
-result:=miscopyarea32(da.left,da.top,da.right-da.left+1,da.bottom-da.top+1,sa,d,s);
-end;
-
-function miscopyarea322(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xscroll,yscroll:longint):boolean;//can copy ALL 32bits of color
-begin
-result:=miscopyarea323(da_clip,ddx,ddy,ddw,ddh,sa,d,s,xscroll,yscroll,false);
-end;
-
-function miscopyarea323(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xscroll,yscroll:longint;xmix32:boolean):boolean;//18nov2024: xmix32 mixes alpha colors into a lesser bit depth image e.g. drawing a 32 bit image onto a 24 bit one, can copy ALL 32bits of color
-label
-   skipend;
-var//Note: Speed optimised using x-pixel limiter "d1,d2", y-pixel limiter "d3,d4"
-   //      and object caching "1x createtmp" and "2x createint" with a typical speed
-   //      increase in PicWork of 45x, or a screen paint time originally of 3,485ms now 78ms
-   //      with layer 2 image at 80,000px wide @ 1,000% zoom as of 06sep2017.
-   //Note: s and d are required - 25jul2017
-   //Note: da,sa are zero-based areas, e.g: da.left/right=0..[width-1],
-   //Critical Note: must use "trunc" instead of "round" for correct rounding behaviour - 24SEP2011
-   //Note: xmix32: blends or mixes 32 bit color pixels from "s" into "d" WHEN d is not 32 bit capable
-   dr32,sr32:pcolorrow32;//25apr2020
-   dr24,sr24:pcolorrow24;
-   dr8,sr8:pcolorrow8;
-   sc32:tcolor32;
-   tmp24,sc24:tcolor24;
-   sc8:tcolor8;
-   mx,my:pdllongint;
-   _mx,_my:tdynamicinteger;//mapper support
-   p,daW,daH,saW,saH:longint;
-   d1,d2,d3,d4:longint;//x-pixel(d) and y-pixel(d) speed optimisers -> represent ACTUAL d.area needed to be processed - 05sep2017
-   //.image values
-   sw,sh,sbits:longint;
-   shasai:boolean;
-   dw,dh,dbits:longint;
-   dhasai:boolean;
-   //.other
-   dx,dy,sx,sy:longint;
-   dx1,dx2,dy1,dy2:longint;
-   bol1,xmirror,xflip:boolean;
-   da:twinrect;
-
-   function cint32(x:currency):longint;
-   begin//Note: Clip a 64bit integer to a 32bit integer range
-   if (x>max32) then x:=max32
-   else if (x<min32) then x:=min32;
-   result:=trunc(x);
-   end;
-
-   procedure mix32_24;
-   begin
-   if (sc32.a<=0) then sc24:=dr24[dx]
-   else
-      begin
-      tmp24:=dr24[dx];
-      sc24.r:=( (sc32.r*sc32.a) + (tmp24.r*(255-sc32.a)) ) div 256;//div 256 is FASTER thatn 255
-      sc24.g:=( (sc32.g*sc32.a) + (tmp24.g*(255-sc32.a)) ) div 256;
-      sc24.b:=( (sc32.b*sc32.a) + (tmp24.b*(255-sc32.a)) ) div 256;
-      end;
-   end;
-
-   procedure mix32_8;
-   begin
-   //check
-   if (sc32.a<=0) then exit;
-
-   //mix
-   sc32.r:=( (sc32.r*sc32.a) + (dr8[dx]*(255-sc32.a)) ) div 256;//div 256 is FASTER thatn 255
-   end;
-begin
-//defaults
-result:=false;
-_mx   :=nil;
-_my   :=nil;
-
-try
-//check
-if (sa.right<sa.left) or (sa.bottom<sa.top) then goto skipend;
-if not misinfo82432(s,sbits,sw,sh,shasai)   then goto skipend;
-if not misinfo82432(d,dbits,dw,dh,dhasai)   then goto skipend;
-
-//.mirror + flip
-xmirror:=(ddw<0);if xmirror then ddw:=-ddw;
-xflip  :=(ddh<0);if xflip   then ddh:=-ddh;
-da.left:=cint32(ddx);
-da.right:=cint32(ddx)+cint32(ddw-1);
-da.top:=cint32(ddy);
-da.bottom:=cint32(ddy)+cint32(ddh-1);
-
-//.da_clip - limit to dimensions of "d" - 05sep2017
-da_clip.left:=frcrange32(da_clip.left,0,dw-1);
-da_clip.right:=frcrange32(da_clip.right,da_clip.left,dw-1);
-da_clip.top:=frcrange32(da_clip.top,0,dH-1);
-da_clip.bottom:=frcrange32(da_clip.bottom,0,dH-1);
-
-//.optimise actual x-pixels scanned -> d1 + d2 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d1:=largest32(largest32(da.left,da_clip.left),0);//range: 0..max32
-d2:=smallest32(smallest32(da.right,da_clip.right),dw-1);//range: min32..dw-1
-if (d2<d1) then goto skipend;
-
-//.optimise actual y-pixels scanned -> d3 + d4 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d3:=largest32(largest32(da.top,da_clip.top),0);//range: 0..max32
-d4:=smallest32(smallest32(da.bottom,da_clip.bottom),dH-1);//range: min32..dh-1
-if (d4<d3) then goto skipend;
-
-//.other
-daW:=low__posn(da.right-da.left)+1;
-daH:=low__posn(da.bottom-da.top)+1;
-saW:=low__posn(sa.right-sa.left)+1;
-saH:=low__posn(sa.bottom-sa.top)+1;
-dx1:=frcrange32(da.left,0,dw-1);
-dx2:=frcrange32(da.right,0,dw-1);
-dy1:=frcrange32(da.top,0,dh-1);
-dy2:=frcrange32(da.bottom,0,dh-1);
-//.check area -> do nothing
-if (daw=0) or (dah=0) or (saw=0) or (sah=0) then goto skipend;
-if (sa.right<sa.left) or (sa.bottom<sa.top) or (da.right<da.left) or (da.bottom<da.top) then goto skipend;
-if (dx2<dx1) or (dy2<dy1) then goto skipend;
-
-//.x-scroll
-if (xscroll<>0) then
-   begin
-   xscroll:=-xscroll;//logic inversion -> match user expectation -> neg.vals=left, pos.vals=right
-   bol1:=(xscroll<0);
-   xscroll:=low__posn(xscroll);
-   xscroll:=xscroll-((xscroll div saW)*saW);
-   xscroll:=frcrange32(xscroll,0,saW-1);
-   if bol1 then xscroll:=-xscroll;
-   end;
-
-//.y-scroll
-if (yscroll<>0) then
-   begin
-   yscroll:=-yscroll;//logic inversion -> match user expectation -> neg.vals=up, pos.vals=down
-   bol1:=(yscroll<0);
-   yscroll:=low__posn(yscroll);
-   yscroll:=yscroll-((yscroll div saH)*saH);
-   yscroll:=frcrange32(yscroll,0,saH-1);
-   if bol1 then yscroll:=-yscroll;
-   end;
-
-//.mx (mapped dx) - highly optimised - 06sep2017
-if not low__createint(_mx,'copyareaxx_mx.'+intstr32(daW)+'.0.'+intstr32(sa.left)+'.'+intstr32(sa.right)+'.'+intstr32(saW),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _mx.setparams(daW,daW,0);
-   mx:=_mx.core;
-   //get
-   for p:=0 to (daW-1) do
-   begin
-   mx[p]:=frcrange32(sa.left+trunc(p*(saW/daW)),sa.left,sa.right);//06apr2017
-   end;//p
-   end;
-mx:=_mx.core;
-
-//.my (mapped dy) - highly optimised - 06sep2017
-if not low__createint(_my,'copyareaxx_my.'+intstr32(daH)+'.0.'+intstr32(sa.top)+'.'+intstr32(sa.bottom)+'.'+intstr32(saH),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _my.setparams(daH,daH,0);
-   my:=_my.core;
-   //get
-   for p:=0 to (daH-1) do
-   begin
-   my[p]:=frcrange32(sa.top+trunc(p*(saH/daH)),sa.top,sa.bottom);//24SEP2011
-   end;//p
-   end;
-my:=_my.core;
-
-//-- Draw Color Pixels ---------------------------------------------------------
-//dy
-//...was: for dy:=da.top to da.bottom do if (dy>=0) and (dy<dH) and (dy>=da_clip.top) and (dy<=da_clip.bottom) then
-for dy:=d3 to d4 do
-   begin
-   //.ar
-   if xflip then sy:=my[(da.bottom-da.top)-(dy-da.top)] else sy:=my[dy-da.top];//zero base
-   //.y-scroll
-   if (yscroll<>0) then
-      begin
-      sy:=sy+yscroll;
-      if (sy<sa.top) then sy:=sa.bottom-(-sy-sa.top) else if (sy>sa.bottom) then sy:=sa.top+(sy-sa.bottom);
-      end;
-   //.sy
-   if (sy>=0) and (sy<sH) then
-      begin
-      if not misscan82432(d,dy,dr8,dr24,dr32)                     then goto skipend;//25apr2020, 28may2019
-      if not misscan82432(s,sy,sr8,sr24,sr32)                     then goto skipend;//25apr2020,
-      //dx - Note: xeven only updated at this stage for speed during "sselshowbits<>0" - 08jul2019
-      //...was: for dx:=da.left to da.right do if (dx>=0) and (dx<dw) and (dx>=da_clip.left) and (dx<=da_clip.right) then
-      for dx:=d1 to d2 do
-         begin
-         if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-         //.x-scroll
-         if (xscroll<>0) then
-            begin
-            sx:=sx+xscroll;
-            if (sx<sa.left) then
-               begin
-               //.math quirk for "animation cell area" referencing - 25sep2017
-               if (sx<=0) then sx:=sa.right-(-sx-sa.left) else sx:=sa.right-(sa.left-sx);
-               end
-            else if (sx>sa.right) then sx:=sa.left+(sx-sa.right);
-            end;
-         //.sx
-         if (sx>=0) and (sx<sW) then
-            begin
-            //.32 + 32
-            if (sbits=32) and (dbits=32) then
-               begin
-               sc32:=sr32[sx];
-               dr32[dx]:=sc32;
-               end
-            //.32 + 24
-            else if (sbits=32) and (dbits=24) then
-               begin
-               sc32:=sr32[sx];
-
-               if xmix32 then mix32_24
-               else
-                  begin
-                  sc24.r:=sc32.r;
-                  sc24.g:=sc32.g;
-                  sc24.b:=sc32.b;
-                  end;
-
-               dr24[dx]:=sc24;
-               end
-            //.32 + 8
-            else if (sbits=32) and (dbits=8) then
-               begin
-               sc32:=sr32[sx];
-               if (sc32.g>sc32.r) then sc32.r:=sc32.g;
-               if (sc32.b>sc32.r) then sc32.r:=sc32.b;
-
-               if xmix32 then mix32_8;
-
-               dr8[dx]:=sc32.r;
-               end
-            //.24 + 32
-            else if (sbits=24) and (dbits=32) then
-               begin
-               sc24:=sr24[sx];
-               sc32.r:=sc24.r;
-               sc32.g:=sc24.g;
-               sc32.b:=sc24.b;
-               sc32.a:=255;
-               dr32[dx]:=sc32;
-               end
-            //.24 + 24
-            else if (sbits=24) and (dbits=24) then
-               begin
-               sc24:=sr24[sx];
-               dr24[dx]:=sc24;
-               end
-            //.24 + 8
-            else if (sbits=24) and (dbits=8) then
-               begin
-               sc24:=sr24[sx];
-               if (sc24.g>sc24.r) then sc24.r:=sc24.g;
-               if (sc24.b>sc24.r) then sc24.r:=sc24.b;
-               dr8[dx]:=sc24.r;
-               end
-            //.8 + 32
-            else if (sbits=8) and (dbits=32) then
-               begin
-               sc32.r:=sr8[sx];
-               sc32.g:=sc32.r;
-               sc32.b:=sc32.r;
-               sc32.a:=255;
-               dr32[dx]:=sc32;
-               end
-            //.8 + 24
-            else if (sbits=8) and (dbits=24) then
-               begin
-               sc24.r:=sr8[sx];
-               sc24.g:=sc24.r;
-               sc24.b:=sc24.r;
-               dr24[dx]:=sc24;
-               end
-            //.8 + 8
-            else if (sbits=8) and (dbits=8) then
-               begin
-               sc8:=sr8[sx];
-               dr8[dx]:=sc8;
-               end;
-            end;//sx
-         end;//dx
-      end;//sy
-   end;//dy
-
-//successful
-result:=true;
-skipend:
-except;end;
-//.free
-low__freeint(_mx);
-low__freeint(_my);
-end;
-
 function mis__colormatrixpixel24(x,y,w,h:longint):tcolor24;
 var
    c32:tcolor32;
@@ -19423,6 +21922,7 @@ var
    dypert,dxpert,av,ar,ag,ab:single;
    h2:longint;
 begin
+
 //defaults
 result.a:=a;
 
@@ -19522,635 +22022,1899 @@ result.g:=byte(round(ag));
 result.b:=byte(round(ab));
 end;
 
-function mis__copyfast2432MASK(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xmask,xbackmask:tmask8;xmaskval,xpower255:longint):boolean;//30jan2025, 18nov2024: xmix32 mixes alpha colors into a lesser bit depth image e.g. drawing a 32 bit image onto a 24 bit one, can copy ALL 32bits of color
-label
-   skipend;
-var//Performance Boost:
-   //~172% faster than "miscopyareaxx10()" achieving ~34 fps (29ms/frame) at 1920x1080 with "32->24 bit" on an i5-6500T CPU @ 2.50GHz - 12dec2024
-   //Speed optimised using x-pixel limiter "d1,d2", y-pixel limiter "d3,d4" and object caching "2x createint" for x/y mapping
-   //s and d are required and sa is a zero-based area, e.g: da.left/right=0..[width-1]
-   //Trunc used instead of round for correct rounding behaviour
-   dr32,sr32:pcolorrow32;//25apr2020
-   dr24,sr24:pcolorrow24;
-   mr1,mr2:pcolorrow8;
-   s32,d32:tcolor32;
-   s24,d24:tcolor24;
-   mx,my:pdllongint;
-   _mx,_my:tdynamicinteger;//mapper support
-   p,daW,daH,saW,saH:longint;
-   d1,d2,d3,d4:longint;//x-pixel(d) and y-pixel(d) speed optimisers -> represent ACTUAL d.area needed to be processed - 05sep2017
-   //.image values
-   sw,sh,sbits:longint;
-   shasai:boolean;
-   dw,dh,dbits:longint;
-   dhasai:boolean;
-   //.other
-   dx,dy,sx,sy:longint;
-   p255,dx1,dx2,dy1,dy2:longint;
-   bol1,xmirror,xflip:boolean;
-   mok1,mok2:boolean;
-   da:twinrect;
+function mis__sdPair(const sbits,dbits:longint):longint;//03apr2026
+begin//Note: represent two bit depths (source and destination) as a single number -> halves the number of "if then" statements required in high-speed graphic procs
 
-   function cint32(x:currency):longint;
-   begin//Note: Clip a 64bit integer to a 32bit integer range
-   if (x>max32) then x:=max32
-   else if (x<min32) then x:=min32;
-   result:=trunc(x);
-   end;
-begin
-//defaults
-result:=false;
-_mx   :=nil;
-_my   :=nil;
+if      (sbits=32) and (dbits=32) then result:=sd32_32
+else if (sbits=32) and (dbits=24) then result:=sd32_24
+else if (sbits=32) and (dbits=8 ) then result:=sd32_8
 
-try
-//check
-if (sa.right<sa.left) or (sa.bottom<sa.top) then goto skipend;
-if not misinfo2432(s,sbits,sw,sh,shasai)    then goto skipend;
-if not misinfo2432(d,dbits,dw,dh,dhasai)    then goto skipend;
+else if (sbits=24) and (dbits=32) then result:=sd24_32
+else if (sbits=24) and (dbits=24) then result:=sd24_24
+else if (sbits=24) and (dbits=8 ) then result:=sd24_8
 
-mok1:=(xmaskval>=0) and (xmask<>nil) and (xmask.width>=dw) and (xmask.height>=dh);
-mok2:=(xbackmask<>nil) and (xbackmask.width>=dw) and (xbackmask.height>=dh);
-mr1:=nil;
-mr2:=nil;
-if not mok1 then xmaskval:=-1;//off
+else if (sbits=8 ) and (dbits=32) then result:=sd8_32
+else if (sbits=8 ) and (dbits=24) then result:=sd8_24
+else if (sbits=8 ) and (dbits=8 ) then result:=sd8_8
 
-//.mirror + flip
-xmirror:=(ddw<0);
-if xmirror then ddw:=-ddw;
+else                                   result:=sd_err;
 
-xflip  :=(ddh<0);
-if xflip   then ddh:=-ddh;
-
-da.left:=cint32(ddx);
-da.right:=cint32(ddx)+cint32(ddw-1);
-da.top:=cint32(ddy);
-da.bottom:=cint32(ddy)+cint32(ddh-1);
-
-//.da_clip - limit to dimensions of "d" - 05sep2017
-da_clip.left:=frcrange32(da_clip.left,0,dw-1);
-da_clip.right:=frcrange32(da_clip.right,da_clip.left,dw-1);
-da_clip.top:=frcrange32(da_clip.top,0,dH-1);
-da_clip.bottom:=frcrange32(da_clip.bottom,0,dH-1);
-
-//.optimise actual x-pixels scanned -> d1 + d2 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d1:=largest32(largest32(da.left,da_clip.left),0);//range: 0..max32
-d2:=smallest32(smallest32(da.right,da_clip.right),dw-1);//range: min32..dw-1
-if (d2<d1) then goto skipend;
-
-//.optimise actual y-pixels scanned -> d3 + d4 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d3:=largest32(largest32(da.top,da_clip.top),0);//range: 0..max32
-d4:=smallest32(smallest32(da.bottom,da_clip.bottom),dH-1);//range: min32..dh-1
-if (d4<d3) then goto skipend;
-
-//.other
-daW:=low__posn(da.right-da.left)+1;
-daH:=low__posn(da.bottom-da.top)+1;
-saW:=low__posn(sa.right-sa.left)+1;
-saH:=low__posn(sa.bottom-sa.top)+1;
-dx1:=frcrange32(da.left,0,dw-1);
-dx2:=frcrange32(da.right,0,dw-1);
-dy1:=frcrange32(da.top,0,dh-1);
-dy2:=frcrange32(da.bottom,0,dh-1);
-
-//.check power level -> 0 -> do nothing
-xpower255:=frcrange32(xpower255,0,255);
-if (xpower255<=0) then goto skipend;
-
-//.check area -> do nothing
-if (daw=0) or (dah=0) or (saw=0) or (sah=0) then goto skipend;
-if (sa.right<sa.left) or (sa.bottom<sa.top) or (da.right<da.left) or (da.bottom<da.top) then goto skipend;
-if (dx2<dx1) or (dy2<dy1) then goto skipend;
-
-//.mx (mapped dx) - highly optimised - 06sep2017
-if not low__createint(_mx,'copyareaxx_mx.'+intstr32(daW)+'.0.'+intstr32(sa.left)+'.'+intstr32(sa.right)+'.'+intstr32(saW),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _mx.setparams(daW,daW,0);
-   mx:=_mx.core;
-   //get
-   for p:=0 to (daW-1) do mx[p]:=frcrange32(sa.left+trunc(p*(saW/daW)),sa.left,sa.right);//06apr2017
-   end;
-mx:=_mx.core;
-
-//.my (mapped dy) - highly optimised - 06sep2017
-if not low__createint(_my,'copyareaxx_my.'+intstr32(daH)+'.0.'+intstr32(sa.top)+'.'+intstr32(sa.bottom)+'.'+intstr32(saH),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _my.setparams(daH,daH,0);
-   my:=_my.core;
-   //get
-   for p:=0 to (daH-1) do my[p]:=frcrange32(sa.top+trunc(p*(saH/daH)),sa.top,sa.bottom);//24SEP2011
-   end;
-my:=_my.core;
-
-
-//draw color pixels ------------------------------------------------------------
-//dy
-for dy:=d3 to d4 do
-   begin
-   //.ar
-   if xflip then sy:=my[(da.bottom-da.top)-(dy-da.top)] else sy:=my[dy-da.top];//zero base
-
-   //.sy
-   if (sy>=0) and (sy<sH) then
-      begin
-
-      if not misscan2432(d,dy,dr24,dr32) then goto skipend;
-      if not misscan2432(s,sy,sr24,sr32) then goto skipend;
-      if mok1 then mr1:=xmask.prows8[dy];
-      if mok2 then mr2:=xbackmask.prows8[dy];
-
-      //dx
-
-
-      //.32 -> 32
-      if (sbits=32) and (dbits=32) then
-         begin
-         for dx:=d1 to d2 do
-            begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) and ((xmaskval=-1) or (mr1[dx]=xmaskval)) then
-               begin
-               //init
-               s32:=sr32[sx];
-               p255:=(s32.a*xpower255) shr 8;
-
-               //get
-               if (p255>=1) then
-                  begin
-
-                  //update background mask
-                  if (mr2<>nil) then
-                     begin
-                     case mr2[dx] of
-                     1  :mr2[dx]:=0;//hide
-                     200:mr2[dx]:=100;//hide
-                     201:mr2[dx]:=101;//hide
-                     end;
-                     end;
-
-                  //set
-                  if (p255=255) then dr32[dx]:=s32
-                  else
-                     begin
-                     d32:=dr32[dx];
-
-                     d32.r:=((d32.r*(255-p255)) + (s32.r*p255)) shr 8;
-                     d32.g:=((d32.g*(255-p255)) + (s32.g*p255)) shr 8;
-                     d32.b:=((d32.b*(255-p255)) + (s32.b*p255)) shr 8;
-
-                     dr32[dx]:=d32;
-                     end;
-
-                  end;//p255
-               end;//sx
-            end;//dx
-         end
-
-
-      //.24 -> 32
-      else if (sbits=24) and (dbits=32) then
-         begin
-         for dx:=d1 to d2 do
-            begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) and ((xmaskval=-1) or (mr1[dx]=xmaskval)) then
-               begin
-               //init
-               p255:=xpower255;
-
-               //get
-               if (p255>=1) then
-                  begin
-
-                  //update background mask
-                  if (mr2<>nil) then
-                     begin
-                     case mr2[dx] of
-                     1  :mr2[dx]:=0;//hide
-                     200:mr2[dx]:=100;//hide
-                     201:mr2[dx]:=101;//hide
-                     end;
-                     end;
-
-                  //set
-                  s24  :=sr24[sx];
-
-                  if (p255=255) then
-                     begin
-                     s32.r:=s24.r;
-                     s32.g:=s24.g;
-                     s32.b:=s24.g;
-                     s32.a:=255;
-                     dr32[dx]:=s32;
-                     end
-                  else
-                     begin
-                     d32:=dr32[dx];
-
-                     d32.r:=((d32.r*(255-p255)) + (s24.r*p255)) shr 8;
-                     d32.g:=((d32.g*(255-p255)) + (s24.g*p255)) shr 8;
-                     d32.b:=((d32.b*(255-p255)) + (s24.b*p255)) shr 8;
-
-                     dr32[dx]:=d32;
-                     end;
-
-                  end;//p255
-               end;//sx
-            end;//dx
-         end
-
-
-      //.32 -> 24
-      else if (sbits=32) and (dbits=24) then
-         begin
-         for dx:=d1 to d2 do
-            begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) and ((xmaskval=-1) or (mr1[dx]=xmaskval)) then
-               begin
-               //init
-               s32:=sr32[sx];
-               p255:=(s32.a*xpower255) shr 8;
-
-               //get
-               if (p255>=1) then
-                  begin
-
-                  //update background mask
-                  if (mr2<>nil) then
-                     begin
-                     case mr2[dx] of
-                     1  :mr2[dx]:=0;//hide
-                     200:mr2[dx]:=100;//hide
-                     201:mr2[dx]:=101;//hide
-                     end;
-                     end;
-
-                  //set
-                  if (p255=255) then
-                     begin
-                     s24.r:=s32.r;
-                     s24.g:=s32.g;
-                     s24.b:=s32.b;
-                     dr24[dx]:=s24;
-                     end
-                  else
-                     begin
-                     d24:=dr24[dx];
-
-                     d24.r:=((d24.r*(255-p255)) + (s32.r*p255)) shr 8;
-                     d24.g:=((d24.g*(255-p255)) + (s32.g*p255)) shr 8;
-                     d24.b:=((d24.b*(255-p255)) + (s32.b*p255)) shr 8;
-
-                     dr24[dx]:=d24;
-                     end;
-
-                  end;//p255
-               end;//sx
-            end;//dx
-         end
-
-
-      //.24 -> 24
-      else if (sbits=24) and (dbits=24) then
-         begin
-         for dx:=d1 to d2 do
-            begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) and ((xmaskval=-1) or (mr1[dx]=xmaskval)) then
-               begin
-               //init
-               p255:=xpower255;
-
-               //get
-               if (p255>=1) then
-                  begin
-
-                  //update background mask
-                  if (mr2<>nil) then
-                     begin
-                     case mr2[dx] of
-                     1  :mr2[dx]:=0;//hide
-                     200:mr2[dx]:=100;//hide
-                     201:mr2[dx]:=101;//hide
-                     end;
-                     end;
-
-                  //set
-                  s24:=sr24[sx];
-
-                  if (p255=255) then dr24[dx]:=s24
-                  else
-                     begin
-                     d24:=dr24[dx];
-
-                     d24.r:=((d24.r*(255-p255)) + (s24.r*p255)) shr 8;
-                     d24.g:=((d24.g*(255-p255)) + (s24.g*p255)) shr 8;
-                     d24.b:=((d24.b*(255-p255)) + (s24.b*p255)) shr 8;
-
-                     dr24[dx]:=d24;
-                     end;
-
-                  end;//p255
-               end;//sx
-            end;//dx
-
-
-         end;//bits decider
-      end;//sy
-   end;//dy
-
-//successful
-result:=true;
-skipend:
-except;end;
-low__freeint(_mx);
-low__freeint(_my);
 end;
 
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx//1111111111111111111111111
-function mis__copyfast82432(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//09jan2025 - barebones pixel copier
+function mis__copyfast(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject):boolean;//03apr2026
+begin
+
+result:=mis__copyfast3( dclip ,sa ,ddx,ddy,ddw,ddh ,s,d ,255 ,false ,false ,false );
+
+end;
+
+function mis__copyfast2(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint):boolean;//03apr2026
+begin
+
+result:=mis__copyfast3( dclip ,sa ,ddx,ddy,ddw,ddh ,s,d ,dpower255 ,false ,false ,false );
+
+end;
+
+function mis__copyfast3(const dclip:twinrect;const sa:twinrect;const ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip,drenderAlphaShades:boolean):boolean;//03apr2026
+begin
+
+if (dpower255<=0) then
+   begin
+
+   result:=true;
+
+   end
+
+else if drenderAlphaShades then
+   begin
+
+   result:=xmis__copyfast_cliprange_mirror_flip_power255_alphaShades(dclip,sa,ddx,ddy,ddw,ddh,s,d,dpower255,dmirror,dflip);
+
+   end
+else if (dpower255>=255) then
+   begin
+
+   result:=xmis__copyfast_cliprange_mirror_flip(dclip,sa,ddx,ddy,ddw,ddh,s,d,dmirror,dflip);
+
+   end
+
+else begin
+
+   result:=xmis__copyfast_cliprange_mirror_flip_power255(dclip,sa,ddx,ddy,ddw,ddh,s,d,dpower255,dmirror,dflip);
+
+   end;
+
+end;
+
+function xmis__copyfast_cliprange_mirror_flip(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dmirror,dflip:boolean):boolean;//03apr2026
 label
    skipend;
-var//Performance Boost:
-   //~172% faster than "miscopyareaxx10()" achieving ~34 fps (29ms/frame) at 1920x1080 with "32->24 bit" on an i5-6500T CPU @ 2.50GHz - 12dec2024
-   //Speed optimised using x-pixel limiter "d1,d2", y-pixel limiter "d3,d4" and object caching "2x createint" for x/y mapping
-   //s and d are required and sa is a zero-based area, e.g: da.left/right=0..[width-1]
-   //Trunc used instead of round for correct rounding behaviour
-   dr32,sr32:pcolorrow32;//25apr2020
-   dr24,sr24:pcolorrow24;
-   dr8 ,sr8 :pcolorrow8;
-   v:tint4;
-   mx,my:pdllongint;
-   _mx,_my:tdynamicinteger;//mapper support
-   p,daW,daH,saW,saH:longint;
-   d1,d2,d3,d4:longint;//x-pixel(d) and y-pixel(d) speed optimisers -> represent ACTUAL d.area needed to be processed - 05sep2017
-   //.image values
-   sw,sh,sbits:longint;
-   shasai:boolean;
-   dw,dh,dbits:longint;
-   dhasai:boolean;
-   //.other
-   dx,dy,sx,sy:longint;
-   p255,dx1,dx2,dy1,dy2:longint;
-   bol1,xmirror,xflip:boolean;
+
+var
    da:twinrect;
 
-   function cint32(x:currency):longint;
-   begin//Note: Clip a 64bit integer to a 32bit integer range
-   if (x>max32) then x:=max32
-   else if (x<min32) then x:=min32;
-   result:=trunc(x);
-   end;
+   sw,sh,sbits,dw,dh,dbits,sd,dx1,dx2,dy1,dy2,dx,dy,sx,sy,ssw,ssh:longint;
+
+   shasai,dhasai,xmirror,xflip:boolean;
+
+   mx,my:pdllongint;
+   _mx,_my:tdynamicinteger;//mapper support
+
+   c32:tcolor32;
+   c24:tcolor24;
+   c8 :tcolor8;
+
+   s32,d32:pcolor32;
+   s24,d24:pcolor24;
+
+   dr32,sr32:pcolorrow32;
+   dr24,sr24:pcolorrow24;
+   dr8 ,sr8 :pcolorrow8;
+
 begin
-//defaults
-result:=false;
-_mx   :=nil;
-_my   :=nil;
 
-try
-//check
-if (sa.right<sa.left) or (sa.bottom<sa.top) then goto skipend;
-if not misinfo82432(s,sbits,sw,sh,shasai)   then goto skipend;
-if not misinfo82432(d,dbits,dw,dh,dhasai)   then goto skipend;
 
-//.mirror + flip
-xmirror:=(ddw<0);
+//defaults ---------------------------------------------------------------------
+
+result      :=false;
+_mx         :=nil;
+_my         :=nil;
+
+
+//check ------------------------------------------------------------------------
+
+if (dclip.right<dclip.left) or (dclip.bottom<dclip.top) then exit;
+if (sa.right<sa.left) or (sa.bottom<sa.top)             then exit;
+if not misinfo82432(s,sbits,sw,sh,shasai)               then exit;
+if not misinfo82432(d,dbits,dw,dh,dhasai)               then exit;
+
+
+//mirror + flip ----------------------------------------------------------------
+
+if dmirror then ddw:=-ddw;
+xmirror     :=(ddw<0);
 if xmirror then ddw:=-ddw;
 
-xflip  :=(ddh<0);
+if dflip   then ddh:=-ddh;
+xflip       :=(ddh<0);
 if xflip   then ddh:=-ddh;
 
-da.left:=cint32(ddx);
-da.right:=cint32(ddx)+cint32(ddw-1);
-da.top:=cint32(ddy);
-da.bottom:=cint32(ddy)+cint32(ddh-1);
 
-//.da_clip - limit to dimensions of "d" - 05sep2017
-da_clip.left:=frcrange32(da_clip.left,0,dw-1);
-da_clip.right:=frcrange32(da_clip.right,da_clip.left,dw-1);
-da_clip.top:=frcrange32(da_clip.top,0,dH-1);
-da_clip.bottom:=frcrange32(da_clip.bottom,0,dH-1);
+//init -------------------------------------------------------------------------
 
-//.optimise actual x-pixels scanned -> d1 + d2 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d1:=largest32(largest32(da.left,da_clip.left),0);//range: 0..max32
-d2:=smallest32(smallest32(da.right,da_clip.right),dw-1);//range: min32..dw-1
-if (d2<d1) then goto skipend;
+sd                    :=mis__sdPair(sbits,dbits);
 
-//.optimise actual y-pixels scanned -> d3 + d4 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d3:=largest32(largest32(da.top,da_clip.top),0);//range: 0..max32
-d4:=smallest32(smallest32(da.bottom,da_clip.bottom),dH-1);//range: min32..dh-1
-if (d4<d3) then goto skipend;
+da.left               :=ddx;
+da.right              :=ddx + pred(ddw);
+da.top                :=ddy;
+da.bottom             :=ddy + pred(ddh);
 
-//.other
-daW:=low__posn(da.right-da.left)+1;
-daH:=low__posn(da.bottom-da.top)+1;
-saW:=low__posn(sa.right-sa.left)+1;
-saH:=low__posn(sa.bottom-sa.top)+1;
-dx1:=frcrange32(da.left,0,dw-1);
-dx2:=frcrange32(da.right,0,dw-1);
-dy1:=frcrange32(da.top,0,dh-1);
-dy2:=frcrange32(da.bottom,0,dh-1);
+ssw                   :=sa.right  - sa.left + 1;
+ssh                   :=sa.bottom - sa.top  + 1;
 
-//.check area -> do nothing
-if (daw=0) or (dah=0) or (saw=0) or (sah=0) then goto skipend;
-if (sa.right<sa.left) or (sa.bottom<sa.top) or (da.right<da.left) or (da.bottom<da.top) then goto skipend;
-if (dx2<dx1) or (dy2<dy1) then goto skipend;
+//.dclip - limit to dimensions of "d"
+dclip.left            :=frcrange32(dclip.left   ,0          ,dw-1 );
+dclip.right           :=frcrange32(dclip.right  ,dclip.left ,dw-1 );
+dclip.top             :=frcrange32(dclip.top    ,0          ,dh-1 );
+dclip.bottom          :=frcrange32(dclip.bottom ,dclip.top  ,dh-1 );
 
-//.mx (mapped dx) - highly optimised - 06sep2017
-if not low__createint(_mx,'copyareaxx_mx.'+intstr32(daW)+'.0.'+intstr32(sa.left)+'.'+intstr32(sa.right)+'.'+intstr32(saW),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _mx.setparams(daW,daW,0);
-   mx:=_mx.core;
-   //get
-   for p:=0 to (daW-1) do mx[p]:=frcrange32(sa.left+trunc(p*(saW/daW)),sa.left,sa.right);//06apr2017
-   end;
-mx:=_mx.core;
+//.optimise actual x-pixels scanned -> dx1..dx2
+dx1                   :=largest32 ( largest32 (da.left  ,dclip.left ) ,0    );
+dx2                   :=smallest32( smallest32(da.right ,dclip.right) ,dw-1 );
 
-//.my (mapped dy) - highly optimised - 06sep2017
-if not low__createint(_my,'copyareaxx_my.'+intstr32(daH)+'.0.'+intstr32(sa.top)+'.'+intstr32(sa.bottom)+'.'+intstr32(saH),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _my.setparams(daH,daH,0);
-   my:=_my.core;
-   //get
-   for p:=0 to (daH-1) do my[p]:=frcrange32(sa.top+trunc(p*(saH/daH)),sa.top,sa.bottom);//24SEP2011
-   end;
-my:=_my.core;
+if (dx2<dx1) then exit;
+
+//.optimise actual y-pixels scanned -> dy1...dy2
+dy1                   :=largest32 ( largest32 (da.top    ,dclip.top   ) ,0    );
+dy2                   :=smallest32( smallest32(da.bottom ,dclip.bottom) ,dh-1 );
+
+if (dy2<dy1) then exit;
 
 
-//draw color pixels ------------------------------------------------------------
-v.ca:=255;
+//map X and Y scales -----------------------------------------------------------
+
+//.mx
+_mx         :=rescache__newMapped( 1 ,ddw ,sa.left ,sa.right ,ssw );
+mx          :=_mx.core;
+
+//.my
+_my         :=rescache__newMapped( 1 ,ddh ,sa.top ,sa.bottom ,ssh );
+my          :=_my.core;
+
+
+//render pixels ----------------------------------------------------------------
 
 //dy
-for dy:=d3 to d4 do
+for dy:=dy1 to dy2 do
+begin
+
+//sy
+if xflip then sy:=my[ pred(ddh) - dy + da.top ] else sy:=my[ dy-da.top ];//zero base
+
+//range
+if (sy>=0) and (sy<sh) then
    begin
-   //.ar
-   if xflip then sy:=my[(da.bottom-da.top)-(dy-da.top)] else sy:=my[dy-da.top];//zero base
 
-   //.sy
-   if (sy>=0) and (sy<sH) then
+   if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
+   if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+
+   //dx - note: a simple "if chain" is 1.5x faster than using a "case" statement - 03apr2026
+
+   //32 -> 32 ---------------------------------------------------------------
+   if (sd=sd32_32) then
       begin
-      if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
-      if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
 
-
-      //dx
-
-      //.32 -> 32
-      if (sbits=32) and (dbits=32) then
+      if xmirror then
          begin
-         for dx:=d1 to d2 do
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgra32:=sr32[sx];
-               dr32[dx]:=v.bgra32;
-               end;
-            end;//dx
+
+            dr32[dx]:=sr32[sx];
+
+            end;
+
+         end;//dx
+
          end
 
-      //.32 -> 24
-      else if (sbits=32) and (dbits=24) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgra32:=sr32[sx];
-               dr24[dx]:=v.bgr24;
-               end;
-            end;//dx
+
+            dr32[dx]:=sr32[sx];
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 24 ---------------------------------------------------------------
+   else if (sd=sd32_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32    :=@sr32[sx];
+            d24    :=@dr24[dx];
+
+            d24.r  :=s32.r;
+            d24.g  :=s32.g;
+            d24.b  :=s32.b;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.32 -> 8
-      else if (sbits=32) and (dbits=8) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgra32:=sr32[sx];
-               if (v.bgra32.g>v.bgra32.r) then v.bgra32.r:=v.bgra32.g;
-               if (v.bgra32.b>v.bgra32.r) then v.bgra32.r:=v.bgra32.b;
-               dr8[dx]:=v.bgra32.r;
-               end;
-            end;//dx
+
+            s32    :=@sr32[sx];
+            d24    :=@dr24[dx];
+
+            d24.r  :=s32.r;
+            d24.g  :=s32.g;
+            d24.b  :=s32.b;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 8 ----------------------------------------------------------------
+   else if (sd=sd32_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            dr8[dx]   :=c32.r;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.24 -> 32
-      else if (sbits=24) and (dbits=32) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgr24 :=sr24[sx];
-               dr32[dx]:=v.bgra32;
-               end;
-            end;//dx
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            dr8[dx]   :=c32.r;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 32 ---------------------------------------------------------------
+   else if (sd=sd24_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24    :=@sr24[sx];
+            d32    :=@dr32[dx];
+
+            d32.r  :=s24.r;
+            d32.g  :=s24.g;
+            d32.b  :=s24.b;
+            d32.a  :=255;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.24 -> 24
-      else if (sbits=24) and (dbits=24) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgr24:=sr24[sx];
-               dr24[dx]:=v.bgr24;
-               end;
-            end;//dx
+
+            s24    :=@sr24[sx];
+            d32    :=@dr32[dx];
+
+            d32.r  :=s24.r;
+            d32.g  :=s24.g;
+            d32.b  :=s24.b;
+            d32.a  :=255;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 24 ---------------------------------------------------------------
+   else if (sd=sd24_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr24[dx]:=sr24[sx];
+
+            end;
+
+         end;//dx
+
          end
 
-      //.24 -> 8
-      else if (sbits=24) and (dbits=8) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgr24:=sr24[sx];
-               if (v.bgr24.g>v.bgr24.r) then v.bgr24.r:=v.bgr24.g;
-               if (v.bgr24.b>v.bgr24.r) then v.bgr24.r:=v.bgr24.b;
-               dr8[dx]:=v.bgr24.r;
-               end;
-            end;//dx
+
+            dr24[dx]:=sr24[sx];
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 8 ----------------------------------------------------------------
+   else if (sd=sd24_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=c24.r;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.8 -> 32
-      else if (sbits=8) and (dbits=32) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgra32.r:=sr8[sx];
-               v.bgra32.g:=v.bgra32.r;
-               v.bgra32.b:=v.bgra32.r;
-               dr32[dx]:=v.bgra32;
-               end;
-            end;//dx
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=c24.r;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 32 ---------------------------------------------------------------
+   else if (sd=sd8_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8     :=sr8[sx];
+            d32    :=@dr32[dx];
+
+            d32.r  :=c8;
+            d32.g  :=c8;
+            d32.b  :=c8;
+            d32.a  :=255;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.8 -> 24
-      else if (sbits=8) and (dbits=24) then
+      else begin
+
+         for dx:=dx1 to dx2 do
          begin
-         for dx:=d1 to d2 do
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
             begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgr24.r:=sr8[sx];
-               v.bgr24.g:=v.bgr24.r;
-               v.bgr24.b:=v.bgr24.r;
-               dr24[dx]:=v.bgr24;
-               end;
-            end;//dx
+
+            c8     :=sr8[sx];
+            d32    :=@dr32[dx];
+
+            d32.r  :=c8;
+            d32.g  :=c8;
+            d32.b  :=c8;
+            d32.a  :=255;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 24 ---------------------------------------------------------------
+   else if (sd=sd8_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8     :=sr8[sx];
+            d24    :=@dr24[dx];
+
+            d24.r  :=c8;
+            d24.g  :=c8;
+            d24.b  :=c8;
+
+            end;
+
+         end;//dx
+
          end
 
-      //.8 -> 8
-      else if (sbits=8) and (dbits=8) then
-         begin
-         for dx:=d1 to d2 do
-            begin
-            if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-            if (sx>=0) and (sx<sW) then
-               begin
-               v.bgr24.r:=sr8[sx];
-               dr8[dx]:=v.bgr24.r;
-               end;
-            end;//dx
-         end;
+      else begin
 
-      end;
-   end;//dy
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8     :=sr8[sx];
+            d24    :=@dr24[dx];
+
+            d24.r  :=c8;
+            d24.g  :=c8;
+            d24.b  :=c8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 8 ----------------------------------------------------------------
+   else if (sd=sd8_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=sr8[sx];
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=sr8[sx];
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+      
+   else goto skipend;
+
+   end;//sy
+
+end;//dy
 
 //successful
-result:=true;
+result      :=true;
 skipend:
-except;end;
-low__freeint(_mx);
-low__freeint(_my);
+
+//free
+if (_mx<>nil) then rescache__delMapped( @_mx );
+if (_my<>nil) then rescache__delMapped( @_my );
+
+end;
+
+function xmis__copyfast_cliprange_mirror_flip_power255(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip:boolean):boolean;//03apr2026
+label
+   skipend;
+
+var
+   da:twinrect;
+
+   ca,cainv,sw,sh,sbits,dw,dh,dbits,sd,dx1,dx2,dy1,dy2,dx,dy,sx,sy,ssw,ssh:longint;
+
+   shasai,dhasai,xmirror,xflip:boolean;
+
+   mx,my:pdllongint;
+   _mx,_my:tdynamicinteger;//mapper support
+
+   c32:tcolor32;
+   c24:tcolor24;
+   c8 :tcolor8;
+
+   s32,d32:pcolor32;
+   s24,d24:pcolor24;
+
+   dr32,sr32:pcolorrow32;
+   dr24,sr24:pcolorrow24;
+   dr8 ,sr8 :pcolorrow8;
+
+begin
+
+
+//defaults ---------------------------------------------------------------------
+
+result      :=false;
+_mx         :=nil;
+_my         :=nil;
+
+
+//check ------------------------------------------------------------------------
+
+if (dclip.right<dclip.left) or (dclip.bottom<dclip.top) then exit;
+if (sa.right<sa.left) or (sa.bottom<sa.top)             then exit;
+if not misinfo82432(s,sbits,sw,sh,shasai)               then exit;
+if not misinfo82432(d,dbits,dw,dh,dhasai)               then exit;
+
+
+//mirror + flip ----------------------------------------------------------------
+
+if dmirror then ddw:=-ddw;
+xmirror     :=(ddw<0);
+if xmirror then ddw:=-ddw;
+
+if dflip   then ddh:=-ddh;
+xflip       :=(ddh<0);
+if xflip   then ddh:=-ddh;
+
+
+//init -------------------------------------------------------------------------
+
+ca                    :=frcrange32( dpower255 ,0 ,255 );
+cainv                 :=255 - ca;
+
+sd                    :=mis__sdPair(sbits,dbits);
+
+da.left               :=ddx;
+da.right              :=ddx + pred(ddw);
+da.top                :=ddy;
+da.bottom             :=ddy + pred(ddh);
+
+ssw                   :=sa.right  - sa.left + 1;
+ssh                   :=sa.bottom - sa.top  + 1;
+
+//.dclip - limit to dimensions of "d"
+dclip.left            :=frcrange32(dclip.left   ,0          ,dw-1 );
+dclip.right           :=frcrange32(dclip.right  ,dclip.left ,dw-1 );
+dclip.top             :=frcrange32(dclip.top    ,0          ,dh-1 );
+dclip.bottom          :=frcrange32(dclip.bottom ,dclip.top  ,dh-1 );
+
+//.optimise actual x-pixels scanned -> dx1..dx2
+dx1                   :=largest32 ( largest32 (da.left  ,dclip.left ) ,0    );
+dx2                   :=smallest32( smallest32(da.right ,dclip.right) ,dw-1 );
+
+if (dx2<dx1) then exit;
+
+//.optimise actual y-pixels scanned -> dy1...dy2
+dy1                   :=largest32 ( largest32 (da.top    ,dclip.top   ) ,0    );
+dy2                   :=smallest32( smallest32(da.bottom ,dclip.bottom) ,dh-1 );
+
+if (dy2<dy1) then exit;
+
+
+//map X and Y scales -----------------------------------------------------------
+
+//.mx
+_mx         :=rescache__newMapped( 1 ,ddw ,sa.left ,sa.right ,ssw );
+mx          :=_mx.core;
+
+//.my
+_my         :=rescache__newMapped( 1 ,ddh ,sa.top ,sa.bottom ,ssh );
+my          :=_my.core;
+
+
+//render pixels ----------------------------------------------------------------
+
+//dy
+for dy:=dy1 to dy2 do
+begin
+
+//sy
+if xflip then sy:=my[ pred(ddh) - dy + da.top ] else sy:=my[ dy-da.top ];//zero base
+
+//range
+if (sy>=0) and (sy<sh) then
+   begin
+
+   if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
+   if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+
+   //dx - note: a simple "if chain" is 1.5x faster than using a "case" statement - 03apr2026
+
+   //32 -> 32 ---------------------------------------------------------------
+   if (sd=sd32_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s32.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s32.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s32.b*ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (s32.a*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s32.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s32.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s32.b*ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (s32.a*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 24 ---------------------------------------------------------------
+   else if (sd=sd32_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s32.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s32.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s32.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s32.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 8 ----------------------------------------------------------------
+   else if (sd=sd32_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c32.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c32.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 32 ---------------------------------------------------------------
+   else if (sd=sd24_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s24.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s24.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s24.b*ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (255  *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s24.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s24.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s24.b*ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (255  *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 24 ---------------------------------------------------------------
+   else if (sd=sd24_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s24.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s24.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s24.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s24.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 8 ----------------------------------------------------------------
+   else if (sd=sd24_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c24.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c24.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 32 ---------------------------------------------------------------
+   else if (sd=sd8_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (c8 *ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (c8 *ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (c8 *ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (255*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (c8 *ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (c8 *ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (c8 *ca) ) shr 8;
+            d32.a     :=( (d32.a*cainv) + (255*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 24 ---------------------------------------------------------------
+   else if (sd=sd8_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (c8 *ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (c8 *ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (c8 *ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (c8 *ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 8 ----------------------------------------------------------------
+   else if (sd=sd8_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (sr8[sx]*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (sr8[sx]*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   else goto skipend;
+
+   end;//sy
+
+end;//dy
+
+//successful
+result      :=true;
+skipend:
+
+//free
+if (_mx<>nil) then rescache__delMapped( @_mx );
+if (_my<>nil) then rescache__delMapped( @_my );
+
+end;
+
+function xmis__copyfast_cliprange_mirror_flip_power255_alphaShades(dclip:twinrect;sa:twinrect;ddx,ddy,ddw,ddh:longint32;const s,d:tobject;const dpower255:longint;const dmirror,dflip:boolean):boolean;//03apr2026
+label
+   skipend;
+
+var
+   da:twinrect;
+
+   xpower255,la,ca,cainv,sw,sh,sbits,dw,dh,dbits,sd,dx1,dx2,dy1,dy2,dx,dy,sx,sy,ssw,ssh:longint;
+
+   shasai,dhasai,xmirror,xflip:boolean;
+
+   mx,my:pdllongint;
+   _mx,_my:tdynamicinteger;//mapper support
+
+   c32:tcolor32;
+   c24:tcolor24;
+   c8 :tcolor8;
+
+   s32,d32:pcolor32;
+   s24,d24:pcolor24;
+
+   dr32,sr32:pcolorrow32;
+   dr24,sr24:pcolorrow24;
+   dr8 ,sr8 :pcolorrow8;
+
+begin
+
+
+//defaults ---------------------------------------------------------------------
+
+result      :=false;
+_mx         :=nil;
+_my         :=nil;
+
+
+//check ------------------------------------------------------------------------
+
+if (dclip.right<dclip.left) or (dclip.bottom<dclip.top) then exit;
+if (sa.right<sa.left) or (sa.bottom<sa.top)             then exit;
+if not misinfo82432(s,sbits,sw,sh,shasai)               then exit;
+if not misinfo82432(d,dbits,dw,dh,dhasai)               then exit;
+
+
+//mirror + flip ----------------------------------------------------------------
+
+if dmirror then ddw:=-ddw;
+xmirror     :=(ddw<0);
+if xmirror then ddw:=-ddw;
+
+if dflip   then ddh:=-ddh;
+xflip       :=(ddh<0);
+if xflip   then ddh:=-ddh;
+
+
+//init -------------------------------------------------------------------------
+
+xpower255             :=frcrange32( dpower255 ,0 ,255 );
+ca                    :=xpower255;
+cainv                 :=255 - ca;
+la                    :=-1;
+
+sd                    :=mis__sdPair(sbits,dbits);
+
+da.left               :=ddx;
+da.right              :=ddx + pred(ddw);
+da.top                :=ddy;
+da.bottom             :=ddy + pred(ddh);
+
+ssw                   :=sa.right  - sa.left + 1;
+ssh                   :=sa.bottom - sa.top  + 1;
+
+//.dclip - limit to dimensions of "d"
+dclip.left            :=frcrange32(dclip.left   ,0          ,dw-1 );
+dclip.right           :=frcrange32(dclip.right  ,dclip.left ,dw-1 );
+dclip.top             :=frcrange32(dclip.top    ,0          ,dh-1 );
+dclip.bottom          :=frcrange32(dclip.bottom ,dclip.top  ,dh-1 );
+
+//.optimise actual x-pixels scanned -> dx1..dx2
+dx1                   :=largest32 ( largest32 (da.left  ,dclip.left ) ,0    );
+dx2                   :=smallest32( smallest32(da.right ,dclip.right) ,dw-1 );
+
+if (dx2<dx1) then exit;
+
+//.optimise actual y-pixels scanned -> dy1...dy2
+dy1                   :=largest32 ( largest32 (da.top    ,dclip.top   ) ,0    );
+dy2                   :=smallest32( smallest32(da.bottom ,dclip.bottom) ,dh-1 );
+
+if (dy2<dy1) then exit;
+
+
+//map X and Y scales -----------------------------------------------------------
+
+//.mx
+_mx         :=rescache__newMapped( 1 ,ddw ,sa.left ,sa.right ,ssw );
+mx          :=_mx.core;
+
+//.my
+_my         :=rescache__newMapped( 1 ,ddh ,sa.top ,sa.bottom ,ssh );
+my          :=_my.core;
+
+
+//render pixels ----------------------------------------------------------------
+
+//dy
+for dy:=dy1 to dy2 do
+begin
+
+//sy
+if xflip then sy:=my[ pred(ddh) - dy + da.top ] else sy:=my[ dy-da.top ];//zero base
+
+//range
+if (sy>=0) and (sy<sh) then
+   begin
+
+   if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;
+   if not misscan82432(s,sy,sr8,sr24,sr32) then goto skipend;
+
+   //dx - note: a simple "if chain" is 1.5x faster than using a "case" statement - 03apr2026
+
+   //32 -> 32 ---------------------------------------------------------------
+   if (sd=sd32_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d32       :=@dr32[dx];
+
+            if (la<>s32.a) then
+               begin
+
+               la     :=s32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            d32.r     :=( (d32.r*cainv) + (s32.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s32.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d32       :=@dr32[dx];
+
+            if (la<>s32.a) then
+               begin
+
+               la     :=s32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            d32.r     :=( (d32.r*cainv) + (s32.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s32.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 24 ---------------------------------------------------------------
+   else if (sd=sd32_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d24       :=@dr24[dx];
+
+            if (la<>s32.a) then
+               begin
+
+               la     :=s32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            d24.r     :=( (d24.r*cainv) + (s32.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s32.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s32       :=@sr32[sx];
+            d24       :=@dr24[dx];
+
+            if (la<>s32.a) then
+               begin
+
+               la     :=s32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            d24.r     :=( (d24.r*cainv) + (s32.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s32.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s32.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //32 -> 8 ----------------------------------------------------------------
+   else if (sd=sd32_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            if (la<>c32.a) then
+               begin
+
+               la     :=c32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c32.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c32       :=sr32[sx];
+            if (c32.g>c32.r) then c32.r:=c32.g;
+            if (c32.b>c32.r) then c32.r:=c32.b;
+
+            if (la<>c32.a) then
+               begin
+
+               la     :=c32.a;
+               ca     :=(xpower255*la) shr 8;
+               cainv  :=255 - ca;
+
+               end;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c32.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 32 ---------------------------------------------------------------
+   else if (sd=sd24_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s24.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s24.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (s24.r*ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (s24.g*ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 24 ---------------------------------------------------------------
+   else if (sd=sd24_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s24.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s24.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            s24       :=@sr24[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (s24.r*ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (s24.g*ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (s24.b*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //24 -> 8 ----------------------------------------------------------------
+   else if (sd=sd24_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c24.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c24       :=sr24[sx];
+            if (c24.g>c24.r) then c24.r:=c24.g;
+            if (c24.b>c24.r) then c24.r:=c24.b;
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (c24.r*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 32 ---------------------------------------------------------------
+   else if (sd=sd8_32) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (c8 *ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (c8 *ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d32       :=@dr32[dx];
+
+            d32.r     :=( (d32.r*cainv) + (c8 *ca) ) shr 8;
+            d32.g     :=( (d32.g*cainv) + (c8 *ca) ) shr 8;
+            d32.b     :=( (d32.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 24 ---------------------------------------------------------------
+   else if (sd=sd8_24) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (c8 *ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (c8 *ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            c8        :=sr8[sx];
+            d24       :=@dr24[dx];
+
+            d24.r     :=( (d24.r*cainv) + (c8 *ca) ) shr 8;
+            d24.g     :=( (d24.g*cainv) + (c8 *ca) ) shr 8;
+            d24.b     :=( (d24.b*cainv) + (c8 *ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   //8 -> 8 ----------------------------------------------------------------
+   else if (sd=sd8_8) then
+      begin
+
+      if xmirror then
+         begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ pred(ddw) - dx + da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (sr8[sx]*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end
+
+      else begin
+
+         for dx:=dx1 to dx2 do
+         begin
+
+         sx        :=mx[ dx-da.left ];
+
+         if (sx>=0) and (sx<sw) then
+            begin
+
+            dr8[dx]   :=( (dr8[dx]*cainv) + (sr8[sx]*ca) ) shr 8;
+
+            end;
+
+         end;//dx
+
+         end;//if
+
+      end
+
+   else goto skipend;
+
+   end;//sy
+
+end;//dy
+
+//successful
+result      :=true;
+skipend:
+
+//free
+if (_mx<>nil) then rescache__delMapped( @_mx );
+if (_my<>nil) then rescache__delMapped( @_my );
+
 end;
 
 function mis__copyAVE82432(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;dsmoothresampling:boolean):boolean;//06jun2025, 09may2025 - barebones "average" pixel copier/resampler
@@ -20180,7 +23944,7 @@ var
    da:twinrect;
 
    function cint32(x:currency):longint;
-   begin//Note: Clip a 64bit integer to a 32bit integer range
+   begin//Note: Clip a 64bit longint32 to a 32bit longint32 range
    if (x>max32) then x:=max32
    else if (x<min32) then x:=min32;
    result:=trunc(x);
@@ -20298,29 +24062,12 @@ if (sa.right<sa.left) or (sa.bottom<sa.top) or (da.right<da.left) or (da.bottom<
 if (dx2<dx1) or (dy2<dy1) then goto skipend;
 
 //.mx (mapped dx) - highly optimised - 06sep2017
-if not low__createint(_mx,'copyareaxx_mx.'+intstr32(daW)+'.0.'+intstr32(sa.left)+'.'+intstr32(sa.right)+'.'+intstr32(saW),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _mx.setparams(daW,daW,0);
-   mx:=_mx.core;
-   //get
-   for p:=0 to (daW-1) do mx[p]:=frcrange32(sa.left+trunc(p*(saW/daW)),sa.left,sa.right);//06apr2017
-   end;
-mx:=_mx.core;
+_mx         :=rescache__newMapped( 1 ,daW ,sa.left ,sa.right ,saW );
+mx          :=_mx.core;
 
 //.my (mapped dy) - highly optimised - 06sep2017
-if not low__createint(_my,'copyareaxx_my.'+intstr32(daH)+'.0.'+intstr32(sa.top)+'.'+intstr32(sa.bottom)+'.'+intstr32(saH),bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   _my.setparams(daH,daH,0);
-   my:=_my.core;
-   //get
-   for p:=0 to (daH-1) do my[p]:=frcrange32(sa.top+trunc(p*(saH/daH)),sa.top,sa.bottom);//24SEP2011
-   end;
-my:=_my.core;
-
+_my         :=rescache__newMapped( 1 ,daH ,sa.top ,sa.bottom ,saH );
+my          :=_my.core;
 
 //.offsets -> calc the rounding errors and store in x/yoffset vars
 xoffset:=trunc( (daW-1)*(saW/daW) );
@@ -20400,8 +24147,11 @@ for dy:=d3 to d4 do
 result:=true;
 skipend:
 except;end;
-low__freeint(_mx);
-low__freeint(_my);
+
+//free
+rescache__delMapped( @_mx );
+rescache__delMapped( @_my );
+
 end;
 
 function miscopy(s,d:tobject):boolean;//27dec2024, 12feb2022
@@ -20435,7 +24185,8 @@ else
    //.bits
    if (sbits<>dbits) and (not missetb2(d,sbits)) then goto skipend;
    //.pixels -> full 32bit RGBA support - 15feb2022
-   if not miscopyarea32(0,0,sw,sh,misarea(s),d,s) then goto skipend;
+   //was: if not miscopyarea32(0,0,sw,sh,misarea(s),d,s) then goto skipend;
+   if not mis__copyfast(maxarea,misarea(s),0,0,sw,sh,s,d) then goto skipend;
    //.ai
    if shasai and dhasai and (not misaicopy(s,d)) then goto skipend;
    end;
@@ -20577,6 +24328,13 @@ begin
 result:=misokex(s,sbits,sw,sh,shasai) and ((sbits=8) or (sbits=24) or (sbits=32));
 end;
 
+function misok8162432(s:tobject;var sbits,sw,sh:longint):boolean;//04jun2026
+var
+   shasai:boolean;
+begin
+result:=misokex(s,sbits,sw,sh,shasai) and ((sbits=8) or (sbits=16) or (sbits=24) or (sbits=32));
+end;
+
 function misok2432(s:tobject;var sbits,sw,sh:longint):boolean;//01may2025
 var
    shasai:boolean;
@@ -20605,6 +24363,51 @@ var
    shasai:boolean;
 begin
 result:=misokex(s,sbits,sw,sh,shasai) and ((sbits=8) or (sbits=24)) and shasai;
+end;
+
+function misfast24(s:tobject;var sw,sh:longint;var srows:pcolorrows24):boolean;//15jul2025: fast basic info for 24 bit image
+begin
+//defaults
+result:=false;
+
+//get
+if (s=nil) then result:=false
+else if (s is twinbmp) then
+   begin
+
+   if (24=(s as twinbmp).bits) then
+      begin
+      sw    :=(s as twinbmp).width;
+      sh    :=(s as twinbmp).height;
+      srows :=(s as twinbmp).prows24;
+      result:=(sw>=1) and (sh>=1);
+      end;
+
+   end
+else if (s is trawimage) then
+   begin
+
+   if (24=(s as trawimage).bits) then
+      begin
+      sw    :=(s as trawimage).width;
+      sh    :=(s as trawimage).height;
+      srows :=(s as trawimage).prows24;
+      result:=(sw>=1) and (sh>=1);
+      end;
+
+   end
+else if (s is tbasicimage) then
+   begin
+
+   if (24=(s as tbasicimage).bits) then
+      begin
+      sw    :=(s as tbasicimage).width;
+      sh    :=(s as tbasicimage).height;
+      srows :=(s as tbasicimage).prows24;
+      result:=(sw>=1) and (sh>=1);
+      end;
+
+   end;//if
 end;
 
 function misinfo(s:tobject;var sbits,sw,sh:longint;var shasai:boolean):boolean;
@@ -20654,7 +24457,7 @@ result:=false;
 xout:=nil;
 
 //get
-if zznil(s,2086) then exit
+if      (s=nil)            then exit
 else if (s is twinbmp)     then xout:=(s as twinbmp).prows8
 else if (s is trawimage)   then xout:=(s as trawimage).prows8
 else if (s is tbasicimage) then xout:=(s as tbasicimage).prows8;
@@ -20670,7 +24473,7 @@ result:=false;
 xout:=nil;
 
 //get
-if zznil(s,2087) then exit
+if      (s=nil)            then exit
 else if (s is twinbmp)     then xout:=(s as twinbmp).prows16
 else if (s is trawimage)   then xout:=(s as trawimage).prows16
 else if (s is tbasicimage) then xout:=(s as tbasicimage).prows16;
@@ -20682,11 +24485,11 @@ end;
 function misrows24(s:tobject;var xout:pcolorrows24):boolean;
 begin
 //defaults
-result:=false;
-xout:=nil;
+result :=false;
+xout   :=nil;
 
 //get
-if zznil(s,2088) then exit
+if      (s=nil)            then exit
 else if (s is twinbmp)     then xout:=(s as twinbmp).prows24
 else if (s is trawimage)   then xout:=(s as trawimage).prows24
 else if (s is tbasicimage) then xout:=(s as tbasicimage).prows24;
@@ -20702,7 +24505,7 @@ result:=false;
 xout:=nil;
 
 //get
-if zznil(s,2089) then exit
+if      (s=nil)            then exit
 else if (s is twinbmp)     then xout:=(s as twinbmp).prows32
 else if (s is trawimage)   then xout:=(s as trawimage).prows32
 else if (s is tbasicimage) then xout:=(s as tbasicimage).prows32;
@@ -20975,6 +24778,55 @@ else if (s is twinbmp) then
 else if (s is trawimage) then
    begin
    sr8 :=(s as trawimage).prows8[sy];
+   sr24:=(s as trawimage).prows24[sy];
+   sr32:=(s as trawimage).prows32[sy];
+   end
+else exit;
+
+//successful
+result:=(sr8<>nil) and (sr24<>nil) and (sr32<>nil);
+end;
+
+function misscan8162432(s:tobject;sy:longint;var sr8:pcolorrow8;var sr16:pcolorrow16;var sr24:pcolorrow24;var sr32:pcolorrow32):boolean;//04jun2026
+var
+   sw,sh:longint;
+begin
+//defaults
+result:=false;
+sr8:=nil;
+sr24:=nil;
+sr32:=nil;
+
+//check
+if zznil(s,2091) then exit;
+
+//init
+sw:=misw(s);
+sh:=mish(s);
+if (sw<=0) or (sh<=0) then exit;
+
+//range
+if (sy<0) then sy:=0 else if (sy>=sh) then sy:=sh-1;
+
+//get
+if (s is tbasicimage) then
+   begin
+   sr8 :=(s as tbasicimage).prows8[sy];
+   sr16:=(s as tbasicimage).prows16[sy];
+   sr24:=(s as tbasicimage).prows24[sy];
+   sr32:=(s as tbasicimage).prows32[sy];
+   end
+else if (s is twinbmp) then
+   begin
+   sr8 :=(s as twinbmp).prows8[sy];
+   sr16:=(s as twinbmp).prows16[sy];
+   sr24:=(s as twinbmp).prows24[sy];
+   sr32:=(s as twinbmp).prows32[sy];
+   end
+else if (s is trawimage) then
+   begin
+   sr8 :=(s as trawimage).prows8[sy];
+   sr16:=(s as trawimage).prows16[sy];
    sr24:=(s as trawimage).prows24[sy];
    sr32:=(s as trawimage).prows32[sy];
    end
@@ -21322,6 +25174,11 @@ begin
 result:=misraw(8,dw,dh);
 end;
 
+function misraw16(dw,dh:longint):trawimage;
+begin
+result:=misraw(16,dw,dh);
+end;
+
 function misraw24(dw,dh:longint):trawimage;
 begin
 result:=misraw(24,dw,dh);
@@ -21341,6 +25198,11 @@ end;
 function miswin8(dw,dh:longint):twinbmp;
 begin
 result:=miswin(8,dw,dh);
+end;
+
+function miswin16(dw,dh:longint):twinbmp;
+begin
+result:=miswin(16,dw,dh);
 end;
 
 function miswin24(dw,dh:longint):twinbmp;
@@ -21699,54 +25561,64 @@ end;
 
 function misb(s:tobject):longint;//bits 0..N
 begin
-//defaults
-result:=0;
 
-try
-//get
-if zznil(s,2072) then exit
-//.image
+if       (s=nil)           then result:=0
 else if (s is tbasicimage) then result:=(s as tbasicimage).bits
-//.winbmp
 else if (s is twinbmp)     then result:=(s as twinbmp).bits
-//.rawimage
-else if (s is trawimage)   then result:=(s as trawimage).bits;
-except;end;
+else if (s is trawimage)   then result:=(s as trawimage).bits
+else if (s is tbasicrle6)  then result:=6//07mar2026
+else if (s is tbasicrle8)  then result:=8//07mar2026
+else if (s is tbasicrle32) then result:=32;//07mar2026
+
 end;
 
 procedure missetb(s:tobject;sbits:longint);
 begin
-try
-sbits:=frcmin32(sbits,1);
-if not misv(s) then exit
+
+sbits       :=frcmin32(sbits,1);
+
+if       not misv(s)          then exit
 else if (s is tbasicimage)    then (s as tbasicimage).setparams(sbits,misw(s),mish(s))
 else if (s is twinbmp)        then (s as twinbmp).setparams(sbits,misw(s),mish(s))
 else if (s is trawimage)      then (s as trawimage).setparams(sbits,misw(s),mish(s));
-except;end;
+
 end;
 
 function missetb2(s:tobject;sbits:longint):boolean;//12feb2022
 begin
+
 missetb(s,sbits);
-result:=(misb(s)<>sbits);
+
+result      :=(misb(s)<>sbits);
+
 end;
 
 function misw(s:tobject):longint;
 begin
+
 if      (s=nil)            then result:=0
 else if (s is tbasicimage) then result:=(s as tbasicimage).width
 else if (s is twinbmp)     then result:=(s as twinbmp).width
 else if (s is trawimage)   then result:=(s as trawimage).width
+else if (s is tbasicrle6)  then result:=(s as tbasicrle6).width//07mar2026
+else if (s is tbasicrle8)  then result:=(s as tbasicrle8).width//07mar2026
+else if (s is tbasicrle32) then result:=(s as tbasicrle32).width//07mar2026
 else                            result:=0;
+
 end;
 
 function mish(s:tobject):longint;
 begin
+
 if      (s=nil)            then result:=0
 else if (s is tbasicimage) then result:=(s as tbasicimage).height
 else if (s is twinbmp)     then result:=(s as twinbmp).height
 else if (s is trawimage)   then result:=(s as trawimage).height
+else if (s is tbasicrle6)  then result:=(s as tbasicrle6).height//07mar2026
+else if (s is tbasicrle8)  then result:=(s as tbasicrle8).height//07mar2026
+else if (s is tbasicrle32) then result:=(s as tbasicrle32).height//07mar2026
 else                            result:=0;
+
 end;
 
 function miscw(s:tobject):longint;//cell width
@@ -21943,49 +25815,50 @@ begin
 result:=(s<>nil) and misaiclear(misai(s)^);
 end;
 
-function misaiclear(var x:tanimationinformation):boolean;
+function misaiclear(var x:tanimationinformation):boolean;//18mar2026
 begin
-//defaults
-result:=false;
 
-try
+//defaults
+result      :=false;
+
 //get
 with x do
 begin
-binary:=true;
-format:='';
-subformat:='';
-info:='';//22APR2012
-filename:='';
-map16:='';//Warning: won't work under D10 - 21aug2020
-transparent:=false;
-syscolors:=false;
-flip:=false;
-mirror:=false;
-delay:=0;
-itemindex:=0;
-count:=1;
-bpp:=24;
+binary      :=true;
+format      :='';
+subformat   :='';
+info        :='';//22APR2012
+filename    :='';
+map16       :='';//Warning: won't work under D10 - 21aug2020
+transparent :=false;
+syscolors   :=false;
+flip        :=false;
+mirror      :=false;
+delay       :=0;
+itemindex   :=0;
+count       :=1;
+bpp         :=24;
 //cursor - 20JAN2012
-hotspotX:=0;
-hotspotY:=0;
+hotspotX    :=0;
+hotspotY    :=0;
 hotspotMANUAL:=false;//use system generated AUTOMATIC hotspot - 03jan2019
 //special
-owrite32bpp:=false;//22JAN2012
+owrite32bpp :=false;//22JAN2012
 //final
-readb64:=false;
-readb128:=false;
-writeb64:=false;
-writeb128:=false;
+readb64     :=false;
+readb128    :=false;
+writeb64    :=false;
+writeb128   :=false;
 //internal
-iosplit:=0;//none
-cellwidth:=0;
-cellheight:=0;
-use32:=false;
+iosplit     :=0;//none
+cellwidth   :=0;
+cellheight  :=0;
+use32       :=false;
 end;
+
 //successful
-result:=true;
-except;end;
+result      :=true;
+
 end;
 
 function misai(s:tobject):panimationinformation;
@@ -22185,7 +26058,7 @@ if (dfontsize<0) then dfontsize:=round(-dfontsize/dheightscale);
 dfontsize:=frcrange32(dfontsize,3,5000);
 
 //init
-xlen:=low__len(x);
+xlen:=low__Len32(x);
 if (xlen<=0) then goto skipdone;
 dthick0:=frcmax32(frcmin32(dfontsize div 5,1),dfontsize div 3);
 dthick:=frcmax32(frcmin32(dfontsize div low__aorb(5,2,xbold),1),dfontsize div 3);
@@ -22237,1121 +26110,6 @@ for p:=1 to xlen do xdrawdigit(byte(x[p-1+stroffset]),p<xlen);
 skipdone:
 result:=true;
 skipend:
-except;end;
-end;
-
-function miscopyareaxx(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255,xtrans,xtc:longint;xoptions:currency):boolean;//05sep2017, 25jul2017
-begin
-result:=miscopyareaxx2(da_clip,ddx,ddy,ddw,ddh,sa,d,s,xpower255,xtrans,xtc,xoptions,0,0);
-end;
-
-function miscopyareaxx1(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject):boolean;//01jun2019
-begin
-result:=miscopyareaxx5(maxarea,ddx,ddy,ddw,ddh,sa,d,s,nil,nil,nil,nil,255,0,clnone,0,0,0,nil,nil,nil,nil,nil,nil,nil);
-end;
-
-function miscopyareaxx1A(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xusealpha:boolean):boolean;//support 32bit alpha channel - 27jan2021
-begin
-result:=miscopyareaxx8(maxarea,ddx,ddy,ddw,ddh,sa,d,s,nil,nil,nil,nil,nil,nil,0,0,false,255,0,clnone,0,0,0,nil,nil,nil,nil,nil,nil,nil,xusealpha);
-end;
-
-function miscopyareaxx1B(ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255:longint;xusealpha:boolean):boolean;//support 32bit alpha channel - 27jan2021
-begin
-result:=miscopyareaxx8(maxarea,ddx,ddy,ddw,ddh,sa,d,s,nil,nil,nil,nil,nil,nil,0,0,false,xpower255,0,clnone,0,0,0,nil,nil,nil,nil,nil,nil,nil,xusealpha);
-end;
-
-function miscopyareaxx2(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx3(da_clip,ddx,ddy,ddw,ddh,sa,d,s,nil,nil,xpower255,xtrans,xtc,xoptions,xscroll,yscroll);
-end;
-
-function miscopyareaxx3(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx5(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,nil,sm,nil,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,nil,nil,nil,nil,nil,nil,nil);
-end;
-
-function miscopyareaxx3b(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint):boolean;//27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx5(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,nil,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,nil,nil,nil,nil,nil,nil,nil);
-end;
-
-function miscopyareaxx4(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,sm:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx5(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,nil,sm,nil,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY);
-end;
-
-function miscopyareaxx5(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2:tobject;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx6(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,nil,0,false,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY);
-end;
-
-function miscopyareaxx6(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//32bit support - 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx8(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,sselshow,nil,-1,xselshowSTRIDE,xselshowEVENINIT,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY,false);
-end;
-
-function miscopyareaxx7(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8):boolean;//32bit alpha channel support - 26jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx8(da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,sselshow,dmask,dmaskval,xselshowSTRIDE,xselshowEVENINIT,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY,false);
-end;
-
-function miscopyareaxx8(da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx9(clnone,clnone,da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,sselshow,dmask,dmaskval,xselshowSTRIDE,xselshowEVENINIT,xpower255,xtrans,xtc,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY,xusealpha);
-end;
-
-function misoptions(xinvert,xgrey,xsepia,xnoise:boolean):currency;
-var
-   v8:tcur8;
-begin
-v8.val:=0;
-if xinvert then include(v8.bits,0);
-if xgrey   then include(v8.bits,1);
-if xsepia  then include(v8.bits,2);
-if xnoise  then include(v8.bits,3);
-result:=v8.val;
-end;
-
-function miscopyareaxx9(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//xinvert put last for better results - 05jun2021, "round()" instead of "trunc()" - 16mar2021, dsysinfo support - 10mar2021, 32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-begin
-result:=miscopyareaxx10(xcolorise1,xcolorise2,da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,sselshow,dmask,nil,dmaskval,xselshowSTRIDE,xselshowEVENINIT,xpower255,xtrans,xtc,clnone,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY,xusealpha);
-end;
-
-function miscopyareaxx91(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask,dbackmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//04dec2024
-begin
-result:=miscopyareaxx10(xcolorise1,xcolorise2,da_clip,ddx,ddy,ddw,ddh,sa,d,s,dm,dm2,sm,sm2,sselshow,dmask,dbackmask,dmaskval,xselshowSTRIDE,xselshowEVENINIT,xpower255,xtrans,xtc,clnone,xoptions,xscroll,yscroll,refOP,refRGB,refR,refG,refB,refX,refY,xusealpha);
-end;
-
-function miscopyareaxx10(xcolorise1,xcolorise2:longint;da_clip:twinrect;ddx,ddy,ddw,ddh:currency;sa:twinrect;d,s,dm,dm2,sm,sm2,sselshow:tobject;dmask,dbackmask:tmask8;dmaskval:longint;xselshowSTRIDE:longint;xselshowEVENINIT:boolean;xpower255,xtrans,xtc,xwriteShadesofcolor:longint;xoptions:currency;xscroll,yscroll:longint;refOP,refRGB,refR,refG,refB,refX,refY:tstr8;xusealpha:boolean):boolean;//xinvert put last for better results - 05jun2021, "round()" instead of "trunc()" - 16mar2021, dsysinfo support - 10mar2021, 32bit alpha channel support - 29jan2021, 27jan2021, 30aug2020, 25apr2020, 15may2019, 22aug2018, 27sep2017, 26sep2017, 25sep2017, 25jul2017
-label
-   skipend,skiptrans;
-const
-   alpha_backmask_choke=100;
-var//Note: Speed optimised using x-pixel limiter "d1,d2", y-pixel limiter "d3,d4"
-   //      and object caching "1x createtmp" and "2x createint" with a typical speed
-   //      increase in PicWork of 45x, or a screen paint time originally of 3,485ms now 78ms
-   //      with layer 2 image at 80,000px wide @ 1,000% zoom as of 06sep2017.
-   //Note: s and d are required - 25jul2017
-   //Note: da,sa are zero-based areas, e.g: da.left/right=0..[width-1],
-   //Note: xpower255 range = 0..255 - 29may2019
-   //Critical Note: must use "trunc" instead of "round" for correct rounding behaviour - 24SEP2011
-   //Note: Range errors fixed on 26sep2017 -> now stable and reliable
-   //Note: m =optional dest mask -> 24bit mask, but we use the red channel (0=transparent, 1=low..255=full) - 12nov2017
-   //Note: m2 =optional 2nd dest mask -> 24bit mask, but we use the red channel (0=transparent, 1=low..255=full) - 14apr2019
-   //Note: sm=optional source mask -> 24bit mask, but we use the red channel (0=transparent, 1=low..255=full) - 11jan2018
-   //Note: Not in use yet --> sm2=optional 2nd source mask -> 24bit mask, but we use the red channel (0=transparent, 1=low..255=full) - 14apr2019
-   //Note: Now supports 8,24 and 32 bits for "s" and "d" - 25apr2020
-   a:tbasicimage;
-   dr32,sr32,dr132,dr232,dr332,dr432:pcolorrow32;//25apr2020
-   dr24,sr24,dmr24,dmr24b,smr24,sselshowr24,sselshowr24a,sselshowr24b,ar,ar1,ar2,dr1,dr2,dr3,dr4:pcolorrow24;
-   bmr8,mr8,dr8,sr8,dmr8,dmr8b,smr8,sselshowr8,sselshowr8a,sselshowr8b,dr18,dr28,dr38,dr48:pcolorrow8;
-   aok1,aok2,dok1,dok2,dok3,dok4:boolean;
-   xcwhite24,xcblack24,dc24,sc24:tcolor24;
-   xcwhite32,xcblack32,dc32,sc32:tcolor32;
-   mx,my:pdllongint;
-   _mx,_my:tdynamicinteger;//mapper support
-   xselstride,p,vr,vg,vb,vc,daW,daH,saW,saH:longint;
-   v1,v2,v3,v4:longint;
-   int1,d1,d2,d3,d4:longint;//x-pixel(d) and y-pixel(d) speed optimisers -> represent ACTUAL d.area needed to be processed - 05sep2017
-   //.image values
-   sw,sh,sbits:longint;
-   smw,smh,smbits:longint;
-   smw2,smh2,smbits2:longint;
-   sselshoww,sselshowh,sselshowbits:longint;
-   shasai,smhasai,smhasai2,sselshowhasai:boolean;
-   dw,dh,dbits:longint;
-   dmw,dmh,dmbits:longint;
-   dmw2,dmh2,dmbits2:longint;
-   dhasai,dmhasai,dmhasai2:boolean;
-   //.other
-   xalpha255,xpower2,dx,dy,sx,sy,sya,syb,sxa,sxb:longint;
-   dx1,dx2,dy1,dy2:longint;
-   xtranscol:tcolor24;
-   bs:array[0..2] of boolean;
-   xtranscolok,bol1,xfilters,xmirror,xflip,xinvert,xgrey,xsepia,xnoise:boolean;
-   c8:tcur8;
-   da:twinrect;
-   str1:string;
-   //ref pattern support - 24aug2018
-   zmin,zmax,zoff,zcount:longint;
-   reflistR,reflistG,reflistB,reflistRGB:pcolorrow8;
-   reflistOP:pdllongint;
-   refcoreR,refcoreG,refcoreB,refcoreRGB:tdynamicbyte;
-   refcoreOP:tdynamicinteger;
-   refuse:boolean;
-   //colorise support - 27mar2021
-   dcolorise1,dcolorise2:tcolor24;
-   dcoloriseOK,dcoloriseInv:boolean;
-   dcolorisev:longint;
-   //write shades of color support - 15mar2022
-   socOK:boolean;
-   soc24:tcolor24;
-   socLevel:longint;
-
-   function cint32(x:currency):longint;
-   begin//Note: Clip a 64bit integer to a 32bit integer range
-   if (x>max32) then x:=max32
-   else if (x<min32) then x:=min32;
-   result:=trunc(x);
-   end;
-
-   procedure xinc32(xr32:pcolorrow32;xoff:longint);
-   begin
-   xoff:=dx+xoff;
-   if (xoff>=0) and (xoff<dw) then
-      begin
-      inc(vr,xr32[xoff].r);
-      inc(vg,xr32[xoff].g);
-      inc(vb,xr32[xoff].b);
-      inc(vc);
-      end;
-   end;
-
-   procedure xinc24(xr:pcolorrow24;xoff:longint);
-   begin
-   xoff:=dx+xoff;
-   if (xoff>=0) and (xoff<dw) then
-      begin
-      inc(vr,xr[xoff].r);
-      inc(vg,xr[xoff].g);
-      inc(vb,xr[xoff].b);
-      inc(vc);
-      end;
-   end;
-
-   procedure xinc8(xr:pcolorrow8;xoff:longint);
-   begin
-   xoff:=dx+xoff;
-   if (xoff>=0) and (xoff<dw) then
-      begin
-      inc(vr,xr[xoff]);
-      inc(vg,xr[xoff]);
-      inc(vb,xr[xoff]);
-      inc(vc);
-      end;
-   end;
-
-   procedure d_sys24;//10mar2021
-   begin
-   dcolorisev:=(sc24.r+sc24.g+sc24.b) div 3;
-   if (dcolorisev<100) then dcolorisev:=100 else if (dcolorisev>230) then dcolorisev:=230;
-   if dcoloriseInv then dcolorisev:=255-dcolorisev;//26mar2021
-   sc24.r:=((dcolorise1.r*dcolorisev) + (dcolorise2.r*(255-dcolorisev))) div 255;
-   sc24.g:=((dcolorise1.g*dcolorisev) + (dcolorise2.g*(255-dcolorisev))) div 255;
-   sc24.b:=((dcolorise1.b*dcolorisev) + (dcolorise2.b*(255-dcolorisev))) div 255;
-   end;
-begin
-//defaults
-result:=false;//11SEP2011
-
-try
-mr8:=nil;
-bmr8:=nil;//background mask row - 04dec2024
-ar1:=nil;
-ar2:=nil;
-_mx:=nil;
-_my:=nil;
-a:=nil;
-reflistR:=nil;
-reflistG:=nil;
-reflistB:=nil;
-reflistRGB:=nil;
-reflistOP:=nil;
-refcoreR:=nil;
-refcoreG:=nil;
-refcoreB:=nil;
-refcoreRGB:=nil;
-refcoreOP:=nil;
-refuse:=false;
-//.xwriteShadesofcolor
-socOK:=(xwriteShadesofcolor<>clnone);
-socLevel:=255;//on by default - required for non-soc modes - 15mar2022
-if socOK then soc24:=int__c24(xwriteShadesofcolor);
-
-//.refs -> lock - 30aug2020
-if (refOP<>nil)  then str__lock(@refOP);
-if (refRGB<>nil) then str__lock(@refRGB);
-if (refR<>nil)   then str__lock(@refR);
-if (refG<>nil)   then str__lock(@refG);
-if (refB<>nil)   then str__lock(@refB);
-if (refX<>nil)   then str__lock(@refX);
-if (refY<>nil)   then str__lock(@refY);
-
-//check
-if (sa.right<sa.left) or (sa.bottom<sa.top) then goto skipend;
-if not misinfo82432(s,sbits,sw,sh,shasai) then goto skipend;
-if not misinfo82432(d,dbits,dw,dh,dhasai) then goto skipend;
-if zznil(dmask,2107) or (dmask.width<dw) or (dmask.height<dh) or (dmaskval<-1) then dmaskval:=-1;//off - 23may2020
-//.background mask support
-if (dbackmask<>nil) and ((dbackmask.width<dw) or (dbackmask.height<dh)) then dbackmask:=nil;//turn off
-
-//-- init --
-//.colors
-xcwhite24.r:=255;  xcwhite24.g:=255;  xcwhite24.b:=255;
-xcblack24.r:=0;    xcblack24.g:=0;    xcblack24.b:=0;
-xcwhite32.r:=255;  xcwhite32.g:=255;  xcwhite32.b:=255;  xcwhite32.a:=255;
-xcblack32.r:=0;    xcblack32.g:=0;    xcblack32.b:=0;    xcblack32.a:=255;
-
-//.colorise -> convert color pixels into shades between "xcolorise1 .. xcolorise2" - 27mar2021
-dcoloriseOK:=(xcolorise1<>clnone) and (xcolorise2<>clnone);
-if dcoloriseOK then
-   begin
-   dcolorise1:=int__c24(xcolorise1);
-   dcolorise2:=int__c24(xcolorise2);
-   dcoloriseInv:=(int__brightness_aveb(c24a0__int(dcolorise1))<int__brightness_aveb(c24a0__int(dcolorise2)));
-   end;
-
-//allow only 8bit and 24bit mask handling:
-//.dm & dm2
-if (not misinfo824(dm,dmbits,dmw,dmh,dmhasai))      or (dmw<dw)  or (dmh<dh)  then dmbits:=0;//0=off
-if (not misinfo824(dm2,dmbits2,dmw2,dmh2,dmhasai2)) or (dmw2<dw) or (dmh2<dh) then dmbits2:=0;//0=off
-//.sm & sm2
-if (not misinfo824(sm,smbits,smw,smh,smhasai))      or (smw<sw)  or (smh<sh)  then smbits:=0;//0=off
-if (not misinfo824(sm2,smbits2,smw2,smh2,smhasai2)) or (smw2<sw) or (smh2<sh) then smbits2:=0;//0=off
-//.sselshow
-if (not misinfo824(sselshow,sselshowbits,sselshoww,sselshowh,sselshowhasai)) or (sselshoww<sw) or (sselshowh<sh) then sselshowbits:=0;//0=off
-if (xselshowstride<1) then xselshowstride:=4;//use default value of 4 pixels when not specified - 08jul2019
-xselstride:=2*xselshowstride;//2x for realtime calculations to work - 08jul2019
-//.xpower
-xpower255:=frcrange32(xpower255,0,255);
-xpower2:=xpower255;
-xalpha255:=255;
-//.ref pattern support - 24aug2018
-if ref_use(refR) and (ref_count(refR)>=1) then
-   begin
-   if zznil(refcoreR,2110) then refcoreR:=tdynamicbyte.create;
-   for int1:=255 downto 0 do refcoreR.value[int1]:=byte(ref_val0255(refR,int1));
-   reflistR:=refcoreR.core;
-   end;
-if ref_use(refG) and (ref_count(refG)>=1) then
-   begin
-   if zznil(refcoreG,2111) then refcoreG:=tdynamicbyte.create;
-   for int1:=255 downto 0 do refcoreG.value[int1]:=byte(ref_val0255(refG,int1));
-   reflistG:=refcoreG.core;
-   end;
-if ref_use(refB) and (ref_count(refB)>=1) then
-   begin
-   if zznil(refcoreB,2112) then refcoreB:=tdynamicbyte.create;
-   for int1:=255 downto 0 do refcoreB.value[int1]:=byte(ref_val0255(refB,int1));
-   reflistB:=refcoreB.core;
-   end;
-if ref_use(refRGB) and (ref_count(refRGB)>=1) then
-   begin
-   if zznil(refcoreRGB,2113) then refcoreRGB:=tdynamicbyte.create;
-   for int1:=255 downto 0 do refcoreRGB.value[int1]:=byte(ref_val0255(refRGB,int1));
-   reflistRGB:=refcoreRGB.core;
-   end;
-if ref_use(refOP) and (ref_count(refOP)>=1) then
-   begin
-   if zznil(refcoreOP,2114) then refcoreOP:=tdynamicinteger.create;
-   for int1:=255 downto 0 do refcoreOP.value[int1]:=round( (ref_val32(refOP,int1,int1,-255,255)/255)*xpower255 );
-   reflistOP:=refcoreOP.core;
-   end;
-refuse:=(reflistR<>nil) or (reflistG<>nil) or (reflistB<>nil) or (reflistRGB<>nil) or (reflistOP<>nil);
-
-//.xmirror
-xmirror:=(ddw<0);if xmirror then ddw:=-ddw;
-xflip  :=(ddh<0);if xflip   then ddh:=-ddh;
-da.left:=cint32(ddx);
-da.right:=cint32(ddx)+cint32(ddw-1);
-da.top:=cint32(ddy);
-da.bottom:=cint32(ddy)+cint32(ddh-1);
-
-//.da_clip - limit to dimensions of "d" - 05sep2017
-da_clip.left:=frcrange32(da_clip.left,0,dw-1);
-da_clip.right:=frcrange32(da_clip.right,da_clip.left,dw-1);
-da_clip.top:=frcrange32(da_clip.top,0,dH-1);
-da_clip.bottom:=frcrange32(da_clip.bottom,0,dH-1);
-
-//.optimise actual x-pixels scanned -> d1 + d2 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d1:=largest32(largest32(da.left,da_clip.left),0);//range: 0..max32
-d2:=smallest32(smallest32(da.right,da_clip.right),dw-1);//range: min32..dw-1
-if (d2<d1) then goto skipend;
-
-//.optimise actual y-pixels scanned -> d3 + d4 -> 05sep2017
-//.warning: Do not alter boundary handling below or failure will result - 27sep2017
-d3:=largest32(largest32(da.top,da_clip.top),0);//range: 0..max32
-d4:=smallest32(smallest32(da.bottom,da_clip.bottom),dH-1);//range: min32..dh-1
-if (d4<d3) then goto skipend;
-
-//.create temp buffer -> needs no lock/unlock - 23may2020
-if not low__createimg24(a,'copyareaxx_a24',bol1) then goto skipend;
-if (misb(a)<>24) then goto skipend;
-//.adjust image dimensions
-if (a.width>(dw+2000)) or (a.height>(dh+2000)) then//too big -> make small first
-   begin
-   a.sizeto(1,1);
-   end;
-if (a.width<dw)  then a.sizeto(dw,a.height);
-if (a.height<dh) then a.sizeto(a.width,dh);
-aok1:=false;
-aok2:=false;
-dok1:=false;
-dok2:=false;
-dok3:=false;
-dok4:=false;
-//.xoptions
-c8.val:=xoptions;
-xinvert :=(0 in c8.bits);
-xgrey   :=(1 in c8.bits);
-xsepia  :=(2 in c8.bits);
-xnoise  :=(3 in c8.bits);
-xfilters:=xinvert or xgrey or xsepia or xnoise;
-//.xtrans
-xtrans:=frcrange32(xtrans,0,3);//0=none, 1=1bit, 2=8bit, 3=8bit enhanced -> dual purpose -> sharp, blur, blur2 AND transparent color
-xtranscolok:=(xtc<>clnone);
-if xtranscolok then xtranscol:=int__c24(xtc);
-//.other
-daW:=low__posn(da.right-da.left)+1;
-daH:=low__posn(da.bottom-da.top)+1;
-saW:=low__posn(sa.right-sa.left)+1;
-saH:=low__posn(sa.bottom-sa.top)+1;
-dx1:=frcrange32(da.left,0,dw-1);
-dx2:=frcrange32(da.right,0,dw-1);
-dy1:=frcrange32(da.top,0,dh-1);
-dy2:=frcrange32(da.bottom,0,dh-1);
-//.check area -> do nothing
-if (daw=0) or (dah=0) or (saw=0) or (sah=0) then goto skipend;
-if (sa.right<sa.left) or (sa.bottom<sa.top) or (da.right<da.left) or (da.bottom<da.top) then goto skipend;
-if (dx2<dx1) or (dy2<dy1) then goto skipend;
-
-//.x-scroll
-if (xscroll<>0) then
-   begin
-   xscroll:=-xscroll;//logic inversion -> match user expectation -> neg.vals=left, pos.vals=right
-   bol1:=(xscroll<0);
-   xscroll:=low__posn(xscroll);
-   xscroll:=xscroll-((xscroll div saW)*saW);
-   xscroll:=frcrange32(xscroll,0,saW-1);
-   if bol1 then xscroll:=-xscroll;
-   end;
-
-//.y-scroll
-if (yscroll<>0) then
-   begin
-   yscroll:=-yscroll;//logic inversion -> match user expectation -> neg.vals=up, pos.vals=down
-   bol1:=(yscroll<0);
-   yscroll:=low__posn(yscroll);
-   yscroll:=yscroll-((yscroll div saH)*saH);
-   yscroll:=frcrange32(yscroll,0,saH-1);
-   if bol1 then yscroll:=-yscroll;
-   end;
-
-//.mx (mapped dx) - highly optimised - 06sep2017
-if ref_use(refX) then int1:=ref_count(refX) else int1:=0;
-if (int1>=1) then str1:='.ref'+intstr32(ref_id(refX))+'_'+intstr32(int1)+'_'+intstr32(low__crc32b(refX)) else str1:='';
-if not low__createint(_mx,'copyareaxx_mx.'+intstr32(daW)+'.0.'+intstr32(sa.left)+'.'+intstr32(sa.right)+'.'+intstr32(saW)+str1,bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   zcount:=0;
-   zmin:=0;
-   zmax:=daW-1;
-   _mx.setparams(daW,daW,0);
-   mx:=_mx.core;
-   //get
-   for p:=0 to (daW-1) do
-   begin
-   mx[p]:=frcrange32(sa.left+trunc(p*(saW/daW)),sa.left,sa.right);//06apr2017
-   if (int1>=1) then mx[p]:=ref_valrange32(refX,mx[p],sa.left,sa.right,p,zmin,zmax,zoff,zcount);
-   end;//p
-   end;
-mx:=_mx.core;
-
-//.my (mapped dy) - highly optimised - 06sep2017
-if ref_use(refY) then int1:=ref_count(refY) else int1:=0;
-if (int1>=1) then str1:='.ref'+intstr32(ref_id(refY))+'_'+intstr32(int1)+'_'+intstr32(low__crc32b(refY)) else str1:='';
-if not low__createint(_my,'copyareaxx_my.'+intstr32(daH)+'.0.'+intstr32(sa.top)+'.'+intstr32(sa.bottom)+'.'+intstr32(saH)+str1,bol1) then goto skipend;
-if not bol1 then
-   begin
-   //init
-   zcount:=0;
-   zmin:=0;
-   zmax:=daH-1;
-   _my.setparams(daH,daH,0);
-   my:=_my.core;
-   //get
-   for p:=0 to (daH-1) do
-   begin
-   my[p]:=frcrange32(sa.top+trunc(p*(saH/daH)),sa.top,sa.bottom);//24SEP2011
-   if (int1>=1) then my[p]:=ref_valrange32(refY,my[p],sa.top,sa.bottom,p,zmin,zmax,zoff,zcount);
-   end;//p
-   end;
-my:=_my.core;
-
-//-- Draw Color Pixels ---------------------------------------------------------
-//dy
-//...was: for dy:=da.top to da.bottom do if (dy>=0) and (dy<dH) and (dy>=da_clip.top) and (dy<=da_clip.bottom) then
-for dy:=d3 to d4 do
-   begin
-   //.ar
-   ar:=a.prows24[dy];
-   if xflip then sy:=my[(da.bottom-da.top)-(dy-da.top)] else sy:=my[dy-da.top];//zero base
-   if (sselshowbits<>0) then
-      begin
-      case xflip of
-      true:begin
-         //.sya
-         v1:=dy-1;
-         if (v1<d3) then v1:=d3;
-         sya:=my[(da.bottom-da.top)-(v1-da.top)];
-         //.syb
-         v1:=dy+1;
-         if (v1>d4) then v1:=d4;
-         syb:=my[(da.bottom-da.top)-(v1-da.top)];
-         end;
-      else begin
-         //.sya
-         v1:=dy-1;
-         if (v1<d3) then v1:=d3;
-         sya:=my[v1-da.top];//zero base
-         //.syb
-         v1:=dy+1;
-         if (v1>d4) then v1:=d4;
-         syb:=my[v1-da.top];//zero base
-         end;
-      end;//case
-      end;//if
-   //.y-scroll
-   if (yscroll<>0) then
-      begin
-      sy:=sy+yscroll;
-      if (sy<sa.top) then sy:=sa.bottom-(-sy-sa.top)
-      else if (sy>sa.bottom) then sy:=sa.top+(sy-sa.bottom);
-      end;
-   //.sy
-   if (sy>=0) and (sy<sH) then
-      begin
-      if (dmaskval>=0) then mr8:=dmask.prows8[dy];
-      if (dbackmask<>nil) then bmr8:=dbackmask.prows8[dy];
-      if not misscan82432(d,dy,dr8,dr24,dr32)                     then goto skipend;//25apr2020, 28may2019
-      if not misscan82432(s,sy,sr8,sr24,sr32)                     then goto skipend;//25apr2020,
-      if (dmbits<>0)  and (not misscan824(dm,dy,dmr8,dmr24))      then goto skipend;
-      if (dmbits2<>0) and (not misscan824(dm2,dy,dmr8b,dmr24b))   then goto skipend;
-      if (smbits<>0)  and (not misscan824(sm,sy,smr8,smr24))      then goto skipend;
-      if (sselshowbits<>0) then
-         begin
-         if not misscan824(sselshow,sya,sselshowr8a,sselshowr24a) then goto skipend;
-         if not misscan824(sselshow,sy,sselshowr8,sselshowr24)    then goto skipend;
-         if not misscan824(sselshow,syb,sselshowr8b,sselshowr24b) then goto skipend;
-         end;
-      //dx - Note: xeven only updated at this stage for speed during "sselshowbits<>0" - 08jul2019
-      //...was: for dx:=da.left to da.right do if (dx>=0) and (dx<dw) and (dx>=da_clip.left) and (dx<=da_clip.right) then
-      for dx:=d1 to d2 do
-         begin
-         if xmirror then sx:=mx[(da.right-da.left)-(dx-da.left)] else sx:=mx[dx-da.left];//zero base
-         if (sselshowbits<>0) then
-            begin
-            case xmirror of
-            true:begin
-               //.sxa
-               v1:=dx-1;
-               if (v1<d1) then v1:=d1;
-               sxa:=mx[(da.right-da.left)-(v1-da.left)];
-               //.sxb
-               v1:=dx+1;
-               if (v1>d2) then v1:=d2;
-               sxb:=mx[(da.right-da.left)-(v1-da.left)];
-               end;
-            else begin
-               //.sxa
-               v1:=dx-1;
-               if (v1<d1) then v1:=d1;
-               sxa:=mx[v1-da.left];//zero base
-               //.sxb
-               v1:=dx+1;
-               if (v1>d2) then v1:=d2;
-               sxb:=mx[v1-da.left];//zero base
-               end;
-            end;//case
-            end;//if
-         //.x-scroll
-         if (xscroll<>0) then
-            begin
-            sx:=sx+xscroll;
-            if (sx<sa.left) then
-               begin
-               //.math quirk for "animation cell area" referencing - 25sep2017
-               if (sx<=0) then sx:=sa.right-(-sx-sa.left) else sx:=sa.right-(sa.left-sx);
-               end
-            else if (sx>sa.right) then sx:=sa.left+(sx-sa.right);
-            end;
-         //.sx
-         if (sx>=0) and (sx<sW) then
-            begin
-            //init
-            if      (sbits=32) then//25apr2020
-               begin
-               sc32:=sr32[sx];
-               if socOK then
-                  begin
-                  //greyscale value
-                  socLevel:=sc32.r;
-                  if (sc32.g>socLevel) then socLevel:=sc32.g;
-                  if (sc32.b>socLevel) then socLevel:=sc32.b;
-                  sc24:=soc24;
-                  //get
-//                  sc24.r:=(soc24.r*socLevel) div 255;
-//                  sc24.g:=(soc24.g*socLevel) div 255;
-//                  sc24.b:=(soc24.b*socLevel) div 255;
-                  end
-               else
-                  begin
-                  sc24.r:=sc32.r;
-                  sc24.g:=sc32.g;
-                  sc24.b:=sc32.b;
-                  end;
-               xalpha255:=sc32.a;//new - 27jan2021
-               end
-            else if (sbits=24) then
-               begin
-               sc24:=sr24[sx];
-               if socOK then
-                  begin
-                  //greyscale value
-                  socLevel:=sc24.r;
-                  if (sc24.g>socLevel) then socLevel:=sc24.g;
-                  if (sc24.b>socLevel) then socLevel:=sc24.b;
-                  sc24:=soc24;
-                  //get
-//                  sc24.r:=(soc24.r*socLevel) div 255;
-//                  sc24.g:=(soc24.g*socLevel) div 255;
-//                  sc24.b:=(soc24.b*socLevel) div 255;
-                  end;
-               end
-            else if (sbits=8) then
-               begin
-               //8bit -> 24bit
-               if socOK then
-                  begin
-                  //greyscale value
-                  socLevel:=sr8[sx];
-                  sc24:=soc24;
-                  //get
-
-//                  sc24.r:=(soc24.r*socLevel) div 255;
-//                  sc24.g:=(soc24.g*socLevel) div 255;
-//                  sc24.b:=(soc24.b*socLevel) div 255;
-                  end
-               else
-                  begin
-                  sc24.r:=sr8[sx];
-                  sc24.g:=sc24.r;
-                  sc24.b:=sc24.r;
-                  end;
-               end;
-            //draw pixel -> using "dpower" - 15may2019, 14apr2019, 25jul2017
-//..was:    if ((xtrans=0) or (not xtranscolok) or ( (sc.r<>xtranscol.r) or (sc.g<>xtranscol.g) or (sc.b<>xtranscol.b) )) and ((not mok) or (mr[dx].r>=1)) and ((not mok2) or (mr2[dx].r>=1)) and ((not smok) or (smr[sx].r>=1)) then
-            if ((xalpha255>=1) or (not xusealpha)) and
-               ( (xtrans=0) or (not xtranscolok) or ( (sc24.r<>xtranscol.r) or (sc24.g<>xtranscol.g) or (sc24.b<>xtranscol.b) ) ) and
-               ( (dmbits=0) or ((dmbits=8) and (dmr8[dx]>=1)) or ((dmbits=24) and (dmr24[dx].r>=1)) ) and
-               ( (dmbits2=0) or ((dmbits2=8) and (dmr8b[dx]>=1)) or ((dmbits2=24) and (dmr24b[dx].r>=1)) ) and
-               ( (smbits=0) or ((smbits=8) and (smr8[sx]>=1)) or ((smbits=24) and (smr24[sx].r>=1)) ) and
-               (socLevel>=1) then
-               begin
-               //.xpower2 init
-               xpower2:=xpower255;
-               if (socLevel<255) and (xpower2>=1) then
-                  begin
-                  xpower2:=(xpower255*socLevel) div 255;
-                  if (xpower2<1) then xpower2:=1;
-                  end;
-
-               //.ref pattern support - 24aug2018
-               if refuse then
-                  begin
-                  if (reflistOP<>nil) then
-                     begin
-                     int1:=sc24.r;
-                     if (sc24.g>int1) then int1:=sc24.g;
-                     if (sc24.b>int1) then int1:=sc24.b;
-                     xpower2:=reflistOP[int1];//-255..+255
-                     if (xpower2<0) then xpower2:=0 else if (xpower2>255) then xpower2:=255;
-                     end;
-                  if (reflistRGB<>nil) then
-                     begin
-                     sc24.r:=reflistRGB[sc24.r];
-                     sc24.g:=reflistRGB[sc24.g];
-                     sc24.b:=reflistRGB[sc24.b];
-                     end;
-                  if (reflistR<>nil) then sc24.r:=reflistR[sc24.r];
-                  if (reflistG<>nil) then sc24.g:=reflistG[sc24.g];
-                  if (reflistB<>nil) then sc24.b:=reflistB[sc24.b];
-                  end;
-               //.filters
-               if xfilters then
-                  begin
-                  if xnoise   then    fbNoise3(sc24.r,sc24.g,sc24.b);
-//was:            if xinvert  then    fbInvert(sc24.r,sc24.g,sc24.b);
-                  if xgrey    then fbGreyscale(sc24.r,sc24.g,sc24.b);
-                  if xsepia   then     fbSepia(sc24.r,sc24.g,sc24.b);
-                  if xinvert  then    fbInvert(sc24.r,sc24.g,sc24.b);//put last for more predictable USER EXPECTATIONS - 05jun2021
-                  end;
-               //.xpower2 modification
-               case dmbits of
-               8:if (dmr8[dx]=0) then xpower2:=0 else xpower2:=(xpower2*dmr8[dx]) div 255;
-               24:if (dmr24[dx].r=0) then xpower2:=0 else xpower2:=(xpower2*dmr24[dx].r) div 255;
-               end;
-
-               //.xpower2 modification - 2nd mask - 14apr2019
-               case dmbits2 of
-               8:if (dmr8b[dx]=0) then xpower2:=0 else xpower2:=(xpower2*dmr8b[dx]) div 255;
-               24:if (dmr24b[dx].r=0) then xpower2:=0 else xpower2:=(xpower2*dmr24b[dx].r) div 255;
-               end;
-               //.sm modification of xpower2 - 11jan2018
-               case smbits of
-               8:if (smr8[sx]=0) then xpower2:=0 else xpower2:=(xpower2*smr8[sx]) div 255;
-               24:if (smr24[sx].r=0) then xpower2:=0 else xpower2:=(xpower2*smr24[sx].r) div 255;
-               end;
-
-               //.32bit alpha channel handling - 26jan2021
-               if xusealpha and (xpower2>=1) and (xalpha255<255) then
-                  begin
-                  xpower2:=trunc(xpower2*(xalpha255/255));
-                  if (xpower2<1) then xpower2:=1;
-                  end;
-
-               //.xpower2 finalise
-               case dbits of
-               32:begin
-                  if dcoloriseOK then d_sys24;
-                  sc32.r:=sc24.r;
-                  sc32.g:=sc24.g;
-                  sc32.b:=sc24.b;
-                  sc32.a:=xalpha255;
-                  if (xpower2<255) then//fixed on 25jan2021 (had been accidently using "dr24[dx] for 32bit instead of dr32[dx]"
-                     begin
-                     sc32.r:=ref65025_div_255[((dr32[dx].r*(255-xpower2))+(sc32.r*xpower2))];//18ms
-                     sc32.g:=ref65025_div_255[((dr32[dx].g*(255-xpower2))+(sc32.g*xpower2))];//18ms
-                     sc32.b:=ref65025_div_255[((dr32[dx].b*(255-xpower2))+(sc32.b*xpower2))];//18ms
-                     if not xusealpha then sc32.a:=ref65025_div_255[((dr32[dx].a*(255-xpower2))+(sc32.a*xpower2))];//18ms
-                     end;
-                  if xusealpha then sc32.a:=dr32[dx].a;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     dr32[dx]:=sc32;//25apr2020
-                     if (bmr8<>nil) and (xpower2>=1) and (xalpha255>=alpha_backmask_choke) then backmask__exclude(bmr8[dx]);//background mask
-                     end;
-                  end;
-               24:begin
-                  if dcoloriseOK then d_sys24;
-                  if (xpower2<255) then
-                     begin
-                     sc24.r:=ref65025_div_255[((dr24[dx].r*(255-xpower2))+(sc24.r*xpower2))];//18ms
-                     sc24.g:=ref65025_div_255[((dr24[dx].g*(255-xpower2))+(sc24.g*xpower2))];//18ms
-                     sc24.b:=ref65025_div_255[((dr24[dx].b*(255-xpower2))+(sc24.b*xpower2))];//18ms
-                     end;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     dr24[dx]:=sc24;
-                     if (bmr8<>nil) and (xpower2>=1) and (xalpha255>=alpha_backmask_choke) then backmask__exclude(bmr8[dx]);//background mask
-                     end;
-                  end;
-               8:begin
-                  if dcoloriseOK then d_sys24;
-                  if (xpower2<255) then
-                     begin
-                     //24bit -> 8bit
-                     sc24.r:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(sc24.r*xpower2))];//18ms
-                     sc24.g:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(sc24.g*xpower2))];//18ms
-                     sc24.b:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(sc24.b*xpower2))];//18ms
-                     if (sc24.g>sc24.r) then sc24.r:=sc24.g;
-                     if (sc24.b>sc24.r) then sc24.r:=sc24.b;
-                     end;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     dr8[dx]:=sc24.r;
-                     if (bmr8<>nil) and (xpower2>=1) and (xalpha255>=alpha_backmask_choke) then backmask__exclude(bmr8[dx]);//background mask
-                     end;
-                  end;
-               end;//case
-               //set
-               ar[dx].r:=1;//1=color, 0=transparent
-               end
-            else ar[dx].r:=0;//1=color, 0=transparent
-
-            //-- SelShow ---------------------------------------------------------------------
-            //Note: Draw in realtime a stride-based (variable length black/white line)
-            //      highlight line -> realtime, no ref. required - 09jul2019
-            //.sel24 + d32
-            if (sselshowbits=24) and (dbits=32) then
-               begin
-               v1:=sselshowr24a[sx].r;//sy-1
-               v2:=sselshowr24[sxa].r;//sx-1
-               v3:=sselshowr24[sxb].r;//sx+1
-               v4:=sselshowr24b[sx].r;//sy+1
-               if (sselshowr24[sx].r<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr24a<>sselshowr24)) or ((v4=255) and (sselshowr24b<>sselshowr24)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr32[dx]:=xcwhite32 else dr32[dx]:=xcblack32;
-                     end;
-                  end;
-               end
-            //.sel8 + d32
-            else if (sselshowbits=8) and (dbits=32) then
-               begin
-               v1:=sselshowr8a[sx];//sy-1
-               v2:=sselshowr8[sxa];//sx-1
-               v3:=sselshowr8[sxb];//sx+1
-               v4:=sselshowr8b[sx];//sy+1
-               if (sselshowr8[sx]<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr8a<>sselshowr8)) or ((v4=255) and (sselshowr8b<>sselshowr8)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr32[dx]:=xcwhite32 else dr32[dx]:=xcblack32;
-                     end;
-                  end;
-               end
-            //.sel24 + d24
-            else if (sselshowbits=24) and (dbits=24) then
-               begin
-               v1:=sselshowr24a[sx].r;//sy-1
-               v2:=sselshowr24[sxa].r;//sx-1
-               v3:=sselshowr24[sxb].r;//sx+1
-               v4:=sselshowr24b[sx].r;//sy+1
-               if (sselshowr24[sx].r<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr24a<>sselshowr24)) or ((v4=255) and (sselshowr24b<>sselshowr24)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr24[dx]:=xcwhite24 else dr24[dx]:=xcblack24;
-                     end;
-                  end;
-               end
-            //.sel8 + d24
-            else if (sselshowbits=8) and (dbits=24) then
-               begin
-               v1:=sselshowr8a[sx];//sy-1
-               v2:=sselshowr8[sxa];//sx-1
-               v3:=sselshowr8[sxb];//sx+1
-               v4:=sselshowr8b[sx];//sy+1
-               if (sselshowr8[sx]<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr8a<>sselshowr8)) or ((v4=255) and (sselshowr8b<>sselshowr8)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr24[dx]:=xcwhite24 else dr24[dx]:=xcblack24;
-                     end;
-                  end;
-               end
-            //.sel8 + d8
-            else if (sselshowbits=8) and (dbits=8) then
-               begin
-               v1:=sselshowr8a[sx];//sy-1
-               v2:=sselshowr8[sxa];//sx-1
-               v3:=sselshowr8[sxb];//sx+1
-               v4:=sselshowr8b[sx];//sy+1
-               if (sselshowr8[sx]<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr8a<>sselshowr8)) or ((v4=255) and (sselshowr8b<>sselshowr8)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr8[dx]:=255 else dr8[dx]:=0;
-                     end;
-                  end;
-               end
-            //.sel24 + d8
-            else if (sselshowbits=24) and (dbits=8) then
-               begin
-               v1:=sselshowr24a[sx].r;//sy-1
-               v2:=sselshowr24[sxa].r;//sx-1
-               v3:=sselshowr24[sxb].r;//sx+1
-               v4:=sselshowr24b[sx].r;//sy+1
-               if (sselshowr24[sx].r<=254) and ( (v2=255) or (v3=255) or ((v1=255) and (sselshowr24a<>sselshowr24)) or ((v4=255) and (sselshowr24b<>sselshowr24)) ) then
-                  begin
-                  //.realtime highlight stride calculations - 08jul2019
-                  bol1:=(dx-((dx div xselstride)*xselstride))>=(xselstride div 2);
-                  if   ((dy-((dy div xselstride)*xselstride))>=(xselstride div 2)) then bol1:=not bol1;
-                  if xselshowEVENINIT then bol1:=not bol1;
-                  if (dmaskval=-1) or (mr8[dx]=dmaskval) then
-                     begin
-                     if bol1 then dr8[dx]:=255 else dr8[dx]:=0;
-                     end;
-                  end;
-               end;
-            end
-         else ar[dx].r:=0;//1=color, 0=transparent - sx
-         end;//dx
-      end//dy
-   else for dx:=d1 to d2 do ar[dx].r:=0;
-   end;//dy
-//.xtrans check
-if (xtrans<=1) and zznil(dm,2115) and zznil(dm2,2116) then goto skiptrans;
-if (smbits<>0) then goto skiptrans;
-
-//-- Draw Transparent Edge Soft Pixels (blur) ----------------------------------
-//dy
-//...was: for dy:=da.top to da.bottom do if (dy>=0) and (dy<dH) and (dy>=da_clip.top) and (dy<=da_clip.bottom) then
-for dy:=d3 to d4 do
-   begin
-   //ar
-   if (dmaskval>=0) then mr8:=dmask.prows8[dy];
-   ar:=a.prows24[dy];
-   //.aok1
-   int1:=dy-1;
-   aok1:=(int1>=d3) and (int1<=d4);
-   if aok1 then ar1:=a.prows24[int1];
-   //.aok2
-   int1:=dy+1;
-   aok2:=(int1>=d3) and (int1<=d4);
-   if aok2 then ar2:=a.prows24[int1];
-   //dr
-   if not misscan82432(d,dy,dr8,dr24,dr32) then goto skipend;//25apr2020, 28may2019
-   //.dok1
-   int1:=dy-1;
-   dok1:=(int1>=d3) and (int1<=d4);
-   if dok1 and (not misscan82432(d,int1,dr18,dr1,dr132)) then goto skipend;
-   //.dok2
-   int1:=dy+1;
-   dok2:=(int1>=d3) and (int1<=d4);
-   if dok2 and (not misscan82432(d,int1,dr28,dr2,dr232)) then goto skipend;
-   //.dok3
-   int1:=dy-2;
-   dok3:=(int1>=d3) and (int1<=d4);
-   if dok3 and (not misscan82432(d,int1,dr38,dr3,dr332)) then goto skipend;
-   //.dok4
-   int1:=dy+2;
-   dok4:=(int1>=d3) and (int1<=d4);
-   if dok4 and (not misscan82432(d,int1,dr48,dr4,dr432)) then goto skipend;
-   //dx
-   //...was: for dx:=da.left to da.right do if (dx>=0) and (dx<dw) and (dx>=da_clip.left) and (dx<=da_clip.right) then
-   for dx:=d1 to d2 do if (dmaskval=-1) or (mr8[dx]=dmaskval) then//23may2020
-      begin
-      //init
-      bs[0]:=false;
-      bs[1]:=false;
-      //get
-      if (xtrans=2) then
-         begin//new range: d1..d2
-         //.y+0
-         if (ar[dx].r=0) then bs[0]:=true;
-         if ((dx-1)>=d1) and (ar[dx-1].r=1) then bs[1]:=true;
-         if ((dx+1)<=d2) and (ar[dx+1].r=1) then bs[1]:=true;
-         //.y-1
-         if aok1 and (ar1[dx].r=1) then bs[1]:=true;
-         //.y+1
-         if aok2 and (ar2[dx].r=1) then bs[1]:=true;
-         end
-      else if (xtrans>=3) then
-         begin//new range: d1..d2
-         //.y+0
-         bs[ar[dx].r]:=true;
-         if ((dx-1)>=d1) then bs[ar[dx-1].r]:=true;
-         if ((dx+1)<=d2) then bs[ar[dx+1].r]:=true;
-         //.y-1
-         if aok1 then
-            begin
-            bs[ar1[dx].r]:=true;
-            if ((dx-1)>=d1) then bs[ar1[dx-1].r]:=true;
-            if ((dx+1)<=d2) then bs[ar1[dx+1].r]:=true;
-            end;
-         //.y+1
-         if aok2 then
-            begin
-            bs[ar2[dx].r]:=true;
-            if ((dx-1)>=d1) then bs[ar2[dx-1].r]:=true;
-            if ((dx+1)<=d2) then bs[ar2[dx+1].r]:=true;
-            end;
-         end;
-      //set
-      if bs[0] and bs[1] then
-         begin
-         case dbits of
-         32:begin
-            //Special Note: Always use a 5x5 blur matrix, even when "xtrans=2" (single blur boundary) for smoothest visual results - 27jul2017
-            //--#--
-            //-###-
-            //#####
-            //-###-
-            //--#--
-            //.y+0
-            vr:=dr32[dx].r;
-            vg:=dr32[dx].g;
-            vb:=dr32[dx].b;
-            vc:=1;
-            xinc32(dr32,-1);
-            xinc32(dr32,+1);
-            xinc32(dr32,-2);
-            xinc32(dr32,+2);
-            //.y-1 / y+1
-            if dok1 then
-               begin
-               xinc32(dr132,0);
-               xinc32(dr132,-1);
-               xinc32(dr132,+1);
-               end;
-            if dok2 then
-               begin
-               xinc32(dr232,0);
-               xinc32(dr232,-1);
-               xinc32(dr232,+1);
-               end;
-            //y-2 / y+2
-            if dok3 then xinc32(dr332,0);
-            if dok4 then xinc32(dr432,0);
-            //set
-            dc32.r:=byte(vr div vc);
-            dc32.g:=byte(vg div vc);
-            dc32.b:=byte(vb div vc);
-            dc32.a:=255;
-            //.xpower - 28aug2018
-            xpower2:=xpower255;
-            if (xpower2<255) then//does not use "m" at this point
-               begin
-               dc32.r:=ref65025_div_255[((dr32[dx].r*(255-xpower2))+(dc32.r*xpower2))];//18ms
-               dc32.g:=ref65025_div_255[((dr32[dx].g*(255-xpower2))+(dc32.g*xpower2))];//18ms
-               dc32.b:=ref65025_div_255[((dr32[dx].b*(255-xpower2))+(dc32.b*xpower2))];//18ms
-               end;
-            //.color
-            dr32[dx]:=dc32;
-            end;
-         24:begin
-            //Special Note: Always use a 5x5 blur matrix, even when "xtrans=2" (single blur boundary) for smoothest visual results - 27jul2017
-            //--#--
-            //-###-
-            //#####
-            //-###-
-            //--#--
-            //.y+0
-            vr:=dr24[dx].r;
-            vg:=dr24[dx].g;
-            vb:=dr24[dx].b;
-            vc:=1;
-            xinc24(dr24,-1);
-            xinc24(dr24,+1);
-            xinc24(dr24,-2);
-            xinc24(dr24,+2);
-            //.y-1 / y+1
-            if dok1 then
-               begin
-               xinc24(dr1,0);
-               xinc24(dr1,-1);
-               xinc24(dr1,+1);
-               end;
-            if dok2 then
-               begin
-               xinc24(dr2,0);
-               xinc24(dr2,-1);
-               xinc24(dr2,+1);
-               end;
-            //y-2 / y+2
-            if dok3 then xinc24(dr3,0);
-            if dok4 then xinc24(dr4,0);
-            //set
-            dc24.r:=byte(vr div vc);
-            dc24.g:=byte(vg div vc);
-            dc24.b:=byte(vb div vc);
-            //.xpower - 28aug2018
-            xpower2:=xpower255;
-            if (xpower2<255) then//does not use "m" at this point
-               begin
-               dc24.r:=ref65025_div_255[((dr24[dx].r*(255-xpower2))+(dc24.r*xpower2))];//18ms
-               dc24.g:=ref65025_div_255[((dr24[dx].g*(255-xpower2))+(dc24.g*xpower2))];//18ms
-               dc24.b:=ref65025_div_255[((dr24[dx].b*(255-xpower2))+(dc24.b*xpower2))];//18ms
-               end;
-            //.color
-            dr24[dx]:=dc24;
-            end;
-         8:begin
-            //Special Note: Always use a 5x5 blur matrix, even when "xtrans=2" (single blur boundary) for smoothest visual results - 27jul2017
-            //--#--
-            //-###-
-            //#####
-            //-###-
-            //--#--
-            //.y+0
-            vr:=dr8[dx];
-            vg:=vr;
-            vb:=vr;
-            vc:=1;
-            xinc8(dr8,-1);
-            xinc8(dr8,+1);
-            xinc8(dr8,-2);
-            xinc8(dr8,+2);
-            //.y-1 / y+1
-            if dok1 then
-               begin
-               xinc8(dr18,0);
-               xinc8(dr18,-1);
-               xinc8(dr18,+1);
-               end;
-            if dok2 then
-               begin
-               xinc8(dr28,0);
-               xinc8(dr28,-1);
-               xinc8(dr28,+1);
-               end;
-            //y-2 / y+2
-            if dok3 then xinc8(dr38,0);
-            if dok4 then xinc8(dr48,0);
-            //set
-            dc24.r:=byte(vr div vc);
-            dc24.g:=byte(vg div vc);
-            dc24.b:=byte(vb div vc);
-            //.xpower - 28aug2018
-            xpower2:=xpower255;
-            if (xpower2<255) then//does not use "m" at this point
-               begin
-               dc24.r:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(dc24.r*xpower2))];//18ms
-               dc24.g:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(dc24.g*xpower2))];//18ms
-               dc24.b:=ref65025_div_255[((dr8[dx]*(255-xpower2))+(dc24.b*xpower2))];//18ms
-               end;
-            //.color
-            if (dc24.g>dc24.r) then dc24.r:=dc24.g;
-            if (dc24.b>dc24.r) then dc24.r:=dc24.b;
-            dr8[dx]:=dc24.r;
-            end;
-         end;//case
-         end;
-      end;//dx
-   end;//dy
-
-skiptrans:
-//successful
-result:=true;
-skipend:
-except;end;
-try
-//.free
-low__freeint(_mx);
-low__freeint(_my);
-low__freeimg(a);
-//.ref pattern
-if (refcoreR<>nil) or (refcoreG<>nil) or (refcoreB<>nil) or (refcoreRGB<>nil) or (refcoreOP<>nil) then
-   begin
-   freeobj(@refcoreR);
-   freeobj(@refcoreG);
-   freeobj(@refcoreB);
-   freeobj(@refcoreRGB);
-   freeobj(@refcoreOP);
-   end;
-//.refs -> auto free - 30aug2020
-if (refOP<>nil)  then str__uaf(@refOP);
-if (refRGB<>nil) then str__uaf(@refRGB);
-if (refR<>nil)   then str__uaf(@refR);
-if (refG<>nil)   then str__uaf(@refG);
-if (refB<>nil)   then str__uaf(@refB);
-if (refX<>nil)   then str__uaf(@refX);
-if (refY<>nil)   then str__uaf(@refY);
 except;end;
 end;
 
@@ -23419,7 +26177,8 @@ if ((xmove<=0) or (xmove>=sw)) and ((ymove<=0) or (ymove>=sh)) then
 //take a copy
 a:=misimg(sbits,sw,sh);
 //was: if not miscopyareaxx1(0,0,sw,sh,misarea(s),a,s) then goto skipend;
-if not miscopyarea32(0,0,sw,sh,sa,a,s) then goto skipend;
+//was: if not miscopyarea32(0,0,sw,sh,sa,a,s) then goto skipend;
+if not mis__copyfast(maxarea,sa,0,0,sw,sh,s,a) then goto skipend;
 //get
 sy:=ymove;
 for dy:=sa.top to sa.bottom do
@@ -23484,7 +26243,10 @@ if xdestructive and (sbits=32) then
 result:=true;
 skipend:
 except;end;
-try;freeobj(@a);except;end;
+
+//free
+freeobj(@a);
+
 end;
 
 function mismatch82432(s,d:tobject;xtol,xfailrate:longint):boolean;//10jul2021
@@ -24400,7 +27162,7 @@ if (xtranscolor<>clnone) then
    tg:=sc24.g;
    tb:=sc24.b;
    tcSAFE24:=sc24;
-   //fixed out of bounds / integer overflow error - 17sep202
+   //fixed out of bounds / longint32 overflow error - 17sep202
    if (tcSAFE24.r>=3) then//avoid using BLACK
       begin
       dec(tcSAFE24.r);
@@ -24459,15 +27221,18 @@ if xpadding then
    end;
 
 case xpadding of
-true:if not miscopyarea32(1,1,misw(s2)-2,mish(s2)-2,misarea(d),s2,d) then goto skipend;
-else if not miscopyarea32(0,0,misw(s2),mish(s2),misarea(d),s2,d) then goto skipend;
+true:if not mis__copyfast(maxarea,misarea(d),1,1,misw(s2)-2,mish(s2)-2,d,s2) then goto skipend;
+else if not mis__copyfast(maxarea,misarea(d),0,0,misw(s2)  ,mish(s2)  ,d,s2) then goto skipend;
 end;//case
 
 //successful
 result:=true;
 skipend:
 except;end;
-try;freeobj(@d);except;end;
+
+//free
+freeobj(@d);
+
 end;
 
 function miscrop82432(s:tobject):boolean;
@@ -24613,11 +27378,13 @@ if xcalonly or ((l=0) and (t=0) and (r=(sw-1)) and (b=(sh-1))) then
    end;
 //redraw
 a:=misimg(sbits,r-l+1,b-t+1);
-if not miscopyarea32(0,0,misw(a),mish(a),area__make(l,t,r,b),a,s) then goto skipend;
+//was: if not miscopyarea32(0,0,misw(a),mish(a),area__make(l,t,r,b),a,s) then goto skipend;
+if not mis__copyfast(maxarea,area__make(l,t,r,b),0,0,misw(a),mish(a),s,a) then goto skipend;
 //set
 if not missize(s,misw(a),mish(a)) then goto skipend;
 if not miscls(s,rgba0__int(t32.r,t32.g,t32.b)) then goto skipend;
-if not miscopyarea32(0,0,misw(a),mish(a),misarea(a),s,a) then goto skipend;
+//was: if not miscopyarea32(0,0,misw(a),mish(a),misarea(a),s,a) then goto skipend;
+if not mis__copyfast(maxarea,misarea(a),0,0,misw(a),mish(a),a,s) then goto skipend;
 //top-left pixel
 if xretainT32 then
    begin
@@ -24631,7 +27398,10 @@ if xretainT32 then
 result:=true;
 skipend:
 except;end;
-try;freeobj(@a);except;end;
+
+//free
+freeobj(@a);
+
 end;
 
 function misframe82432(s:tobject;da_cliparea,xouterarea:twinrect;xautoouterarea:boolean;var slist:array of longint;scount:longint;var e:string):boolean;//28jan2021
@@ -25193,7 +27963,7 @@ var
    //init
    c1:=xfindcol(strcopy1(x+'s',1,1),0);
    c2:=xfindcol(strcopy1(x+'d',2,1),c1);
-   b :=frcrange32(strint(strcopy1(x,3,low__len(x))),0,100);
+   b :=frcrange32(strint32(strcopy1(x,3,low__Len32(x))),0,100);
    //get
    xoutcolor:=int__splice24_100(b,c1,c2)//use 2nd color
    except;end;
@@ -25209,7 +27979,7 @@ xclear;
 if not str__lock(@xdata) then exit;
 //init
 sremsize:=frcrange32(sremsize,0,sframesize);
-xlen:=xdata.len;
+xlen:=xdata.len32;
 xpos:=frcmin32(xpos,0);
 if (xpos>=xlen) then goto skipend;
 if (scolor=clnone)  then scolor:=int_255_255_255;
@@ -25244,11 +28014,11 @@ if (xcount<=0) then
 n:=strcopy1(v1,1,1);
 if (n='m') then//special value: specifies recommended minimum size of frame - 26feb2022
    begin
-   dminsize:=frcmin32(strint(strcopy1(v1,2,low__len(v1))),0);
+   dminsize:=frcmin32(strint32(strcopy1(v1,2,low__Len32(v1))),0);
    goto loop;
    end
 else if (n='') or (n='100')    then dsize:=sframesize//uses ALL remaining frame size
-else                           dsize:=(frcrange32(strint(v1),0,100)*sframesize) div 100;
+else                           dsize:=(frcrange32(strint32(v1),0,100)*sframesize) div 100;
 //.restrict
 dsize:=frcrange32(dsize,0,sremsize);
 //2nd
@@ -25271,54 +28041,26 @@ except;end;
 try;str__uaf(@xdata);except;end;
 end;
 
-procedure sparkle__fill(xrichlevel:longint);
-var
-   p:longint;
-begin
-xrichlevel:=2*frcrange32(xrichlevel,0,20);
-if low__setint(system_sparkleref,xrichlevel) then
-   begin
-   for p:=0 to high(system_sparklelist) do system_sparklelist[p]:=random(xrichlevel);
-   low__iroll(system_sparklecount,1);
-   end;
-end;
-
-function sparkle__start:longint;
-begin
-result:=system_sparklepos;
-end;
-
-procedure sparkle__stop(xpos:longint);
-begin
-if (xpos<0) then xpos:=0 else if (xpos>high(system_sparklelist)) then xpos:=0;
-system_sparklepos:=xpos;
-end;
-
-function sparkle__uniquestart:longint;
-begin
-result:=random(high(system_sparklelist));
-end;
-
 
 //icon procs -------------------------------------------------------------------
 //note: image formats: ico/cur/ani
-function low__icosizes(x:longint):longint;//18JAN2012, 25APR2011
+function low__icosizes(x:longint):longint;//02jun2026, 18JAN2012, 25APR2011
 const
-   step=8;
-   min=16;
-   max=256;//Note: Icon writing routines must clip "256" to "255" for 256x256 icons - 18JAN2012
+   step     =8;
+   min      =16;
+   max      =256;//Note: Icon writing routines must clip "256" to "255" for 256x256 icons - 18JAN2012
 begin
-//defaults
-result:=32;
 
-try
+//defaults
+result      :=32;
+
 //range
-x:=frcrange32(x,min,max);
+x           :=frcrange32(x,min,max);
 //step
-x:=frcrange32((x div nozero__int32(1100144,step))*step,min,max);
+x           :=frcrange32((x div nozero__int32(1100144,step))*step,min,max);
 //set
-result:=x;
-except;end;
+result      :=x;
+
 end;
 
 function low__findbpp82432(i:tobject;iarea:twinrect;imask32:boolean):longint;//limited color count 07feb2022, 19jan2021, 21-SEP-2004
@@ -25329,7 +28071,7 @@ var
    sr24:pcolorrow24;
    sr32:pcolorrow32;
    x:array[word] of tcolor32;
-   xlimit,ibits,iw,ih,p,count,rx,ry:integer;
+   xlimit,ibits,iw,ih,p,count,rx,ry:longint32;
    lc32,c32:tcolor32;
    lc24,c24:tcolor24;
    lc8,c8:tcolor8;
@@ -25591,7 +28333,9 @@ maxx:=dsize-1;
 //copy "d" => "a"
 s8:=misimg8(dsize,dsize);//07apr2015
 s24:=misimg24(dsize,dsize);
-if not miscopyareaxx1(0,0,dsize,dsize,area__make(0,0,sw-1,sh-1),s24,s) then goto skipend;
+
+if not mis__copyfast( maxarea ,area__make(0,0,sw-1,sh-1) ,0 ,0 ,dsize ,dsize ,s ,s24 ) then goto skipend;//03apr2026
+
 //init
 xpal:=str__new8;
 ximg:=str__new8;
@@ -25774,7 +28518,7 @@ imghdr.biheight:=2*dsize;
 imghdr.biplanes:=1;
 imghdr.bibitcount:=dBPP;
 imghdr.bicompression:=0;
-imghdr.bisizeimage:=xpal.len+ximg.len+xmask.len;
+imghdr.bisizeimage:=xpal.len32+ximg.len32+xmask.len32;
 //.icon header - 16b
 icohdr.width:=byte(frcrange32(dsize,0,255));
 icohdr.height:=byte(frcrange32(dsize,0,255));
@@ -25821,7 +28565,7 @@ label
    //dtranscol: clnone=solid (no see thru parts), clTopLeft=pixel(0,0), else=user specified color
    skipend;
 var
-   dtranscol,int1,dw,dh,p:integer;
+   dtranscol,int1,dw,dh,p:longint32;
    anirec:tanirec;
    xicon,xiconlist:tstr8;
    xonce:boolean;
@@ -25851,7 +28595,7 @@ var
       xcellw:=xw;
       xcellh:=xh;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(0,0,xcellw-1,xcellh-1),dcell,xcell)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(0,0,xcellw-1,xcellh-1),0,0,dw,dh,xcell,dcell)) then goto skipend;
       //.translate transparent color if required - 14feb2022
       dtranscol:=mistranscol(dcell,dtranscol,dtranscol<>clnone);
       end
@@ -25859,7 +28603,7 @@ var
       begin
       if not miscells(s,xbits,xw,xh,scellcount,xcellw,xcellh,xdelay,xhasai,xtransparent) then goto skipend;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),dcell,s)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),0,0,dw,dh,s,dcell)) then goto skipend;
       //.transcol - per cell
       dtranscol:=mistranscol(dcell,dtranscolor,dtranscolor<>clnone);
       end;
@@ -25937,7 +28681,7 @@ if not xpullcell(p,true) then goto skipend;
 if not low__toico(dcell,true,dsize,dBPP,dtranscol,dfeather,dtransframe,dhotX,dhotY,xicon,e) then goto skipend;
 //.add icon -> 'icon'+from32bit(length(imgs.items[p]^))+imgs.items[p]^
 xiconlist.addstr('icon');
-xiconlist.addint4(xicon.len);
+xiconlist.addint4(xicon.len32);
 xiconlist.add(xicon);
 xicon.clear;
 end;//p
@@ -25952,13 +28696,13 @@ xdata.addint4(sizeof(anirec));
 xdata.addrec(@anirec,sizeof(anirec));
 //._list
 xdata.addstr('LIST');
-xdata.addint4(4+xiconlist.len);
+xdata.addint4(4+xiconlist.len32);
 xdata.addstr('fram');
 xdata.add(xiconlist);
 //.reduce mem
 xiconlist.clear;
 //.set overal size
-xdata.int4[4]:=frcmin32(xdata.len-4,0);
+xdata.int4[4]:=frcmin32(xdata.len32-4,0);
 //successful
 result:=true;
 skipend:
@@ -25984,7 +28728,8 @@ var
    dtmp32,dm8:tbasicimage;//mask - 07apr2015
    dtmp:tstr8;
    z:string;
-   lastWH,lastS,lastS2,bestindex,bestindex2,int1,mrowlen,mrowfix,rowlen,rowfix,tc,len,bmpLEN,maskLEN,p,pos,palcount,mbpp,bpp,dx,dy,dw,dh,dbits:longint;
+   lastWH,lastS,lastS2,bestindex,bestindex2,int1,mrowlen,mrowfix,rowlen,rowfix,tc,bmpLEN,maskLEN,p,palcount,mbpp,bpp,dx,dy,dw,dh,dbits:longint;
+   len,pos:longint64;
    pal:array[0..255] of tcolor24;
    dr32:pcolorrow32;
    dr24:pcolorrow24;
@@ -26026,10 +28771,10 @@ var
    label
       skipend;
    const
-      bits4:array[0..1] of integer=(16,1);
-      bits1:array[0..7] of integer=(128,64,32,16,8,4,2,1);
+      bits4:array[0..1] of longint32=(16,1);
+      bits1:array[0..7] of longint32=(128,64,32,16,8,4,2,1);
    var
-      mode,p,v:integer;
+      mode,p,v:longint32;
       z:tcolor24;
 
       function pushpixel32(col:tcolor24;mcol:longint):boolean;
@@ -26068,7 +28813,7 @@ var
       else result:=false;
       end;
 
-      function pushpixel8(col8:integer):boolean;
+      function pushpixel8(col8:longint32):boolean;
       begin
       if (dx>=0) and (dx<dw) then
          begin
@@ -26109,7 +28854,7 @@ var
       if (pos>=1) and (pos<=len) then
          begin
          v:=255-str__bytes1(sdata,pos);//now invert transparent values to line up with standard 32bit alpha mask values - 23may2022, was: v:=sdata.bytes1[pos]//byte(icondata[pos]);
-         inc(pos,1);
+         inc64(pos,1);
          end
       else v:=255;//not transparent by default
       for p:=0 to high(bits1) do if not pushpixel8(takefrom(v,bits1[p])*255) then goto skipend;
@@ -26117,17 +28862,17 @@ var
    1:begin
       v:=str__bytes1(sdata,pos);//byte(icondata[pos]);
       for p:=0 to high(bits1) do if not pushpixel32(pal[takefrom(v,bits1[p])],-1) then goto skipend;
-      inc(pos,1);
+      inc64(pos,1);
       end;
    4:begin
       v:=str__bytes1(sdata,pos);//byte(icondata[pos]);
       for p:=0 to high(bits4) do if not pushpixel32(pal[takefrom(v,bits4[p])],-1) then goto skipend;
-      inc(pos,1);
+      inc64(pos,1);
       end;
    8:begin
 //was:      if not pushpixel32(pal[byte(icondata[pos])],-1) then goto skipend;
       if not pushpixel32(pal[ str__bytes1(sdata,pos) ],-1) then goto skipend;
-      inc(pos,1);
+      inc64(pos,1);
       end;
    24:begin//pixel color order "BGR" - 14JAN2012
       if ((pos+2)>len) then goto skipend;
@@ -26135,7 +28880,7 @@ var
       z.g:=str__bytes1(sdata,pos+1);
       z.r:=str__bytes1(sdata,pos+2);
       if not pushpixel32(z,-1) then goto skipend;
-      inc(pos,3);
+      inc64(pos,3);
       end;
    32:begin//pixel color order "BGRT" - 16JAN2012
       if ((pos+3)>len) then goto skipend;
@@ -26144,14 +28889,14 @@ var
       z.r:=str__bytes1(sdata,pos+2);
       //was: if not pushpixel32(z,byte(icondata[pos+3])) then goto skipend;
       if not pushpixel32(z, str__bytes1(sdata,pos+3) ) then goto skipend;
-      inc(pos,4);
+      inc64(pos,4);
       end;
    end;//case
    //successful
    result:=true;
    //round up to nearest 4th byte
    skipend:
-   if (dx>=dw) then inc(pos,low__aorb(rowfix,mrowfix,asmask));
+   if (dx>=dw) then inc64(pos,low__aorb(rowfix,mrowfix,asmask));
    except;end;
    end;
 begin
@@ -26184,6 +28929,7 @@ bestindex:=-1;
 bestindex2:=-1;
 //.dsize
 if (dsize<=0) then dsize:=0 else dsize:=low__icosizes(dsize);//20JAN2012
+
 //.whitec
 whitec.r:=255;
 whitec.g:=255;
@@ -26250,6 +28996,7 @@ skiprec:
 //.corrections
 imghdrs[p].biwidth:=imghdrs[p].biwidth;
 imghdrs[p].biheight:=imghdrs[p].biheight div 2;
+
 //.find best
 if (imghdrs[p].biwidth=imghdrs[p].biheight) and
    (imghdrs[p].biwidth=low__icosizes(imghdrs[p].biwidth)) then
@@ -26272,12 +29019,14 @@ end;//p
 //.best match
 if (bestindex2>=0) then bestindex:=bestindex2;
 if (bestindex<0) then goto skipend;
+
 //set
-dw:=imghdrs[bestindex].biwidth;
-dh:=imghdrs[bestindex].biheight;
-bpp:=imghdrs[bestindex].biBitCount;
-pos:=frcrange32(icohdrs[bestindex].diboffset+imghdrs[bestindex].bisize+1,1,str__len(sdata));//20JAN2012
-len:=pos+icohdrs[bestindex].dibsize-1;//last pos for this icon data chunk - don't read past this point - 20JAN2012
+dw   :=imghdrs[bestindex].biwidth;
+dh   :=imghdrs[bestindex].biheight;
+bpp  :=imghdrs[bestindex].biBitCount;
+pos  :=frcrange32(icohdrs[bestindex].diboffset+imghdrs[bestindex].bisize+1,1,str__len32(sdata));//20JAN2012
+len  :=pos+icohdrs[bestindex].dibsize-1;//last pos for this icon data chunk - don't read past this point - 20JAN2012
+
 //hotspot - for information purposes only - 21JAN2012
 misai(d).hotspotX:=icohdrs[bestindex].reserved1;
 misai(d).hotspotY:=icohdrs[bestindex].reserved2;
@@ -26352,7 +29101,7 @@ if imghdrsPNG[bestindex] and (dtmp32<>nil) then
    str__clear(@dtmp);
    str__add31(@dtmp,sdata,icohdrs[bestindex].diboffset+1,icohdrs[bestindex].dibsize);
    if not png__fromdata(dtmp32,@dtmp,e) then goto skipend;
-   if not miscopyarea32(0,0,dw,dh,misarea(dtmp32),d,dtmp32) then goto skipend;
+   if not mis__copyfast(maxarea,misarea(dtmp32),0,0,dw,dh,dtmp32,d) then goto skipend;
    if not mask__copy(dtmp32,dm8) then goto skipend;
    goto dofinalise;
    end;
@@ -26361,7 +29110,7 @@ if imghdrsPNG[bestindex] and (dtmp32<>nil) then
 if (palcount>=1) then for p:=0 to (palcount-1) do
    begin
    //get
-   if ((p+3)>str__len(sdata)) then
+   if ((p+3)>str__len32(sdata)) then
       begin
       e:=gecDataCorrupt;
       goto skipend;
@@ -26372,7 +29121,7 @@ if (palcount>=1) then for p:=0 to (palcount-1) do
    pal[p].r:=str__bytes1(sdata,pos+2);
    //n/a: pal[p].a:=sdata.bytes1[pos+3];
    //inc
-   inc(pos,4);
+   inc64(pos,4);
    end;
 
 //image
@@ -26499,14 +29248,14 @@ begin
 result:=low__fromani322(d,@sdata,dsize,xuse32,e);
 end;
 
-function low__fromani322(d:tobject;sdata:pobject;dsize:longint;xuse32:boolean;var e:string):boolean;//handles 1-32 bpp animated icons - 23may2022, 26JAN2012
+function low__fromani322(d:tobject;sdata:pobject;dsize:longint;xuse32:boolean;var e:string):boolean;//handles 1-32 bpp animated icons - 30jul2026, 23may2022, 26JAN2012
 label
    //Note: Known anirec.flags: 1=win7/ours, 3=ms old/our
    skipend;
 type
    tlabelANDsize=packed record
       cap:array[0..3] of char;
-      size:dword;
+      size:dword32;
       end;
    tlabelonly=packed record
       cap:array[0..3] of char;
@@ -26514,7 +29263,7 @@ type
 var
    a,imgs:tbasicimage;//temp image for each icon to be read onto
    str1:string;
-   int1,imgscount,dcount,ddelay,dbits,dw,dh,i,p,len,pos:integer;
+   int1,imgscount,dcount,ddelay,dbits,dw,dh,i,p,len,pos:longint32;
    csrec:tlabelANDsize;
    crec:tlabelonly;
    anirec:tanirec;
@@ -26523,24 +29272,25 @@ var
    z:tstr8;
    firsticon:boolean;
 
-   function pullstrucex(var pos:integer;len:longint;data:pobject;a:pointer;asize:longint):boolean;//23may2022
+   function pullstrucex(var pos:longint32;len:longint;data:pobject;a:pointer;asize:longint):boolean;//23may2022
    begin
    //defaults
    result:=false;
    //range
    if not str__ok(data) then exit;
-   if (len<=0) then len:=str__len(data);
+   if (len<=0) then len:=str__len32(data);
    if (asize<1) then exit;
    if (pos<1) then pos:=1;
    if (pos>len) then exit;
    //get
-   result:=str__writeto1b(data,a,asize,pos,asize);
+   result:=str__writeto1b32(data,a,asize,pos,asize);
    end;
 
    function pullrec(a:pointer;asize:longint):boolean;//22JAN2012
    begin
    result:=pullstrucex(pos,len,sdata,a,asize);
    end;
+
 begin
 //defaults
 result:=false;
@@ -26582,21 +29332,29 @@ imgscount:=0;
 e:=gecUnknownFormat;
 pos:=1;
 //was: if (not pullstruc(pos,sdata,@csrec,sizeof(csrec))) or (string(csrec.cap)<>'RIFF') then goto skipend;
-if (not str__writeto1b(sdata,@csrec,sizeof(csrec),pos,sizeof(csrec))) or (string(csrec.cap)<>'RIFF') then goto skipend;
+if (not str__writeto1b32(sdata,@csrec,sizeof(csrec),pos,sizeof(csrec))) or (string(csrec.cap)<>'RIFF') then goto skipend;
 len:=csrec.size;//enforce length from now on
+
 //read chunks
 while true do
 begin
-if (pos<1) or (pos>len) then break
-else if (str__bytes1(sdata,pos)<=32) then inc(pos)//bad data, a plain text name is expected, skip over - 22JAN2012
+
+if      (pos<1) or (pos>len)          then break
+
+else if (str__bytes1(sdata,pos)<=32)  then inc(pos)//bad data, a plain text name is expected, skip over - 22JAN2012
+
 else if pullrec(@csrec,sizeof(csrec)) then
    begin
+
    str1:=strlow(string(csrec.cap));
+
    if (str1='acon') or (str1='info') or (str1='fram') then dec(pos,4)//has no size field so go back 4 bytes to correct - 22JAN2012
+
    else if (str1='list') then
       begin
       //nil
       end
+
    else if (str1='icon') then
       begin
       //get
@@ -26605,16 +29363,20 @@ else if pullrec(@csrec,sizeof(csrec)) then
 //      if not fromicon32(a,0,z,e) then goto skipend;
       str__clear(@z);
       str__add31(@z,sdata,pos,csrec.size);
+
       //was: if mishasai(d) then a.ocleanmask32bpp:=misai(d).ocleanmask32bpp;//26JAN2012
-      if not low__fromico32(a,z,0,xuse32,e) then goto skipend;
+//was:     if not low__fromico32(a,z,0,xuse32,e) then goto skipend;
+
+      //supports more sizes
+      if not ico__fromdata(a,@z,e)          then goto skipend;
 
       //first
-      if not firsticon then
+      if (not firsticon) then
          begin
          firsticon:=true;
          dw:=a.width;
          dh:=a.height;
-         ddelay:=frcmin32(round(anirec.jifrate*16.666),20);//no faster than 50fps
+         ddelay:=frcmin32(round(anirec.jifrate*16.666),16);//no faster than 60fps, was 50fps - 30jul2026
          dcount:=frcmin32(anirec.csteps,1);
          //animation information
          misai(d).cellwidth:=dw;
@@ -26631,15 +29393,21 @@ else if pullrec(@csrec,sizeof(csrec)) then
          missize(d,dcount*dw,dh);
          //draw icon onto "imgs" for reference later
          missize(imgs,dcount*dw,dh);
+
          end;
+
       //.fit image to "imgs" strip cell dimensions
-      miscopyarea32(imgscount*dw,0,dw,dh,area__make(0,0,a.width-1,a.height-1),imgs,a);
+      mis__copyfast(maxarea,area__make(0,0,a.width-1,a.height-1),imgscount*dw,0,dw,dh,a,imgs);
+
       //seq2
-      iseq2.int4i[iseq2.count div 4]:=imgscount;//used instead of "seq" when "seq" is omitted from data - 22JAN2012
+      iseq2.int4i[iseq2.count32 div 4]:=imgscount;//used instead of "seq" when "seq" is omitted from data - 22JAN2012
+
       //inc
       inc(pos,csrec.size);
       inc(imgscount);
+
       end
+
    else if (str1='seq ') then
       begin
 //was:      iseq.text:=copy(data,pos,csrec.size);
@@ -26647,6 +29415,7 @@ else if pullrec(@csrec,sizeof(csrec)) then
       str__add31(@iseq,sdata,pos,csrec.size);
       inc(pos,csrec.size);
       end
+
    else if (str1='rate') then
       begin
 //was:      irate.text:=copy(data,pos,csrec.size);
@@ -26654,8 +29423,10 @@ else if pullrec(@csrec,sizeof(csrec)) then
       str__add31(@irate,sdata,pos,csrec.size);
       inc(pos,csrec.size);
       end
+
    else if (str1='anih') then
       begin
+
       if not pullrec(@anirec,sizeof(anirec)) then goto skipend;
       //range
       if (anirec.csteps<=0) then//this tells us how many CELLS are used to represent the animation - 22JAN2012
@@ -26663,13 +29434,20 @@ else if pullrec(@csrec,sizeof(csrec)) then
          e:=gecDataCorrupt;
          goto skipend;
          end;
+
       end
+
    else
       begin//unknow chunks - skip over - 22JAN2012
+
       inc(pos,csrec.size);
+
       end;
+
    end
+
 else break;
+
 end;
 
 //-- Build Animation -----------------------------------------------------------
@@ -26684,17 +29462,17 @@ if (irate.count>=1) then
    begin
    //get
    int1:=0;
-   for p:=0 to (irate.count-1) do inc(int1,irate.int4i[p]);
-   int1:=int1 div nozero__int32(1100145,irate.count);
+   for p:=0 to (irate.count32-1) do inc(int1,irate.int4i[p]);
+   int1:=int1 div nozero__int32(1100145,irate.count32);
    //set
-   ddelay:=frcmin32(round(int1*16.666),20);//no faster than 50fps
+   ddelay:=frcmin32(round(int1*16.666),16);//no faster than 60fps - 30jul2026
    misai(d).delay:=ddelay;
    end;
 //draw - using "seqptr" to refer to cells stored in "imgs", note: d should already be sized correctly - 22JAN2012
-for p:=0 to ((iseqptr.count div 4)-1) do
+for p:=0 to ((iseqptr.count32 div 4)-1) do
 begin
 i:=iseqptr.int4i[p];//cell index
-miscopyarea32(p*dw,0,dw,dh,area__make(i*dw,0,i*dw+(dw-1),dh-1),d,imgs);
+mis__copyfast(maxarea,area__make(i*dw,0,i*dw+(dw-1),dh-1),p*dw,0,dw,dh,imgs,d);
 end;//p
 //successful
 result:=true;
@@ -26817,7 +29595,7 @@ maxx:=dsize-1;
 
 //copy "d" => "a"
 s32:=misimg32(dsize,dsize);
-if not miscopyarea32(0,0,dsize,dsize,area__make(0,0,sw-1,sh-1),s32,s) then goto skipend;//includes 8bit mask - 15feb2022
+if not mis__copyfast(maxarea,area__make(0,0,sw-1,sh-1),0,0,dsize,dsize,s,s32) then goto skipend;//includes 8bit mask - 15feb2022
 
 stransparent :=mask__hasTransparency32(s32);//13may2025
 stranscol    :=low__aorb(clnone,0,stransparent);//15feb2022
@@ -27026,7 +29804,7 @@ imghdr.biheight:=2*dsize;
 imghdr.biplanes:=1;
 imghdr.bibitcount:=dBPP;
 imghdr.bicompression:=0;
-imghdr.bisizeimage:=xpal.len+ximg.len+xmask.len;
+imghdr.bisizeimage:=xpal.len32+ximg.len32+xmask.len32;
 //.icon header - 16b
 //was: icohdr.width:=byte(frcrange32(dsize,0,255));
 //was: icohdr.height:=byte(frcrange32(dsize,0,255));
@@ -27065,7 +29843,7 @@ typhdr.wtype:=low__aorb(1,2,dcursor);//0=stockicon, 1=icon (default for icons), 
 typhdr.count:=1;//number of icons
 //.size
 case dpng of
-true:icohdr.dibsize:=ximg.len;
+true:icohdr.dibsize:=ximg.len32;
 else icohdr.dibsize:=sizeof(imghdr)+imghdr.bisizeimage;//length of "dibHEADER+dibDATA"
 end;//case
 
@@ -27111,7 +29889,7 @@ label
    //Force to dBPP when >=1, 0=automatic bpp
    skipend;
 var
-   int1,int2,dw,dh,p:integer;
+   int1,int2,dw,dh,p:longint32;
    anirec:tanirec;
    xicon,xiconlist:tstr8;
    dcursor,dtransparent,xonce:boolean;
@@ -27144,13 +29922,13 @@ var
       xcellw:=xw;
       xcellh:=xh;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(0,0,xcellw-1,xcellh-1),dcell,xcell)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(0,0,xcellw-1,xcellh-1),0,0,dw,dh,xcell,dcell)) then goto skipend;
       end
    else
       begin
       if not miscells(s,xbits,xw,xh,scellcount,xcellw,xcellh,xdelay,xhasai,xtransparent) then goto skipend;
       //.draw
-      if xdraw and zzok2(dcell) and (not miscopyarea32(0,0,dw,dh,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),dcell,s)) then goto skipend;
+      if xdraw and zzok2(dcell) and (not mis__copyfast(maxarea,area__make(x*xcellw,0,((x+1)*xcellw)-1,xcellh-1),0,0,dw,dh,s,dcell)) then goto skipend;
       end;
    //.val defaults
    if xonce then
@@ -27264,7 +30042,7 @@ if xonehotspot and ((dhotX<0) or (dhotY<0)) then
    end;
 //.add icon -> 'icon'+from32bit(length(imgs.items[p]^))+imgs.items[p]^
 xiconlist.addstr('icon');
-xiconlist.addint4(xicon.len);
+xiconlist.addint4(xicon.len32);
 xiconlist.add(xicon);
 xicon.clear;
 end;//p
@@ -27279,13 +30057,13 @@ xdata.addint4(sizeof(anirec));
 xdata.addrec(@anirec,sizeof(anirec));
 //._list
 xdata.addstr('LIST');
-xdata.addint4(4+xiconlist.len);
+xdata.addint4(4+xiconlist.len32);
 xdata.addstr('fram');
 xdata.add(xiconlist);
 //.reduce mem
 xiconlist.clear;
 //.set overal size
-xdata.int4[4]:=frcmin32(xdata.len-4,0);
+xdata.int4[4]:=frcmin32(xdata.len32-4,0);
 
 //successful
 result:=true;
@@ -27369,7 +30147,7 @@ x.addbyt1(70);//F
 x.addbyt1(49);//1
 for p:=1 to 6 do x.addbyt1(0);
 //.label
-xlen:=low__len(xlabel);
+xlen:=low__Len32(xlabel);
 for p:=1 to 14 do if (p<=xlen) then x.addbyt1(ord(xlabel[p-1+stroffset])) else x.addbyt1(0);
 //.X blank blocks
 if (xsize>=1) then
@@ -27459,7 +30237,7 @@ end;
 function ref_count(x:tstr8):longint;
 begin
 str__lock(@x);
-if ref_valid(x) then result:=(x.len-24) div 10 else result:=0;
+if ref_valid(x) then result:=(x.len32-24) div 10 else result:=0;
 str__uaf(@x);
 end;
 
@@ -27601,7 +30379,7 @@ if ref_valid(x) then
    for p:=11 to 24 do if (x.bytes1[p]<>0) then result:=result+char(x.bytes1[p]);
    //was:
    //result:=copy(x,11,14);
-   //for p:=1 to low__len(result) do if (result[p-1+stroffset]=#0) then
+   //for p:=1 to low__Len32(result) do if (result[p-1+stroffset]=#0) then
    //   begin
    //   result:=strcopy1(result,1,p-1);
    //   break;
@@ -27617,7 +30395,7 @@ var
 begin
 if str__lock(@x) and ref_valid(x) then
    begin
-   ylen:=low__len(y);
+   ylen:=low__Len32(y);
    //was: y:=strcopy1(y+#0#0#0#0#0#0#0#0#0#0#0#0#0#0,1,14);
    for p:=11 to 24 do
    begin
@@ -27798,8 +30576,11 @@ for p:=0 to (c-1) do ref_setval(x,p,ref_val(y,(c-1)-p));
 ref_incid(x);
 skipend:
 except;end;
-try;str__free(@y);except;end;
-try;str__uaf(@x);except;end;
+
+//free
+str__free(@y);
+str__uaf(@x);
+
 end;
 
 procedure ref_flip(x:tstr8);
@@ -27855,8 +30636,11 @@ end;//p
 ref_incid(x);
 skipend:
 except;end;
-try;str__free(@y);except;end;
-try;str__uaf(@x);except;end;
+
+//free
+str__free(@y);
+str__uaf(@x);
+
 end;
 
 procedure ref_shifty(x:tstr8;xby:extended);
@@ -27995,7 +30779,7 @@ if (xindex>=25) and ((xindex+9)<=x.len) then
    a.bytes[7]:=x.bytes1[xindex+7];
    a.bytes[8]:=x.bytes1[xindex+8];
    a.bytes[9]:=x.bytes1[xindex+9];
-   result:=round(ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(xindex-25) div 10,(x.len-24) div 10));
+   result:=round(ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(xindex-25) div 10,(x.len32-24) div 10));
    end
 else result:=round(ref_proc(0,xval,xmin,xmax,0,0,0));
 //range
@@ -28015,7 +30799,7 @@ result:=0;
 //check
 if not str__lock(@x) then exit;
 //get                 //count  * percentage * blocksize
-xindex:=25+(round((xval/255)*(((x.len-24) div 10)-1))*10);
+xindex:=25+(round((xval/255)*(((x.len32-24) div 10)-1))*10);
 if (xindex>=25) and ((xindex+9)<=x.len) then
    begin
    a.bytes[0]:=x.bytes1[xindex+0];
@@ -28028,7 +30812,7 @@ if (xindex>=25) and ((xindex+9)<=x.len) then
    a.bytes[7]:=x.bytes1[xindex+7];
    a.bytes[8]:=x.bytes1[xindex+8];
    a.bytes[9]:=x.bytes1[xindex+9];
-   result:=round(ref_proc(x.bytes1[10],xval,0,255,a.val,(xindex-25) div 10,(x.len-24) div 10));
+   result:=round(ref_proc(x.bytes1[10],xval,0,255,a.val,(xindex-25) div 10,(x.len32-24) div 10));
    end
 else result:=round(ref_proc(0,xval,0,255,0,0,0));
 //range
@@ -28048,7 +30832,7 @@ result:=0;
 //check
 if not str__lock(@x) then exit;
 //get                 //count  * percentage * blocksize
-xindex:=25+(round((xval/255)*(((x.len-24) div 10)-1))*10);
+xindex:=25+(round((xval/255)*(((x.len32-24) div 10)-1))*10);
 if (xindex>=25) and ((xindex+9)<=x.len) then
    begin
    a.bytes[0]:=x.bytes1[xindex+0];
@@ -28061,7 +30845,7 @@ if (xindex>=25) and ((xindex+9)<=x.len) then
    a.bytes[7]:=x.bytes1[xindex+7];
    a.bytes[8]:=x.bytes1[xindex+8];
    a.bytes[9]:=x.bytes1[xindex+9];
-   result:=round(ref_proc(x.bytes1[10],xval,-255,255,a.val,(xindex-25) div 10,(x.len-24) div 10));
+   result:=round(ref_proc(x.bytes1[10],xval,-255,255,a.val,(xindex-25) div 10,(x.len32-24) div 10));
    end
 else result:=round(ref_proc(0,xval,-255,255,0,0,0));
 //range
@@ -28121,7 +30905,7 @@ if (zpos>=25) and ((zpos+9)<=x.len) then
    a.bytes[7]:=x.bytes1[zpos+7];
    a.bytes[8]:=x.bytes1[zpos+8];
    a.bytes[9]:=x.bytes1[zpos+9];
-   result:=round(ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(zpos-25) div 10,(x.len-24) div 10));
+   result:=round(ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(zpos-25) div 10,(x.len32-24) div 10));
    end
 else result:=round(ref_proc(0,xval,xmin,xmax,0,0,0));
 //range
@@ -28213,7 +30997,7 @@ if (zpos>=25) and ((zpos+9)<=x.len) then
    a.bytes[7]:=x.bytes1[zpos+7];
    a.bytes[8]:=x.bytes1[zpos+8];
    a.bytes[9]:=x.bytes1[zpos+9];
-   result:=ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(zpos-25) div 10,(x.len-24) div 10);
+   result:=ref_proc(x.bytes1[10],xval,xmin,xmax,a.val,(zpos-25) div 10,(x.len32-24) div 10);
    end
 else result:=ref_proc(0,xval,xmin,xmax,0,0,0);
 //range
@@ -28266,84 +31050,101 @@ end;
 
 
 //color procs ------------------------------------------------------------------
-function int__c8(x:longint):tcolor8;
-var
-   a:tint4;
+
+function int__c8(const x:longint):tcolor8;//16sep2025
 begin
-a.val:=x;
-result:=a.r;
-if (a.g>result) then result:=a.g;
-if (a.b>result) then result:=a.b;
+
+result:=tint4(x).r;
+if (tint4(x).g>result) then result:=tint4(x).g;
+if (tint4(x).b>result) then result:=tint4(x).b;
+
 end;
 
-function int__c24(x:longint):tcolor24;
-var
-   c:tint4;
+function int__c24(const x:longint):tcolor24;//16sep2025
 begin
-c.val:=x;
-result.r:=c.r;
-result.g:=c.g;
-result.b:=c.b;
+
+result.r:=tint4(x).r;
+result.g:=tint4(x).g;
+result.b:=tint4(x).b;
+
 end;
 
-function int__c32(x:longint):tcolor32;
-var
-   c:tint4;
+function int__c32(const x:longint):tcolor32;//16sep2025
 begin
-c.val:=x;
-result.r:=c.r;
-result.g:=c.g;
-result.b:=c.b;
-result.a:=c.a;
+
+result.r:=tint4(x).r;
+result.g:=tint4(x).g;
+result.b:=tint4(x).b;
+result.a:=tint4(x).a;
+
 end;
 
-function c24__match(s,d:tcolor24):boolean;
+function c24__match(const s,d:tcolor24):boolean;
 begin
+
 result:=(s.r=d.r) and (s.g=d.g) and (s.b=d.b);
+
 end;
 
-function c32__match(s,d:tcolor32):boolean;
+function c32__match(const s,d:tcolor32):boolean;
 begin
+
 result:=(s.r=d.r) and (s.g=d.g) and (s.b=d.b) and (s.a=d.a);
+
 end;
 
-function c32_c24__match(s:tcolor32;d:tcolor24):boolean;
+function c32_c24__match(const s:tcolor32;const d:tcolor24):boolean;
 begin
+
 result:=(s.r=d.r) and (s.g=d.g) and (s.b=d.b);
+
 end;
 
-function inta__int(x:longint;a:byte):longint;
-var
-   c:tint4;
+function inta__int(const x:longint;const a:byte):longint;//16sep2025
 begin
-c.val:=x;
-c.a:=a;
-result:=c.val;
+
+result          :=x;
+tint4(result).a :=a;
+
 end;
 
-function inta__c32(x:longint;a:byte):tcolor32;
-var
-   c:tint4;
+function inta__c32(const x:longint;const a:byte):tcolor32;//16sep2025
 begin
-c.val:=x;
-result.r:=c.r;
-result.g:=c.g;
-result.b:=c.b;
+
+result.r:=tint4(x).r;
+result.g:=tint4(x).g;
+result.b:=tint4(x).b;
 result.a:=a;
+
 end;
 
-function c8__int(x:tcolor8):longint;
-var
-   a:tint4;
+function c8__int(const x:tcolor8):longint;//16sep2025
 begin
-a.r:=x;
-a.g:=x;
-a.b:=x;
-a.a:=0;//*
-result:=a.val;
+
+tint4(result).r:=x;
+tint4(result).g:=x;
+tint4(result).b:=x;
+tint4(result).a:=0;//*
+
 end;
 
 //.greyscale procs -------------------------------------------------------------
+procedure c24__GuiDisableGrey(var x:tcolor24);//sourced from ttoolbars from Text2EXE 2007
+begin
+
+//get
+x.r:=byte( (x.r+x.g+x.b) div 3 );
+
+//adjust "black/white"
+if      (x.r=0)   then x.r:=50
+else if (x.r=255) then x.r:=240;
+
+//set
+x.g:=x.r;
+x.b:=x.r;
+
+end;
+
 procedure c24__greyscale(var x:tcolor24);
 begin
 if (x.g>x.r) then x.r:=x.g;
@@ -28359,470 +31160,912 @@ if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
 end;
 
-function c24__greyscale2b(x:tcolor24):byte;
+function c24__greyscale2b(const x:tcolor24):byte;
 begin
+
 result:=x.r;
 if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
+
 end;
 
-function c24__lum(x:tcolor24):byte;
+function int__lum(const x:longint):byte;//13sep2025
 begin
+
+result:=tint4(x).r;
+if (tint4(x).g>result) then result:=tint4(x).g;
+if (tint4(x).b>result) then result:=tint4(x).b;
+
+end;
+
+function c24__lum(const x:tcolor24):byte;
+begin
+
 result:=x.r;
 if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
+
 end;
 
-function c32__lum(x:tcolor32):byte;
+function c32__lum(const x:tcolor32):byte;
 begin
+
 result:=x.r;
 if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
+
 end;
 
-function int__greyscale(x:longint):longint;
-var
-   c:tint4;
+function int__greyscale(const x:longint):longint;//16sep2025
 begin
-c.val:=x;
-if (c.g>c.r) then c.r:=c.g;
-if (c.b>c.r) then c.r:=c.b;
-c.g:=c.r;
-c.b:=c.r;
-result:=c.val;
+
+result:=x;
+
+if (tint4(result).g>tint4(result).r) then tint4(result).r:=tint4(result).g;
+if (tint4(result).b>tint4(result).r) then tint4(result).r:=tint4(result).b;
+
+tint4(result).g:=tint4(result).r;
+tint4(result).b:=tint4(result).r;
+
 end;
 
-function inta__greyscale(x:longint;a:byte):longint;
-var
-   c:tint4;
+function inta__greyscale(const x:longint;const a:byte):longint;//16sep2025
 begin
-c.val:=x;
-if (c.g>c.r) then c.r:=c.g;
-if (c.b>c.r) then c.r:=c.b;
-c.g:=c.r;
-c.b:=c.r;
-c.a:=a;
-result:=c.val;
+
+result:=x;
+
+if (tint4(result).g>tint4(result).r) then tint4(result).r:=tint4(result).g;
+if (tint4(result).b>tint4(result).r) then tint4(result).r:=tint4(result).b;
+
+tint4(result).g:=tint4(result).r;
+tint4(result).b:=tint4(result).r;
+tint4(result).a:=a;//*
+
 end;
 
-function int__greyscale_ave(x:longint):longint;
-var
-   c:tint4;
+function int__greyscale_ave(const x:longint):longint;//16sep2025
 begin
-c.val:=x;
-result:=(c.r+c.g+c.b) div 3;
+
+result:=(tint4(x).r+tint4(x).g+tint4(x).b) div 3;
+
 end;
 
-function int__greyscale_c8(x:longint):tcolor8;//03feb2025, 18nov2023
-var
-   c:tint4;
+function int__greyscale_c8(const x:longint):tcolor8;//16sep2025, 03feb2025, 18nov2023
 begin
-c.val:=x;
-if (c.g>c.r) then c.r:=c.g;
-if (c.b>c.r) then c.r:=c.b;
-result:=c.r;
+
+result:=tint4(x).r;
+if (tint4(x).g>result) then result:=tint4(x).g;
+if (tint4(x).b>result) then result:=tint4(x).b;
+
 end;
 
 //.invert procs ----------------------------------------------------------------
-function int__invert(x:longint;var xout:longint):boolean;
+function int__invert(const x:longint;var xout:longint):boolean;
 begin
+
 result:=int__invert2(x,false,xout);
+
 end;
 
-function int__invertb(x:longint):longint;
+function int__invertb(const x:longint):longint;
 begin
+
 int__invert2(x,false,result);
+
 end;
 
-function int__invert2(x:longint;xgreycorrection:boolean;var xout:longint):boolean;
+function int__invert2(const x:longint;const xgreycorrection:boolean;var xout:longint):boolean;//16sep2025
 var
-   c:tint4;
    b:longint;
 begin
+
 result:=true;//pass-thru
+
 if xgreycorrection and int__brightness(x,b) and (b>=100) and (b<=156) then xout:=int_255_255_255
 else
    begin//invert
-   c.val:=x;
-   c.r:=255-c.r;
-   c.g:=255-c.g;
-   c.b:=255-c.b;
-   xout:=c.val;
+
+   tint4(xout).r:=255-tint4(x).r;
+   tint4(xout).g:=255-tint4(x).g;
+   tint4(xout).b:=255-tint4(x).b;
+   tint4(xout).a:=    tint4(x).a;
+
    end;
+
 end;
 
-function int__invert2b(x:longint;xgreycorrection:boolean):longint;
+function int__invert2b(const x:longint;const xgreycorrection:boolean):longint;
 begin
+
 int__invert2(x,xgreycorrection,result);
+
 end;
 
-function c24__int(x:tcolor24):longint;
+function int__colorlabel(const xbackcolor:longint):longint;//softer but still highly visible color label "text label" color - 13sep2025
+begin
+
+case ( int__c8(xbackcolor) <= 180 ) of
+true:result:=int__splice24_100(50,xbackcolor,int_255_255_255);
+else result:=int__splice24_100(50,xbackcolor,0);
+end;//case
+
+end;
+
+function c24__int(const x:tcolor24):longint;//16sep2025
+begin
+
+tint4(result).r:=x.r;
+tint4(result).g:=x.g;
+tint4(result).b:=x.b;
+tint4(result).a:=0;//*
+
+end;
+
+function c24a0__int(const x:tcolor24):longint;//16sep2025
+begin
+
+tint4(result).r:=x.r;
+tint4(result).g:=x.g;
+tint4(result).b:=x.b;
+tint4(result).a:=0;//*
+
+end;
+
+procedure c32__swap(var x,y:tcolor32);//16jul2025
 var
-   a:tint4;
+   z:tcolor32;
 begin
-a.r:=x.r;
-a.g:=x.g;
-a.b:=x.b;
-a.a:=0;//*
-result:=a.val;
+
+z:=x;
+x:=y;
+y:=z;
+
 end;
 
-function c24a0__int(x:tcolor24):longint;
+procedure c24__swap(var x,y:tcolor24);//16jul2025
 var
-   a:tint4;
+   z:tcolor24;
 begin
-a.r:=x.r;
-a.g:=x.g;
-a.b:=x.b;
-a.a:=0;
-result:=a.val;
+z:=x;
+x:=y;
+y:=z;
 end;
 
-function c32__int(x:tcolor32):longint;
+procedure c8__swap(var x,y:tcolor8);//16jul2025
 var
-   c:tint4;
+   z:tcolor8;
 begin
-c.r:=x.r;
-c.g:=x.g;
-c.b:=x.b;
-c.a:=x.a;
-result:=c.val;
+z:=x;
+x:=y;
+y:=z;
 end;
 
-function c8a__int(x:tcolor8;a:byte):longint;
-var
-   v:tint4;
+function c32__int(const x:tcolor32):longint;//16sep2025
 begin
-v.r:=x;
-v.g:=x;
-v.b:=x;
-v.a:=a;
-result:=v.val;
+tint4(result).r:=x.r;
+tint4(result).g:=x.g;
+tint4(result).b:=x.b;
+tint4(result).a:=x.a;
 end;
 
-function c24a__int(x:tcolor24;a:byte):longint;
-var
-   v:tint4;
+function c8a__int(const x:tcolor8;const a:byte):longint;//16sep2025
 begin
-v.r:=x.r;
-v.g:=x.g;
-v.b:=x.b;
-v.a:=a;
-result:=v.val;
+
+tint4(result).r:=x;
+tint4(result).g:=x;
+tint4(result).b:=x;
+tint4(result).a:=a;
+
 end;
 
-function int24__rgba0(x24__or__syscolor:longint):longint;
+function c24a__int(const x:tcolor24;const a:byte):longint;//16sep2025
 begin
+
+tint4(result).r:=x.r;
+tint4(result).g:=x.g;
+tint4(result).b:=x.b;
+tint4(result).a:=a;
+
+end;
+
+function int24__rgba0(const x24__or__syscolor:longint):longint;
+begin
+
 if (x24__or__syscolor<0) then result:=win____GetSysColor(x24__or__syscolor and $000000FF) else result:=x24__or__syscolor;
+
 end;
 
-function rgb0__int(r,g,b:byte):longint;
-var
-   x:tint4;
+function rgb0__int(const r,g,b:byte):longint;//16sep2025
 begin
-x.r:=r;
-x.g:=g;
-x.b:=b;
-x.a:=0;
-result:=x.val;
+
+tint4(result).r:=r;
+tint4(result).g:=g;
+tint4(result).b:=b;
+tint4(result).a:=0;
+
 end;
 
-function rgba0__int(r,g,b:byte):longint;
-var
-   x:tint4;
+function rgba0__int(const r,g,b:byte):longint;
 begin
-x.r:=r;
-x.g:=g;
-x.b:=b;
-x.a:=0;
-result:=x.val;
+
+tint4(result).r:=r;
+tint4(result).g:=g;
+tint4(result).b:=b;
+tint4(result).a:=0;
+
 end;
 
-function rgba__int(r,g,b,a:byte):longint;
-var
-   x:tint4;
+function rgba__int(const r,g,b,a:byte):longint;
 begin
-x.r:=r;
-x.g:=g;
-x.b:=b;
-x.a:=a;
-result:=x.val;
+
+tint4(result).r:=r;
+tint4(result).g:=g;
+tint4(result).b:=b;
+tint4(result).a:=a;
+
 end;
 
-function ggga0__int(r:byte):longint;
-var
-   x:tint4;
+function ggga0__int(const r:byte):longint;
 begin
-x.r:=r;
-x.g:=r;
-x.b:=r;
-x.a:=0;
-result:=x.val;
+
+tint4(result).r:=r;
+tint4(result).g:=r;
+tint4(result).b:=r;
+tint4(result).a:=0;
+
 end;
 
-function ggga__int(r,a:byte):longint;
-var
-   x:tint4;
+function ggga__int(const r,a:byte):longint;
 begin
-x.r:=r;
-x.g:=r;
-x.b:=r;
-x.a:=a;
-result:=x.val;
+
+tint4(result).r:=r;
+tint4(result).g:=r;
+tint4(result).b:=r;
+tint4(result).a:=a;
+
 end;
 
-function rgb__c24(r,g,b:byte):tcolor24;
+function rgb__c24(const r,g,b:byte):tcolor24;
 begin
+
 result.r:=r;
 result.g:=g;
 result.b:=b;
+
 end;
 
-function rgba0__c32(r,g,b:byte):tcolor32;
+function rgba0__c32(const r,g,b:byte):tcolor32;
 begin
+
 result.r:=r;
 result.g:=g;
 result.b:=b;
 result.a:=0;
+
 end;
 
-function rgba255__c32(r,g,b:byte):tcolor32;
+function rgba255__c32(const r,g,b:byte):tcolor32;
 begin
+
 result.r:=r;
 result.g:=g;
 result.b:=b;
 result.a:=255;
+
 end;
 
-function rgba__c32(r,g,b,a:byte):tcolor32;
+function color32(const r,g,b,a:byte):tcolor32;//11jun2026
 begin
+
 result.r:=r;
 result.g:=g;
 result.b:=b;
 result.a:=a;
+
 end;
 
-function c24a0__c32(x:tcolor24):tcolor32;
+function color24(const r,g,b:byte):tcolor24;//11jun2026
 begin
+
+result.r:=r;
+result.g:=g;
+result.b:=b;
+
+end;
+
+function rainbow24(const xpert01:double):tcolor24;//return rainbow color according to xpert01 progress from 0.0..1.0
+begin//color flow: xpert01=0.0 .. 1.0 => red -> yellow -> green -> aqua -> blue -> purple -> red
+
+if (xpert01<=0) or (xpert01>=1) then
+   begin//red
+
+   result.r :=255;
+   result.g :=0;
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.16) then
+   begin//red -> yellow
+
+   result.r :=255;
+   result.g :=round( 255 * ((xpert01-0)/0.16) );
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.33) then
+   begin//yellow -> green
+
+   result.r :=255 - round( 255 * ((xpert01-0.16)/0.17) );
+   result.g :=255;
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.50) then
+   begin//green -> aqua
+
+   result.r :=0;
+   result.g :=255;
+   result.b :=round( 255 * ((xpert01-0.33)/0.17) );
+
+   end
+
+else if (xpert01<=0.67) then
+   begin//aqua -> blue
+
+   result.r :=0;
+   result.g :=255 - round( 255 * ((xpert01-0.50)/0.17) );
+   result.b :=255;
+
+   end
+
+else if (xpert01<=0.84) then
+   begin//blue -> purple
+
+   result.r :=round( 255 * ((xpert01-0.67)/0.17) );
+   result.g :=0;
+   result.b :=255;
+
+   end
+
+else begin//purple -> red
+
+   result.r :=255;
+   result.g :=0;
+   result.b :=255 - round( 255 * ((xpert01-0.84)/0.16) );
+
+   end;
+
+end;
+
+function rainbow32(const xpert01:double;const a:byte):tcolor32;//return rainbow color according to xpert01 progress from 0.0..1.0
+begin//color flow: xpert01=0.0 .. 1.0 => red -> yellow -> green -> aqua -> blue -> purple -> red
+
+result.a    :=a;
+
+if (xpert01<=0) or (xpert01>=1) then
+   begin//red
+
+   result.r :=255;
+   result.g :=0;
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.16) then
+   begin//red -> yellow
+
+   result.r :=255;
+   result.g :=round( 255 * ((xpert01-0)/0.16) );
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.33) then
+   begin//yellow -> green
+
+   result.r :=255 - round( 255 * ((xpert01-0.16)/0.17) );
+   result.g :=255;
+   result.b :=0;
+
+   end
+
+else if (xpert01<=0.50) then
+   begin//green -> aqua
+
+   result.r :=0;
+   result.g :=255;
+   result.b :=round( 255 * ((xpert01-0.33)/0.17) );
+
+   end
+
+else if (xpert01<=0.67) then
+   begin//aqua -> blue
+
+   result.r :=0;
+   result.g :=255 - round( 255 * ((xpert01-0.50)/0.17) );
+   result.b :=255;
+
+   end
+
+else if (xpert01<=0.84) then
+   begin//blue -> purple
+
+   result.r :=round( 255 * ((xpert01-0.67)/0.17) );
+   result.g :=0;
+   result.b :=255;
+
+   end
+
+else begin//purple -> red
+
+   result.r :=255;
+   result.g :=0;
+   result.b :=255 - round( 255 * ((xpert01-0.84)/0.16) );
+
+   end;
+
+end;
+
+function rainbow32__int(const xpert01:double;const a:byte):longint32;
+begin//color flow: xpert01=0.0 .. 1.0 => red -> yellow -> green -> aqua -> blue -> purple -> red
+
+tint4(result).a       :=a;
+
+if (xpert01<=0) or (xpert01>=1) then
+   begin//red
+
+   tint4(result).r    :=255;
+   tint4(result).g    :=0;
+   tint4(result).b    :=0;
+
+   end
+
+else if (xpert01<=0.16) then
+   begin//red -> yellow
+
+   tint4(result).r    :=255;
+   tint4(result).g    :=round( 255 * ((xpert01-0)/0.16) );
+   tint4(result).b    :=0;
+
+   end
+
+else if (xpert01<=0.33) then
+   begin//yellow -> green
+
+   tint4(result).r    :=255 - round( 255 * ((xpert01-0.16)/0.17) );
+   tint4(result).g    :=255;
+   tint4(result).b    :=0;
+
+   end
+
+else if (xpert01<=0.50) then
+   begin//green -> aqua
+
+   tint4(result).r    :=0;
+   tint4(result).g    :=255;
+   tint4(result).b    :=round( 255 * ((xpert01-0.33)/0.17) );
+
+   end
+
+else if (xpert01<=0.67) then
+   begin//aqua -> blue
+
+   tint4(result).r    :=0;
+   tint4(result).g    :=255 - round( 255 * ((xpert01-0.50)/0.17) );
+   tint4(result).b    :=255;
+
+   end
+
+else if (xpert01<=0.84) then
+   begin//blue -> purple
+
+   tint4(result).r    :=round( 255 * ((xpert01-0.67)/0.17) );
+   tint4(result).g    :=0;
+   tint4(result).b    :=255;
+
+   end
+
+else begin//purple -> red
+
+   tint4(result).r    :=255;
+   tint4(result).g    :=0;
+   tint4(result).b    :=255 - round( 255 * ((xpert01-0.84)/0.16) );
+
+   end;
+
+end;
+
+function rgba__c32(const r,g,b,a:byte):tcolor32;
+begin
+
+result.r:=r;
+result.g:=g;
+result.b:=b;
+result.a:=a;
+
+end;
+
+procedure int__rgba(const s:longint;var dr,dg,db,da:byte);//03mar2026
+begin
+
+dr:=tcolor32(s).r;
+dg:=tcolor32(s).g;
+db:=tcolor32(s).b;
+da:=tcolor32(s).a;
+
+end;
+
+procedure int__rgb(const s:longint;var dr,dg,db:byte);//03mar2026
+begin
+
+dr:=tcolor32(s).r;
+dg:=tcolor32(s).g;
+db:=tcolor32(s).b;
+
+end;
+
+function c24a0__c32(const x:tcolor24):tcolor32;
+begin
+
 result.r:=x.r;
 result.g:=x.g;
 result.b:=x.b;
 result.a:=0;
+
 end;
 
-function c24a255__c32(x:tcolor24):tcolor32;
+function c24a255__c32(const x:tcolor24):tcolor32;
 begin
+
 result.r:=x.r;
 result.g:=x.g;
 result.b:=x.b;
 result.a:=255;
+
 end;
 
-function c24a__c32(x:tcolor24;a:byte):tcolor32;
+function c24a__c32(const x:tcolor24;const a:byte):tcolor32;
 begin
+
 result.r:=x.r;
 result.g:=x.g;
 result.b:=x.b;
 result.a:=a;
+
 end;
 
-function c32__c24(x:tcolor32):tcolor24;
+function c32__c24(const x:tcolor32):tcolor24;
 begin
+
 result.r:=x.r;
 result.g:=x.g;
 result.b:=x.b;
+
 end;
 
-function c32__c8(x:tcolor32):tcolor8;
+function c32__c8(const x:tcolor32):tcolor8;
 begin
+
 result:=x.r;
 if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
+
 end;
 
-function c24__c8(x:tcolor24):tcolor8;
+function c24__c8(const x:tcolor24):tcolor8;
 begin
+
 result:=x.r;
 if (x.g>result) then result:=x.g;
 if (x.b>result) then result:=x.b;
+
 end;
 
-function ca__c8(x:tcolor32):tcolor8;
+function ca__c8(const x:tcolor32):tcolor8;
 begin
+
 result:=x.a;
+
 end;
 
 procedure c32__irgb(var x:tcolor32);//invert RGB
 begin
+
 x.r:=255-x.r;
 x.g:=255-x.g;
 x.b:=255-x.b;
+
 end;
 
 procedure c32__irgba(var x:tcolor32);//invert RGBA
 begin
+
 x.r:=255-x.r;
 x.g:=255-x.g;
 x.b:=255-x.b;
 x.a:=255-x.a;
+
 end;
 
 procedure c32__ia(var x:tcolor32);//invert A
 begin
+
 x.a:=255-x.a;
+
 end;
 
 procedure c24__irgb(var x:tcolor24);//invert RGB
 begin
+
 x.r:=255-x.r;
 x.g:=255-x.g;
 x.b:=255-x.b;
+
 end;
 
 procedure c8__i(var x:tcolor8);//invert
 begin
+
 x:=255-x;
+
 end;
 
-function int__brightness(x:longint;var xout:longint):boolean;
-var
-   c:tint4;
+function int__brightness(const x:longint;var xout:longint):boolean;//16sep2025
 begin
-result:=true;//pass-thru
-c.val:=x;
-xout:=c.r;
-if (c.g>xout) then xout:=c.g;
-if (c.b>xout) then xout:=c.b;
+
+result :=true;//pass-thru
+xout   :=tint4(x).r;
+if (tint4(x).g>xout) then xout:=tint4(x).g;
+if (tint4(x).b>xout) then xout:=tint4(x).b;
+
 end;
 
-function int__brightnessb(x:longint):longint;
-var
-   c:tint4;
+function int__brightnessb(const x:longint):longint;//16sep2025
 begin
-c.val:=x;
-result:=c.r;
-if (c.g>result) then result:=c.g;
-if (c.b>result) then result:=c.b;
+
+result:=tint4(x).r;
+if (tint4(x).g>result) then result:=tint4(x).g;
+if (tint4(x).b>result) then result:=tint4(x).b;
+
 end;
 
-function int__brightness_ave(x:longint;var xout:longint):boolean;
-var
-   c:tint4;
+function int__brightness_ave(const x:longint;var xout:longint):boolean;//16sep2025
 begin
-result:=true;//pass-thru
-c.val:=x;
-xout:=(c.r+c.g+c.b) div 3;
+
+result :=true;//pass-thru
+xout   :=(tint4(x).r+tint4(x).g+tint4(x).b) div 3;
+
 end;
 
-function int__brightness_aveb(x:longint):longint;
-var
-   c:tint4;
+function int__brightness_aveb(const x:longint):longint;//16sep2025
 begin
-c.val:=x;
-result:=(c.r+c.g+c.b) div 3;
+
+result:=(tint4(x).r+tint4(x).g+tint4(x).b) div 3;
+
 end;
 
 function int__setbrightness357(xcolor,xbrightness357:longint):longint;//18feb2025, 05feb2025
 var
-   c32:tint4;
    v:longint;
 begin
+
 if (xbrightness357<>255) then
    begin
+
    //init
-   xbrightness357:=frcrange32(xbrightness357,0,357);
-   c32.val:=xcolor;
+   if (xbrightness357<0) then xbrightness357:=0 else if (xbrightness357>357) then xbrightness357:=357;
 
    //r
-   v:=(c32.r*xbrightness357) div 256;//div 256 is FASTER than 255
+   v   :=(tint4(xcolor).r*xbrightness357) div 256;//div 256 is FASTER than 255
    if (v>255) then v:=255;
-   c32.r:=v;
+   tint4(result).r:=v;
 
    //g
-   v:=(c32.g*xbrightness357) div 256;
+   v   :=(tint4(xcolor).g*xbrightness357) div 256;
    if (v>255) then v:=255;
-   c32.g:=v;
+   tint4(result).g:=v;
 
    //b
-   v:=(c32.b*xbrightness357) div 256;
+   v   :=(tint4(xcolor).b*xbrightness357) div 256;
    if (v>255) then v:=255;
-   c32.b:=v;
+   tint4(result).b:=v;
 
    //a - leave as is
+   tint4(result).a:=tint4(xcolor).a;
 
-   //set
-   result:=c32.val;
    end
 else result:=xcolor;
+
 end;
 
 //.splice procs ----------------------------------------------------------------
-function c24__splice(xpert01:extended;s,d:tcolor24):tcolor24;//17may2022
-var//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
-   p2:extended;
-   v:longint;
+
+function c8__splice(const xpert01:extended;const s,d:tcolor8):tcolor8;//04jun2026
+begin//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
+
+//get
+if (xpert01<=0) then
+   begin
+
+   result             :=s;
+
+   end
+else if (xpert01>=1) then
+   begin
+
+   result             :=d;
+
+   end
+else begin
+
+   result             :=round( (xpert01 * d ) + ( (1-xpert01) *s ) );
+
+   end;
+
+end;
+
+function c24__splice(const xpert01:extended;const s,d:tcolor24):tcolor24;//02jun2026, 17may2022
+begin//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
+
+//get
+if (xpert01<=0) then
+   begin
+
+   result             :=s;
+
+   end
+else if (xpert01>=1) then
+   begin
+
+   result             :=d;
+
+   end
+else begin
+
+   //rgb
+   result.r           :=round( (xpert01 * d.r ) + ( (1-xpert01) *s.r ) );
+   result.g           :=round( (xpert01 * d.g ) + ( (1-xpert01) *s.g ) );
+   result.b           :=round( (xpert01 * d.b ) + ( (1-xpert01) *s.b ) );
+
+   end;
+
+end;
+
+function c32__splice(const xpert01:extended;const s,d:tcolor32):tcolor32;//02jun2026, 06dec2023
+begin//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
+
+//get
+if (xpert01<=0) then
+   begin
+
+   result             :=s;
+
+   end
+else if (xpert01>=1) then
+   begin
+
+   result             :=d;
+
+   end
+else begin
+
+   //rgba
+   result.r           :=round( (xpert01 * d.r ) + ( (1-xpert01) *s.r ) );
+   result.g           :=round( (xpert01 * d.g ) + ( (1-xpert01) *s.g ) );
+   result.b           :=round( (xpert01 * d.b ) + ( (1-xpert01) *s.b ) );
+   result.a           :=round( (xpert01 * d.a ) + ( (1-xpert01) *s.a ) );
+
+   end;
+
+end;
+
+function int__splice24(const xpert01:extended;const s,d:longint32):longint32;//02jun2026, 16sep2025, 13nov2022
+begin//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
+
+//get
+if (xpert01<=0) then
+   begin
+
+   result             :=s;
+   tint4(result).a    :=0;//*
+
+   end
+else if (xpert01>=1) then
+   begin
+
+   result             :=d;
+   tint4(result).a    :=0;//*
+
+   end
+else begin
+
+   //rgb
+   tint4(result).r    :=round( (xpert01 * tint4(d).r ) + ( (1-xpert01) *tint4(s).r ) );
+   tint4(result).g    :=round( (xpert01 * tint4(d).g ) + ( (1-xpert01) *tint4(s).g ) );
+   tint4(result).b    :=round( (xpert01 * tint4(d).b ) + ( (1-xpert01) *tint4(s).b ) );
+   tint4(result).a    :=0;//*
+
+   end;
+
+end;
+
+function int__splice32(const xpert01:extended;const s,d:longint32):longint32;//02jun2026
+begin//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
+
+//get
+if (xpert01<=0) then
+   begin
+
+   result             :=s;
+
+   end
+else if (xpert01>=1) then
+   begin
+
+   result             :=d;
+
+   end
+else begin
+
+   //rgba
+   tint4(result).r    :=round( (xpert01 * tint4(d).r ) + ( (1-xpert01) *tint4(s).r ) );
+   tint4(result).g    :=round( (xpert01 * tint4(d).g ) + ( (1-xpert01) *tint4(s).g ) );
+   tint4(result).b    :=round( (xpert01 * tint4(d).b ) + ( (1-xpert01) *tint4(s).b ) );
+   tint4(result).a    :=round( (xpert01 * tint4(d).a ) + ( (1-xpert01) *tint4(s).a ) );
+
+   end;
+
+end;
+
+function int__splice24_100(const xpert100,s,d:longint32):longint32;//02jun2026
 begin
-//init
-if (xpert01<0) then xpert01:=0 else if (xpert01>1) then xpert01:=1;
-p2:=1-xpert01;
-//r
-v:=round((d.r*xpert01)+(s.r*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.r:=v;
-//g
-v:=round((d.g*xpert01)+(s.g*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.g:=v;
-//b
-v:=round((d.b*xpert01)+(s.b*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.b:=v;
+
+if (xpert100<=0) then
+   begin
+
+   result             :=s;
+   tint4(result).a    :=0;//*
+
+   end
+else if (xpert100>=100) then
+   begin
+
+   result             :=d;
+   tint4(result).a    :=0;//*
+
+   end
+else begin
+
+   result:=int__splice24( xpert100/100 ,s ,d );
+
+   end;
+
 end;
 
-function c32__splice(xpert01:extended;s,d:tcolor32):tcolor32;//06dec2023
-var//xpert01 range is 0..1 (0=0% and 0.5=50% and 1=100%)
-   p2:extended;
-   v:longint;
+function int__splice32_100(const xpert100,s,d:longint32):longint32;//02jun2026
 begin
-//init
-if (xpert01<0) then xpert01:=0 else if (xpert01>1) then xpert01:=1;
-p2:=1-xpert01;
-//r
-v:=round((d.r*xpert01)+(s.r*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.r:=v;
-//g
-v:=round((d.g*xpert01)+(s.g*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.g:=v;
-//b
-v:=round((d.b*xpert01)+(s.b*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.b:=v;
-//a
-v:=round((d.a*xpert01)+(s.a*p2));
-if (v<0) then v:=0 else if (v>255) then v:=255;
-result.a:=v;
-end;
 
-function int__splice24(xpert01:extended;s,d:longint):longint;//13nov2022
-begin//xpert range is 0..1 (0=0% and 0.5=50% and 1=100%)
-result:=c24a0__int(c24__splice(xpert01,int__c24(s),int__c24(d)));
-end;
+if (xpert100<=0) then
+   begin
 
-function int__splice32(xpert01:extended;s,d:longint):longint;//13nov2022
-begin//xpert range is 0..1 (0=0% and 0.5=50% and 1=100%)
-result:=c32__int(c32__splice(xpert01,int__c32(s),int__c32(d)));
-end;
+   result             :=s;
 
-function int__splice24_100(xpert100,s,d:longint):longint;
-begin
-result:=int__splice24(xpert100/100,s,d);
-end;
+   end
+else if (xpert100>=100) then
+   begin
 
-function int__splice32_100(xpert100,s,d:longint):longint;
-begin
-result:=int__splice32(xpert100/100,s,d);
+   result             :=d;
+
+   end
+else begin
+
+   result:=int__splice32( xpert100/100 ,s ,d );
+
+   end;
+
 end;
 
 //.color by name procs ---------------------------------------------------------
@@ -28831,11 +32074,13 @@ begin
 result:=inta__findcolor(xname,0);
 end;
 
-function inta__findcolor(xname:string;a:byte):longint;
+function inta__findcolor(xname:string;const a:byte):longint;
 const
-   xlc=220;
+   xlc      =220;
+
 begin
-xname:=strlow(xname);
+
+xname       :=strlow(xname);
 
 if      (xname='yellow') then result:=rgba__int(255,255,190,a)
 else if (xname='green')  then result:=rgba__int(xlc,255,xlc,a)
@@ -28847,6 +32092,7 @@ else if (xname='grey')   then result:=rgba__int(230,230,230,a)
 else if (xname='purple') then result:=rgba__int(245,230,250,a)
 else if (xname='white')  then result:=rgba__int(255,255,250,a)//slight yellowish tint
 else                          result:=rgba__int(230,230,230,a);
+
 end;
 
 //.color dodger procs ----------------------------------------------------------
@@ -29069,7 +32315,7 @@ if (sx='') then
 
 //init
 x         :=strlow(sx);
-xlen      :=low__len(x);
+xlen      :=low__Len32(x);
 xhavehash :=(strcopy1(x,1,1)='#');
 
 //get
@@ -29299,85 +32545,111 @@ if xautoflip and once and ( low__nrw(int__brightnessb(a.val),int__brightnessb(ox
    a.val:=ox.val;
    xchangeby0255:=-xchangeby0255;
    once:=false;
-   goto redo;
+   goto redo;            
    end;
 
 //return result
 result:=a.val;
 end;
 
-function int__vis24(xforeground24,xbackground24,xseparation:longint):boolean;//color is visible
+function int__vis24(const xforeground24,xbackground24,xseparation:longint):boolean;//color is visible
+
    function v(x,y:byte;by:longint):boolean;
    begin
+
    //enforce safe range
    if (by<0) then by:=30;
+
    //get
    result:=(low__posn(x-y)>=by);
+
    end;
+
 begin
+
 result:=
  v(tint4(xforeground24).r,tint4(xbackground24).r,xseparation) or
  v(tint4(xforeground24).g,tint4(xbackground24).g,xseparation) or
  v(tint4(xforeground24).b,tint4(xbackground24).b,xseparation);
+
 end;
 
-function c24__vis24(xforeground24,xbackground24:tcolor24;xseparation:longint):boolean;//color is visible
+function c24__vis24(const xforeground24,xbackground24:tcolor24;xseparation:longint):boolean;//color is visible
+
    function v(x,y:byte;by:longint):boolean;
    begin
+
    //enforce safe range
    if (by<0) then by:=30;
+
    //get
    result:=(low__posn(x-y)>=by);
+
    end;
+
 begin
+
 result:=
  v(xforeground24.r,xbackground24.r,xseparation) or
  v(xforeground24.g,xbackground24.g,xseparation) or
  v(xforeground24.b,xbackground24.b,xseparation);
+
 end;
 
-function int__makevis24(xforeground24,xbackground24,xseparation:longint):longint;//make color visible (foreground visible on background)
+function int__makevis24(const xforeground24,xbackground24,xseparation:longint):longint;//make color visible (foreground visible on background)
 begin
+
 if int__vis24(xforeground24,xbackground24,xseparation) then result:=xforeground24 else result:=int__invert2b(xforeground24,true);
+
 end;
 
-function c24__makevis24(xforeground24,xbackground24:tcolor24;xseparation:longint):tcolor24;//make color visible (foreground visible on background)
+function c24__makevis24(const xforeground24,xbackground24:tcolor24;xseparation:longint):tcolor24;//make color visible (foreground visible on background)
 begin
+
 if c24__vis24(xforeground24,xbackground24,xseparation) then result:=xforeground24 else result:=int__c24(int__invert2b(c24__int(xforeground24),true));
+
 end;
 
 //.pixel processor procs -------------------------------------------------------
-function ppBlend32(var s,snew:tcolor32):boolean;//color / pixel processor - 30nov2023
-var//250ms -> 235ms -> 218ms -> 204ms per 10,000,000 calls
-   v1,v2,da,daBIG:longint;
-begin
-//defaults
-result:=false;
 
-//decide
-if      (snew.a=0)   then exit
-else if (snew.a=255) then
+procedure ppBlend32(const s:tcolor32;var d:tcolor32);//merge 2 32-bit colors together - 21jun2026
+var
+   v1                 :longint32;
+   v2                 :longint32;
+   daBIG              :longint32;
+
+begin
+
+if (s.a=0) then
    begin
-   result:=true;
-   s:=snew;
-   exit;
+
+   //nil
+
+   end
+
+else if (s.a=255) then
+   begin
+
+   d                  :=s;
+
+   end
+
+else begin
+
+   v1                 :=s.a * 255;
+   v2                 :=d.a * ( 255 - s.a );
+
+   daBIG              :=v1 + v2;
+
+   d.r                :=( (v1 * s.r) + (v2 * d.r) ) div daBIG;
+   d.g                :=( (v1 * s.g) + (v2 * d.g) ) div daBIG;
+   d.b                :=( (v1 * s.b) + (v2 * d.b) ) div daBIG;
+   d.a                :=s.a + ( v2 div 255 );//must div by 255 exactly, otherwise subtle color loss creeps in damaging the image
+
    end;
 
-//get
-v1:=snew.a*255;
-v2:=s.a*(255-snew.a);
-
-da    :=snew.a + (v2 div 255);//must div by 255 exactly, otherwise subtle color loss creeps in damaging the image
-daBIG :=v1 + v2;
-
-s.r:=( (snew.r*v1) + (s.r*v2) ) div daBIG;
-s.g:=( (snew.g*v1) + (s.g*v2) ) div daBIG;
-s.b:=( (snew.b*v1) + (s.b*v2) ) div daBIG;
-s.a:=da;
-
-//successful
-result:=true;
 end;
+
 {
 //----------------------------------------------------------------------START---
 //reference for ppBlend32 - original floating point algorithms
@@ -29456,65 +32728,18 @@ begin
 if xuseb then result:=b else result:=a;
 end;
 
-
-//canvas procs -----------------------------------------------------------------
-function wincanvas__setfont(x:hdc;xfontname:string;xsharp,xbold:boolean;xsize,xcolor,xbackcolor:longint;var xoutfont,xoutbrush:hdc):boolean;
-var
-   h:hdc;
-   b:tlogbrush;
-   f:tlogfont;
-   p:longint;
+function c32__aorb(const a,b:tcolor32;const xuseb:boolean):tcolor32;//09apr2026
 begin
-result:=(x<>0);
-
-if result then
-   begin
-   //filter
-   xcolor    :=int24__rgba0(xcolor);
-   xbackcolor:=int24__rgba0(xbackcolor);
-
-   //brush
-   b.lbstyle:=0;//solid
-   b.lbcolor:=xbackcolor;
-   b.lbhatch:=0;
-   xoutbrush:=win____CreateBrushIndirect(b);
-
-   //font
-   low__cls(@f,sizeof(f));
-   if (xsize>=0) then f.lfHeight:=-win____MulDiv(xsize,system_screenlogpixels,72) else f.lfHeight:=-xsize;
-   f.lfWidth         :=0;//font mapper chooses
-   f.lfEscapement    :=0;//straight fonts
-   f.lfOrientation   :=0;//no rotation
-   f.lfWeight        :=low__aorb(0,700,xbold);//400=normal, 700=bold
-   f.lfItalic        :=0;
-   f.lfUnderline     :=0;
-   f.lfStrikeOut     :=0;
-   f.lfCharSet       :=1;//DEFAULT_CHARSET=1, ANSI_CHARSET=0
-
-   for p:=1 to frcmax32(low__len(xfontname),1+high(f.lfFaceName)) do f.lfFaceName[p-1]:=char(xfontname[p-1+stroffset]);
-//   StrPCopy(f.lfFaceName,xfontname);
-
-   f.lfQuality       :=low__aorb(4,NONANTIALIASED_QUALITY,xsharp);
-   f.lfOutPrecision  :=0;//OUT_DEFAULT_PRECIS=0
-   f.lfClipPrecision :=0;//CLIP_DEFAULT_PRECIS=0
-   f.lfPitchAndFamily:=0;//DEFAULT_PITCH=0
-
-   xoutfont:=win____CreateFontIndirect(f);
-
-   //.delete previous references
-   h:=win____selectobject(x,xoutbrush);
-   if (h<>xoutbrush) then win____deleteobject(xoutbrush);
-
-   h:=win____selectobject(x,xoutfont);
-   if (h<>xoutfont) then win____deleteobject(h);
-
-   //colors
-   win____SetBkMode(x,2);//transparent=1, OPAQUE=2
-   win____SetBkColor(x,xbackcolor);
-   win____SetTextColor(x,xcolor);
-   end;
+if xuseb then result:=b else result:=a;
 end;
 
+function c24__aorb(const a,b:tcolor24;const xuseb:boolean):tcolor24;//09apr2026
+begin
+if xuseb then result:=b else result:=a;
+end;
+
+
+//canvas procs -----------------------------------------------------------------
 
 function wincanvas__textwidth(x:hdc;const xval:string):longint;
 begin
@@ -29529,7 +32754,7 @@ end;
 function wincanvas__textout(x:hdc;xtransparent:boolean;dx,dy:longint;const xval:string):boolean;
 begin
 result:=(x<>0);
-if result then win____TextOut(x,dx,dy,pchar(xval),low__len(xval));
+if result then win____TextOut(x,dx,dy,pchar(xval),low__Len32(xval));
 end;
 
 function wincanvas__textextent(x:hdc;const xval:string):tpoint;
@@ -29538,17 +32763,20 @@ begin
 result.x:=0;
 result.y:=0;
 //get
-if (x<>0) then win____GetTextExtentPoint(x,pchar(xval),low__len(xval),result);
+if (x<>0) then win____GetTextExtentPoint(x,pchar(xval),low__Len32(xval),result);
 end;
 
-function wincanvas__textrect(x:hdc;xtransparent:boolean;xarea:twinrect;dx,dy:longint;const xval:string):boolean;
+function wincanvas__textrect(const x:hdc;const xtransparent:boolean;const xarea:twinrect;const dx,dy:longint;const xval:string):boolean;//20dec2025
 var
    xoptions:longint;
 begin
-result:=(x<>0);
-xoptions:=ETO_CLIPPED;
+
+result    :=(x<>0);
+xoptions  :=ETO_CLIPPED;
+
 if not xtransparent then inc(xoptions,ETO_OPAQUE);
-if result then win____ExtTextOut(x,dx,dy,xoptions,@xarea,pchar(xval),low__len(xval),nil);
+if result then win____ExtTextOut(x,dx,dy,xoptions,@xarea,pchar(xval),low__Len32(xval),nil);
+
 end;
 
 
@@ -29581,48 +32809,51 @@ dh:=frcmin32(sh,1);
 except;end;
 end;
 
-procedure low__scale(maxw,maxh,sw,sh:integer;var dw,dh:integer);//20feb2025: tweaked
+procedure low__scale(maxw,maxh,sw,sh:longint32;var dw,dh:longint32);//20feb2025: tweaked
 var
    r1,r2:extended;
 begin
-try
+
 //range
-sw:=frcmin32(sw,1);
-sh:=frcmin32(sh,1);
-dw:=sw;
-dh:=sh;
+sw          :=frcmin32(sw,1);
+sh          :=frcmin32(sh,1);
+dw          :=sw;
+dh          :=sh;
 
 //get
-r1:=maxw/sw;
+r1          :=maxw/sw;
+
 if (r1<=0) then r1:=1;
-r2:=maxh/sh;
+
+r2          :=maxh/sh;
+
 if (r2<=0) then r2:=1;
 if (r2<r1) then r1:=r2;
 
 //set
-dw:=frcmin32(round(sw*r1),1);
-dh:=frcmin32(round(sh*r1),1);
-except;end;
+dw          :=frcmin32(round32(sw*r1),1);
+dh          :=frcmin32(round32(sh*r1),1);
+
 end;
 
-procedure low__scalecrop(maxw,maxh,sw,sh:integer;var dw,dh:integer);//20feb2025: fixed
+procedure low__scalecrop(maxw,maxh,sw,sh:longint32;var dw,dh:longint32);//20feb2025: fixed
 var
    wratio,hratio:double;
 begin
-try
-sw   :=frcmin32(sw,1);
-sh   :=frcmin32(sh,1);
-maxw :=frcmin32(maxw,1);
-maxh :=frcmin32(maxh,1);
 
-wratio:=maxw/sw;
-hratio:=maxh/sh;
+sw          :=frcmin32(sw,1);
+sh          :=frcmin32(sh,1);
+maxw        :=frcmin32(maxw,1);
+maxh        :=frcmin32(maxh,1);
+
+wratio      :=maxw/sw;
+hratio      :=maxh/sh;
 
 if (hratio>wratio) then wratio:=hratio;
 
-dw:=frcmin32(round(wratio*sw),1);
-dh:=frcmin32(round(wratio*sh),1);
-except;end;
+dw          :=frcmin32(round32(wratio*sw),1);
+dh          :=frcmin32(round32(wratio*sh),1);
+
 end;
 
 end.

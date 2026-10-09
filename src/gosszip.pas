@@ -1,19 +1,21 @@
 unit gosszip;
 
 interface
+{$ifdef gui4} {$define gui3} {$define gamecore}{$endif}
 {$ifdef gui3} {$define gui2} {$define net} {$define ipsec} {$endif}
 {$ifdef gui2} {$define gui}  {$define jpeg} {$endif}
 {$ifdef gui} {$define snd} {$endif}
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
-{$ifdef con2} {$define jpeg} {$endif}
+{$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
+{$ifdef WIN64}{$define 64bit}{$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot {$ifdef laz},windows, sysutils, zbase, zdeflate, zinflate{$endif};
-{$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
+uses gosswin2, gossroot {$ifdef laz}, zbase, zdeflate, zinflate{$endif};
+{$align on}{$iochecks on}{$O+}{$W-}{$U+}{$V+}{$B-}{$X+}{$T-}{$P+}{$H+}{$J-} { set critical compiler conditionals for proper compilation - 10aug2025 }
 //## ==========================================================================================================================================================================================================================
 //##
 //## MIT License
 //##
-//## Copyright 2025 Blaiz Enterprises ( http://www.blaizenterprises.com )
+//## Copyright 2026 Blaiz Enterprises ( http://www.blaizenterprises.com )
 //##
 //## Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 //## files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
@@ -33,18 +35,25 @@ uses gossroot {$ifdef laz},windows, sysutils, zbase, zdeflate, zinflate{$endif};
 //## Items.................... 6
 //## Last Updated ............ 18jun2025, 09jun2025, 28may2025, 13may2025, 29apr2025, 22apr2025, 04apr2025, 27jan2025, 05dec2024, 01dec2024, 26nov2024, 15nov2024, 11nov2024, 10aug2024, 24jun2024, 17apr2024
 //## Lines of Code............ 400+
+//## Origin .................. Human generated and maintained
 //##
-//## main.pas ................ app code
-//## gossroot.pas ............ console/gui app startup and control
-//## gossio.pas .............. file io
-//## gossimg.pas ............. image/graphics
-//## gossnet.pas ............. network
-//## gosswin.pas ............. 32bit windows api's/xbox controller
-//## gosssnd.pas ............. sound/audio/midi/chimes
-//## gossgui.pas ............. gui management/controls
-//## gossdat.pas ............. app icons (24px and 20px) and help documents (gui only) in txt, bwd or bwp format
-//## gosszip.pas ............. zip support
-//## gossjpg.pas ............. jpeg support
+//## main.pas ................ App specific code
+//## gossdat.pas ............. App specific icons and help documents
+//## gossfast.pas ............ FastDraw - rapid render graphic procs
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
+//## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossgui.pas ............. GUI management and controls
+//## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
+//## gossio.pas .............. File IO and low level file/folder/disk/data format procs
+//## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossnet.pas ............. Networking - ip filtering, socket management etc
+//## gossroot.pas ............ App startup and control (GUI, console and service)
+//## gosssnd.pas ............. Sound, audio, midi and midi based chimes
+//## gossteps.pas ............ System, Folder and App images
+//## gosstext.pas ............ TextCore - non-GUI and GUI text engine for text boxes
+//## gosswin.pas ............. Win32 api calls for 32 and 64 bit (static / api references disabled by default)
+//## gosswin2.pas ............ Win32 api calls for 32 and 64 bit (dynamic - load as required with fallback failure handling and default value(s) support)
+//## gosszip.pas ............. ZIP IO (read/write zip data via third party libraries)
 //##
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
@@ -244,7 +253,7 @@ tsize:=4096;
 try
 //lock
 if not str__lock(@s) then exit;
-slen:=str__len(@s);
+slen:=str__len32(@s);
 if (slen<=0) then
    begin
    result:=true;
@@ -276,7 +285,7 @@ begin
 //.read more data
 if (strm.avail_in<=0) and (spos<slen) then
    begin
-   if not block__fastinfo(@s,spos,smem,smin,smax) then goto skipend;
+   if not block64__fastinfo32(@s,spos,smem,smin,smax) then goto skipend;
    strm.next_in:=smem;
    strm.avail_in:=smax-smin+1;
    inc(spos,smax-smin+1);
@@ -354,7 +363,7 @@ tsize:=4096;
 try
 //lock
 if not str__lock(@s) then exit;
-slen:=str__len(@s);
+slen:=str__len32(@s);
 if (slen<=0) then
    begin
    result:=true;
@@ -386,7 +395,7 @@ begin
 //.read more data
 if (strm.avail_in<=0) and (spos<slen) then
    begin
-   if not block__fastinfo(@s,spos,smem,smin,smax) then goto skipend;
+   if not block64__fastinfo32(@s,spos,smem,smin,smax) then goto skipend;
    strm.next_in:=pbyte(smem);
    strm.avail_in:=smax-smin+1;
    inc(spos,smax-smin+1);

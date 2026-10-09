@@ -1,19 +1,21 @@
 unit gossjpg;
 
 interface
+{$ifdef gui4} {$define gui3} {$define gamecore}{$endif}
 {$ifdef gui3} {$define gui2} {$define net} {$define ipsec} {$endif}
 {$ifdef gui2} {$define gui}  {$define jpeg} {$endif}
 {$ifdef gui} {$define snd} {$endif}
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
-{$ifdef con2} {$define jpeg} {$endif}
+{$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
+{$ifdef WIN64}{$define 64bit}{$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot {$ifdef laz}{$ifdef jpeg},windows, sysutils, classes, graphics, JcParam, JDataDst, JDataSrc, JCOMapi, JcAPIstd, JdAPIstd, FPReadJPEG, JPEGLib, JcAPImin, JdAPImin{$endif}{$endif};
-{$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
+uses gosswin2, gossroot {$ifdef laz}{$ifdef jpeg}, JcParam, JDataDst, JDataSrc, JCOMapi, JcAPIstd, JdAPIstd, FPReadJPEG, JPEGLib, JcAPImin, JdAPImin{$endif}{$endif};
+{$align on}{$iochecks on}{$O+}{$W-}{$U+}{$V+}{$B-}{$X+}{$T-}{$P+}{$H+}{$J-} { set critical compiler conditionals for proper compilation - 10aug2025 }
 //## ==========================================================================================================================================================================================================================
 //##
 //## MIT License
 //##
-//## Copyright 2025 Blaiz Enterprises ( http://www.blaizenterprises.com )
+//## Copyright 2026 Blaiz Enterprises ( http://www.blaizenterprises.com )
 //##
 //## Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 //## files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
@@ -39,27 +41,34 @@ uses gossroot {$ifdef laz}{$ifdef jpeg},windows, sysutils, classes, graphics, Jc
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. Jpeg support (gossjpg.pas)
-//## Version.................. 4.00.251 (+39)
+//## Version.................. 4.00.254 (+39)
 //## Items.................... 1
-//## Last Updated ............ 18jun2025, 27may2025, 05may2025, 17feb2024
+//## Last Updated ............ 03dec2025, 18jun2025, 27may2025, 05may2025, 17feb2024
 //## Lines of Code............ 1,500+
+//## Origin .................. Human generated and maintained
 //##
-//## main.pas ................ app code
-//## gossroot.pas ............ console/gui app startup and control
-//## gossio.pas .............. file io
-//## gossimg.pas ............. image/graphics
-//## gossnet.pas ............. network
-//## gosswin.pas ............. 32bit windows api's/xbox controller
-//## gosssnd.pas ............. sound/audio/midi/chimes
-//## gossgui.pas ............. gui management/controls
-//## gossdat.pas ............. app icons (24px and 20px) and help documents (gui only) in txt, bwd or bwp format
-//## gosszip.pas ............. zip support
-//## gossjpg.pas ............. jpeg support
+//## main.pas ................ App specific code
+//## gossdat.pas ............. App specific icons and help documents
+//## gossfast.pas ............ FastDraw - rapid render graphic procs
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
+//## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossgui.pas ............. GUI management and controls
+//## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
+//## gossio.pas .............. File IO and low level file/folder/disk/data format procs
+//## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossnet.pas ............. Networking - ip filtering, socket management etc
+//## gossroot.pas ............ App startup and control (GUI, console and service)
+//## gosssnd.pas ............. Sound, audio, midi and midi based chimes
+//## gossteps.pas ............ System, Folder and App images
+//## gosstext.pas ............ TextCore - non-GUI and GUI text engine for text boxes
+//## gosswin.pas ............. Win32 api calls for 32 and 64 bit (static / api references disabled by default)
+//## gosswin2.pas ............ Win32 api calls for 32 and 64 bit (dynamic - load as required with fallback failure handling and default value(s) support)
+//## gosszip.pas ............. ZIP IO (read/write zip data via third party libraries)
 //##
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
 //## |------------------------|-------------------|-----------|-------------|--------------------------------------------------------
-//## | jpg__*                 | family of procs   | 1.00.212  | 16jun2025   | JPEG image io procs -> read and write jpeg images to/from tstr8 and tstr9 handlers - 05may2025
+//## | jpg__*                 | family of procs   | 1.00.215  | 03dec2025   | JPEG image io procs -> read and write jpeg images to/from tstr8 and tstr9 handlers - 16jun2025, 05may2025
 //## ==========================================================================================================================================================================================================================
 //## Performance Note:
 //##
@@ -105,8 +114,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossjpg.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.251'
-else if (xname='date')       then result:='18jun2025'
+if      (xname='ver')        then result:='4.00.254'
+else if (xname='date')       then result:='03dec2025'
 else if (xname='name')       then result:='Jpeg'
 else
    begin
@@ -129,7 +138,7 @@ if (cinfo^.err^.msg_code=36) then exit;
 raise Exception.CreateFmt('JPEG error '+k64(cinfo^.err^.msg_code),[cinfo^.err^.msg_code]);//reguired -> feeds error back to calling proc
 end;
 
-procedure err__EmitMessage(cinfo: j_common_ptr; msg_level: Integer);
+procedure err__EmitMessage(cinfo: j_common_ptr; msg_level: longint32);
 begin
 //
 end;
@@ -144,10 +153,13 @@ begin
 //
 end;
 
-procedure err__ResetErrorMgr(cinfo: j_common_ptr);
+procedure err__ResetErrorMgr(cinfo: j_common_ptr);//03dec2025
 begin
-cinfo^.err^.num_warnings :=0;
-cinfo^.err^.msg_code     :=0;
+
+//lazarus - 03dec2025
+//was: cinfo^.err^.num_warnings :=0;
+//was: cinfo^.err^.msg_code     :=0;
+
 end;
 
 const
@@ -309,7 +321,7 @@ j.err :=@jpeg_std_error;//local var => thread isolation
 try
 //check
 if not str__lock(s)              then goto skipend;
-if (str__len(s)<=0)              then goto skipend;
+if (str__len32(s)<=0)              then goto skipend;
 if not misok82432(d,dbits,dw,dh) then goto skipend;
 
 //.s -> sdata
@@ -771,12 +783,12 @@ begin
 FreeMem(P);
 end;
 
-procedure _memset(P: Pointer; B: Byte; count: Integer);cdecl;
+procedure _memset(P: Pointer; B: Byte; count: longint32);cdecl;
 begin
 FillChar(P^, count, B);
 end;
 
-procedure _memcpy(dest, source: Pointer; count: Integer);cdecl;
+procedure _memcpy(dest, source: Pointer; count: longint32);cdecl;
 begin
 Move(source^, dest^, count);
 end;
@@ -791,13 +803,13 @@ xsize:=recsize * reccount;
 //get
 if (xsize>=1) and str__ok(s) then
    begin
-   spos  :=str__seekpos(s);
-   slen  :=str__len(s);
+   spos  :=str__seekpos32(s);
+   slen  :=str__len32(s);
    result:=frcmax32(xsize,slen-spos);
 
    if (result>=1) then
       begin
-      result:=str__moveto(s,buf,spos,result);
+      result:=str__moveto32(s,buf,spos,result);
       str__setseekpos(s,spos+result);
       end;
    end
@@ -808,12 +820,14 @@ function _fwrite(const buf; recsize, reccount: longint; s:pobject): longint; cde
 var
    xsize:longint;
 begin
+
 //init
 xsize:=recsize * reccount;
 
 //get
-if (xsize>=1) and str__ok(s) then result:=str__movefrom(s,buf,xsize)
+if (xsize>=1) and str__ok(s) then result:=str__movefrom32(s,buf,xsize)
 else                              result:=0;
+
 end;
 
 function _fflush(s:pointer): longint; cdecl;
@@ -844,7 +858,7 @@ if (cinfo^.err^.msg_code=36) then exit;
 raise Exception.CreateFmt('JPEG error '+k64(cinfo^.err^.msg_code),[cinfo^.err^.msg_code]);//reguired -> feeds error back to calling proc
 end;
 
-procedure err__EmitMessage(cinfo: j_common_ptr; msg_level: Integer);
+procedure err__EmitMessage(cinfo: j_common_ptr; msg_level: longint32);
 begin
 //
 end;
@@ -1065,7 +1079,7 @@ j.common.err :=@jpeg_std_error;//local var => thread isolation
 try
 //check
 if not str__lock(s)              then goto skipend;
-if (str__len(s)<=0)              then goto skipend;
+if (str__len32(s)<=0)              then goto skipend;
 if not misok82432(d,dbits,dw,dh) then goto skipend;
 
 //init

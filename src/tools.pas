@@ -1,13 +1,14 @@
 unit tools;
 
 interface
+{$ifdef gui4} {$define gui3} {$define gamecore}{$endif}
 {$ifdef gui3} {$define gui2} {$define net} {$define ipsec} {$endif}
 {$ifdef gui2} {$define gui}  {$define jpeg} {$endif}
 {$ifdef gui} {$define snd} {$endif}
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
-{$ifdef con2} {$define jpeg} {$endif}
+{$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gossio, gossimg, gossnet {$ifdef laz} {$ifdef search}, httpsend, ssl_openssl{$endif}{$endif};
+uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gosswin2, gossio, gossimg, gossnet {$ifdef laz} {$ifdef search}, httpsend, ssl_openssl{$endif}{$endif};
 {$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
 //## ==========================================================================================================================================================================================================================
 //##
@@ -823,10 +824,10 @@ xname:=strlow(xname);
 //find
 for p:=0 to (local_count-1) do if tools__running(p) then
    begin
-   nlen:=low__len(local_list[p].modname);
+   nlen:=low__len32(local_list[p].modname);
    if strmatch( strcopy1(xname,1,1+nlen), local_list[p].modname+'.' ) then
       begin
-      result:=local_list[p].info(strcopy1(xname,nlen+2,low__len(xname)));
+      result:=local_list[p].info(strcopy1(xname,nlen+2,low__len32(xname)));
       break;
       end;
    end;//p
@@ -886,7 +887,7 @@ var
 begin
 result:=false;
 
-if (local_count>=1) then for p:=0 to (local_count-1) do if tools__running(p) and strmatch( strcopy1(xname,1,low__len(local_list[p].modname)) ,local_list[p].modname) then
+if (local_count>=1) then for p:=0 to (local_count-1) do if tools__running(p) and strmatch( strcopy1(xname,1,low__len32(local_list[p].modname)) ,local_list[p].modname) then
    begin
    xindex:=p;
    result:=true;
@@ -1547,7 +1548,7 @@ else if mp(n,'addurls.html') then
    begin
    //get and flush
    z:=v.s['urllist.leftover'];
-   zlen:=low__len(z);
+   zlen:=low__len32(z);
    v.s['urllist.leftover']:='';
 
    //page
@@ -2416,7 +2417,7 @@ end;//p
 kcount:=0;
 lp:=1;
 
-for p:=1 to low__len(xtext) do
+for p:=1 to low__len32(xtext) do
 begin
 c:=byte(xtext[p-1+stroffset]);
 if keyword__sep(c) then
@@ -2474,7 +2475,7 @@ xrejectedURLS:='';
 if (xlistofurls='') then exit;
 
 //init
-xlen:=low__len(xlistofurls);
+xlen:=low__len32(xlistofurls);
 
 //get
 try
@@ -2564,7 +2565,7 @@ var
    function m(x:string):boolean;
    begin
    ilastm:=x;
-   result:=strmatch(strcopy1(l,p,low__len(x)),x);
+   result:=strmatch(strcopy1(l,p,low__len32(x)),x);
    end;
 
    function et(x:string):string;
@@ -2572,8 +2573,8 @@ var
       mlen,xlen,i:longint;
    begin
    result:='';
-   mlen:=low__len(ilastm);
-   xlen:=low__len(x);
+   mlen:=low__len32(ilastm);
+   xlen:=low__len32(x);
 
    for i:=(p+mlen) to llen do
    begin
@@ -2603,8 +2604,8 @@ var
    //check
    if (n='') then exit;
    n:=strlow(n);
-   nlen:=low__len(n);
-   mlen:=low__len(ilastm);
+   nlen:=low__len32(n);
+   mlen:=low__len32(ilastm);
    xwithin:=false;
    xequal:=false;
    dn:='';
@@ -2680,7 +2681,7 @@ if (xurl='') then
 if url__split2(xurl,utyp,xurl_isfrontpage,xdomain,xurl,true,true) then
    begin
    //list suport
-   dlen:=low__len(xdomain);
+   dlen:=low__len32(xdomain);
    dref:=url__makeref(xdomain);
 
    //check domain against "black listed domains" list
@@ -2732,7 +2733,7 @@ xtit:='';
 xdes:='';
 xh1:='';
 l:=strlow(xpagecode);
-llen:=low__len(l);
+llen:=low__len32(l);
 ilastm:='';
 
 for p:=1 to llen do
@@ -2780,7 +2781,7 @@ if (xurl='') then
    failed(xurl,'Empty url',utyp);
    goto skipend;
    end;
-if (low__len(xurl)>sizeof(turl)) then
+if (low__len32(xurl)>sizeof(turl)) then
    begin
    failed(xurl,'Url too big',utyp);
    goto skipend;
@@ -2814,15 +2815,15 @@ if (xtitle='') and (xdes='') then
 
 //.write url
 low__cls(@d.url,sizeof(d.url));
-for p:=1 to low__len(xurl) do d.url[p-1]:=byte(xurl[p-1+stroffset]);
+for p:=1 to low__len32(xurl) do d.url[p-1]:=byte(xurl[p-1+stroffset]);
 
 //.title
 low__cls(@d.tit,sizeof(d.tit));
-for p:=1 to frcmax32(low__len(xtitle),sizeof(d.tit)) do d.tit[p-1]:=byte(xtitle[p-1+stroffset]);
+for p:=1 to frcmax32(low__len32(xtitle),sizeof(d.tit)) do d.tit[p-1]:=byte(xtitle[p-1+stroffset]);
 
 //.des
 low__cls(@d.des,sizeof(d.des));
-for p:=1 to frcmax32(low__len(xdes),sizeof(d.des)) do d.des[p-1]:=byte(xdes[p-1+stroffset]);
+for p:=1 to frcmax32(low__len32(xdes),sizeof(d.des)) do d.des[p-1]:=byte(xdes[p-1+stroffset]);
 
 //.keywords
 for p:=0 to high(k) do
@@ -2875,14 +2876,14 @@ if (r.krev>=1) then low__roll64(ikeyword_whitehits,1);
 //.keywords have already been length checked -> safe to read as is
 for p:=0 to high(k) do if (k[p]<>'') then
    begin
-   for p2:=1 to low__len(k[p]) do d.keys[p][p2-1]:=byte(k[p][p2-1+stroffset]);
+   for p2:=1 to low__len32(k[p]) do d.keys[p][p2-1]:=byte(k[p][p2-1+stroffset]);
    end;
 
 //.other vars
-r.dlen:=low__len(xdomain);
+r.dlen:=low__len32(xdomain);
 r.dref:=url__makeref(xdomain);
 
-r.ulen:=low__len(xurl);
+r.ulen:=low__len32(xurl);
 r.uref:=url__makeref(xurl);
 
 r.utyp:=utyp;
@@ -3479,7 +3480,7 @@ begin
 if (sender is tgeturl) then
    begin
    //approximate bandwidth consumption -> e.g. 5K per outbound request AND 5K + text.length per inbound response => 10K + text.length total
-   xin:=add64(5000,low__len((sender as tgeturl).text));
+   xin:=add64(5000,low__len32((sender as tgeturl).text));
    xout:=5000;
 
    net__inccounters(xin,xout);
@@ -3681,7 +3682,7 @@ if not url__split(xurl,a.utyp,xdomain,xurl) then
 len1:=ulen.core;
 ref8:=uref.core;
 
-a.dlen:=low__len(xdomain);
+a.dlen:=low__len32(xdomain);
 a.dref:=url__makeref(xdomain);
 a.usrc:=xsrc;
 
@@ -3707,7 +3708,7 @@ if (xsearch<>nil) then
    end;
 
 //.url info
-a.ulen:=low__len(xurl);
+a.ulen:=low__len32(xurl);
 a.uref:=url__makeref(xurl);
 
 low__cls(@a.url,sizeof(a.url));
@@ -3799,9 +3800,9 @@ if (ulen.items[ipullpos]>=1) then
          if url__split(xurl,utyp1,ddomain,durl) then
             begin
 
-            dlen1:=low__len(ddomain);
+            dlen1:=low__len32(ddomain);
             dref8:=url__makeref(ddomain);
-            ulen1:=low__len(durl);
+            ulen1:=low__len32(durl);
             uref8:=url__makeref(durl);
 
             case xsearch.xfindslot(dlen1,ulen1,dref8,uref8,false) of
@@ -4084,7 +4085,7 @@ end;
 
 function turlpool.rambytes:longint;
 begin
-result:=icore.len + (isrc.bpi*isrc.size) + (ilen.bpi*ilen.size);
+result:=icore.len32 + (isrc.bpi*isrc.size) + (ilen.bpi*ilen.size);
 end;
 
 function turlpool.canpush:boolean;
@@ -4102,7 +4103,7 @@ result:=false;
 //check
 if not canpush                   then exit;//no capacity left -> ignore
 
-xlen:=low__len(xurl);
+xlen:=low__len32(xurl);
 if (xlen<=0) or (xlen>islotsize) then exit;//too small or too big -> ignore
 
 //find free slot
@@ -4266,7 +4267,7 @@ var
 begin
 try
 //init
-xlen:=low__len(xlist);
+xlen:=low__len32(xlist);
 
 //clear list
 clear;
@@ -4282,7 +4283,7 @@ begin
 
 if url__split2(xline,utyp,bol1,ddomain,uurl,false,false) then
    begin
-   dlen:=low__len(ddomain);
+   dlen:=low__len32(ddomain);
    dref:=url__makeref(ddomain);
 
    if not have(dlen,dref) then//detect duplicates -> include only one instance of domain
@@ -4408,7 +4409,7 @@ var
 begin
 try
 //init
-xlen:=low__len(xlist);
+xlen:=low__len32(xlist);
 
 //clear list
 clear;
@@ -4874,7 +4875,7 @@ if (v<>nil) then
    ivars.s['file.data1']:='';//reduce RAM
 
    //inc job counter - 22feb2025
-   if (str__len(@b)>=1) then
+   if (str__len32(@b)>=1) then
       begin
       inc_jobcount;
       inc__dailyjobs;
@@ -4884,7 +4885,7 @@ if (v<>nil) then
    if not io__findimagewh(@b,sformat,sw,sh) then
       begin
       xwithinlimits:=false;
-      if (str__len(@b)>=1) then
+      if (str__len32(@b)>=1) then
          begin
          derrortitle:='Unsupported Image Format';
          derrormessage:='Format of the uploaded image is not supported. Try again with an image in one of these formats: bmp, gif, ico, jpg, png, tea or tga.';
@@ -4906,7 +4907,7 @@ if (v<>nil) then
    da.bottom  :=da.top+ddh-1;
 
    //draw "s" onto "d" -> if failure, make "d" blank
-   if (not xwithinlimits) or (not mis__fromdata(s,@b,e)) or (not mis__onecell(s)) or (not mis__fixemptymask(s)) or (not miscopyarea32(da.left,da.top,da.right-da.left+1,da.bottom-da.top+1,misarea(s),d,s)) then
+   if (not xwithinlimits) or (not mis__fromdata(s,@b,e)) or (not mis__onecell(s)) or (not mis__fixemptymask(s)) or (not mis__copyfast(maxarea,misarea(s),da.left,da.top,da.right-da.left+1,da.bottom-da.top+1,s,d)) then
       begin
       //fallback to default icon
       xdefaultico32(@b);
@@ -4922,7 +4923,7 @@ if (v<>nil) then
       dbits  :=ia__ifindvalb(daction,ia_bpp,0,1);//actual bits used to create the icon - 19feb2025
       dtransparent:=(ia__ifindvalb(daction,ia_transparent,0,0)<>0);
       dcolors:=miscountcolors(d);
-      dbytes :=str__len(@b);
+      dbytes :=str__len32(@b);
       //.convert to base64
       str__tob64(@b,@b,0);
       dimagedata_b64:='data:'+xmimetype('ico')+';base64,'+str__text(@b);//22feb2025
@@ -5417,7 +5418,7 @@ if (v<>nil) then
    ivars.s['file.data1']:='';//reduce RAM
 
    //inc job counter - 22feb2025
-   if (str__len(@b)>=1) then
+   if (str__len32(@b)>=1) then
       begin
       inc_jobcount;
       inc__dailyjobs;
@@ -5427,7 +5428,7 @@ if (v<>nil) then
    if not io__findimagewh(@b,sformat,sw,sh) then
       begin
       xwithinlimits:=false;
-      if (str__len(@b)>=1) then
+      if (str__len32(@b)>=1) then
          begin
          derrortitle:='Unsupported Image Format';
          derrormessage:='Format of the uploaded image is not supported. Try again with an image in one of these formats: bmp, gif, ico, jpg, png, tea or tga.';
@@ -5456,7 +5457,7 @@ if (v<>nil) then
    //info
    dw     :=misw(s);
    dh     :=mish(s);
-   dbytes :=str__len(@b);
+   dbytes :=str__len32(@b);
    dformat:=io__anyformatb(@b);
    xbrowserimage:=mis__browsersupports(dformat);
 
@@ -5481,10 +5482,11 @@ if (v<>nil) then
       d:=misimg32(da.right-da.left+1,da.bottom-da.top+1);
 
       //draw "s" onto "d" -> if failure, make "d" blank
-      miscopyarea32(0,0,misw(d),mish(d),misarea(s),d,s);
+      mis__copyfast(maxarea,misarea(s),0,0,misw(d),mish(d),s,d);
       mis__todata(d,@b,'png',e);
       str__tob64(@b,@b,0);
       dthumb_b64:='data:'+xmimetype('png')+';base64,'+str__text(@b);
+
       end;
 
    //successful
@@ -5591,7 +5593,7 @@ begin
 result:=x;
 if (result<>'') then
    begin
-   for p:=1 to low__len(result) do
+   for p:=1 to low__len32(result) do
    begin
    s:=byte(result[p-1+stroffset]);
    d:=s;
@@ -5624,7 +5626,7 @@ var
 
    function m(n:string):boolean;
    begin
-   result:=(xslashpos>=1) and (n<>'') and strmatch(strcopy1(xurl,xslashpos,low__len(n)),n);
+   result:=(xslashpos>=1) and (n<>'') and strmatch(strcopy1(xurl,xslashpos,low__len32(n)),n);
    end;
 begin
 //defaults
@@ -5641,12 +5643,12 @@ xurl:=low__filter(surl,true);
 if      strmatch(strcopy1(xurl,1,7),'http://') then
    begin
    utyp:=0;
-   xurl:=strcopy1(xurl,8,low__len(xurl));
+   xurl:=strcopy1(xurl,8,low__len32(xurl));
    end
 else if strmatch(strcopy1(xurl,1,8),'https://') then
    begin
    utyp:=1;
-   xurl:=strcopy1(xurl,9,low__len(xurl));
+   xurl:=strcopy1(xurl,9,low__len32(xurl));
    end
 else if not xstrict then
    begin
@@ -5655,7 +5657,7 @@ else if not xstrict then
 else goto skipend;
 
 //check
-xurl_len:=low__len(xurl);
+xurl_len:=low__len32(xurl);
 if (xurl_len<=0) or (xurl_len>sizeof(turl))  then goto skipend;
 
 //.domain
@@ -5732,7 +5734,7 @@ kout:=strlow(low__filter(strlow(x),false));
 //read to keyword sep - optional
 if xreadTosep and (kout<>'') then
    begin
-   for p:=1 to low__len(kout) do if keyword__sep(byte(kout[p-1+stroffset])) then
+   for p:=1 to low__len32(kout) do if keyword__sep(byte(kout[p-1+stroffset])) then
       begin
       kout:=strcopy1(kout,1,p-1);
       break;
@@ -5740,7 +5742,7 @@ if xreadTosep and (kout<>'') then
    end;
 
 //enforce maximum keyword length
-if (low__len(kout)>sizeof(tkeyword)) then kout:=strcopy1(kout,1,sizeof(tkeyword));
+if (low__len32(kout)>sizeof(tkeyword)) then kout:=strcopy1(kout,1,sizeof(tkeyword));
 
 //successful
 result:=(kout<>'');
@@ -5786,12 +5788,12 @@ result:=false;
 if (xurl='') then exit;
 
 //strip protocol
-if      strmatch(strcopy1(xurl,1,7),'http://')  then xurl:=strcopy1(xurl,8,low__len(xurl))
-else if strmatch(strcopy1(xurl,1,8),'https://') then xurl:=strcopy1(xurl,9,low__len(xurl))
+if      strmatch(strcopy1(xurl,1,7),'http://')  then xurl:=strcopy1(xurl,8,low__len32(xurl))
+else if strmatch(strcopy1(xurl,1,8),'https://') then xurl:=strcopy1(xurl,9,low__len32(xurl))
 else                                                 exit;
 
 //scan
-for p:=1 to low__len(xurl) do
+for p:=1 to low__len32(xurl) do
 begin
 
 case byte(xurl[p-1+stroffset]) of
@@ -5819,7 +5821,7 @@ if not str__lock(xhtml) then goto skipend;
 str__lock(xvalue);
 
 //init
-xlen:=str__len(xhtml);
+xlen:=str__len32(xhtml);
 i:=-1;
 
 //find

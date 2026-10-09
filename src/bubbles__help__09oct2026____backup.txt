@@ -1,4 +1,4 @@
-[t]What is Bubbles, and what does she do?
+[t]What is Bubbles and what does she do?
 She is a simple, easy to use HTTP web server that is browser controlled, and capable of serving static files over the internet, either streamed from disk, or direct from RAM without lag.
 
 Her GUI administration panel is accessed through your web browser (e.g. "http://localhost:1080/admin/" + default password of "admin"), which controls all her settings and vital functions, all in realtime.
@@ -450,7 +450,7 @@ The "*" file type is the fallback mime type used for unknown file types.[/]
 
 
 [t]Web Administration - Contact
-Manages contact form submissions and the SMTP (simple mail transport protocol) email server.
+Manages contact form submissions, subscribe and unsubscribe requests, and the SMTP (simple mail transport protocol) email server.
 
 [h]Allow Contact Form Submissions
 Turns on the contact form handler, allowing contact form submissions via the "contact.html" file.  This is the only file permitted to submit a contact form message to Bubbles.  
@@ -498,8 +498,79 @@ Example code snippet from our website's contact form (contact.html):
 </div>
 </form>[/]
 
+[h]Allow Subscribe/Unsubscribe Requests
+Turns on the email subscribe/unsubscribe handler, allowing users to subscribe/unsubscribe to your site's email list.  Your site's subscribe form code must reside in the "subscribe.html" file, and your site's unsubscribe form code must reside in the "unsubscribe.html" file.  These two ".html" files are specifically monitored by Bubbles for the subscribe handler.
+
+Your forms must use the "POST" method when sending the user's email address to Bubbles, and the email address must be stored in the variable name "email" for the request to be processed.  If you intend to use the Spam Guard in order to prevent against spam submissions then use the "((spamguard))" (without quotes) tag to position it within your subscribe form code.  The unsubscribe form does not require/use the Spam Guard system.  If this tag is missing from your "subscribe.html" page, Bubbles will insert it at the bottom of your form.
+
+Like the contact form handler, there is an upload limit of 65K.
+
+Each hosted site has support for one subscribe list.  Bubbles automatically sanitises these lists, deleting invalid email addresses, removing leading and trailing white space, and filtering out duplicate entries.  In addition, an optional daily submission list is maintained and delivered to your inbox at midnight when there is one or more submissions during the previous 24 hours.  To enable this daily option, tick the "Settings > Bubbles daily subscribe notices (delivered to inbox)" checkbox.
+
+An additional option "Settings > Bubbles subscribe notices (delivered per request to inbox)", delivers individual subscribe and unsubscribe requests to your inbox in realtime.
+
+You can also access each site's full subscribe list by navigating to the "Manage" tab and selecting the desired site.  Then scroll down to the section heading "Subscribe List" and click the "Load" button.  Bubbles will display the full list and the number of emails stored within.
+
+The way it works, once a subscribe or unsubscribe request is received by Bubbles the built-in handler modifies the html page (subscribe.html or unsubscribe.html) by inserting a reply message between the starting comment code "<!--reply-->" (without quotes) and the endpoint comment code "<!--endreply-->" (without quotes).  If this block is found, the code between it is swapped out for a built-in reply message.  If the code block is not found then a reply message is inserted into the page with a best guess approach.  The final page is then sent back to the user's browser.
+
+Unlike the contact form handler, the subscribe handler's reply messages are built-in.
+
+Here is an example code snippet for a subscribe form in the "subscribe.html" page:
+[k]Subscribe to our site's newsletter - add your email to our list:<br>
+<br>
+<form method=post action="subscribe.html" class="left">
+<div class="window tint-back">
+
+<div class="text max-width-95">
+<div class="align-center center">
+<!--reply-->
+
+<div class="inline-block align-left">
+<label class="window-label window-vpad inline-block align-left" for="lemail">Your Email Address</label>
+<input class="window-edit inline width-70" name="email" id="lemail" value="">
+<input class="button center-margin inline" type=submit value=" Subscribe "><br>
+
+<div class="spamguard align-left">((spamguard))&nbsp;</div>
+
+<div class="font70 align-left">You can unsubscribe at anytime by <a class="link-round-grow" href="unsubscribe.html">clicking here</a>.</div>
+
+</div>
+
+<!--endreply-->
+</div>
+</div>
+</div>
+</form>
+[/]
+
+Here is an example code snippet for an unsubscribe form in the "unsubscribe.html" page:
+[k]Unsubscribe from our site's newsletter - remove your email from our list:<br>
+<br>
+<form method=post action="unsubscribe.html" class="left">
+<div class="window tint-red">
+
+<div class="text max-width-95">
+<div class="align-center center">
+<!--reply-->
+
+<div class="inline-block align-left">
+<label class="window-label window-vpad inline-block align-left" for="lemail">Your Email Address</label>
+<input class="window-edit inline width-70" name="email" id="lemail" value="">
+<input class="button center-margin inline" type=submit value=" Unsubscribe "><br>
+
+<div class="spamguard align-left">&nbsp;</div>
+
+</div>
+
+<!--endreply-->
+</div>
+</div>
+</div>
+</form>
+[/]
+
 [h]Protect against mass spam with Spam Guard
-A simple maths problem mechanism to protect against mass unsolicited spam.  Spam Guard presents the user interacting with your online contact form a short maths problem which must be solved correctly.  An incorrect or unsolved contact form submission ends up in the Trash folder.  A message with a correct answer is saved to your Inbox.
+A simple maths problem mechanism to protect against mass unsolicited spam.  Spam Guard presents the user interacting with your online contact form or subscribe form with a simple maths problem which the user must solve correctly.  An incorrect or unsolved Spam Guard question results in an error.
 
 [h]Allow emails to be received and stored in the inbox
 This turns on the SMTP (simple mail transport protocol) email server, which uses port 25 to receive unencrypted emails.
@@ -683,15 +754,12 @@ Listed below is a complete list of Bubbles' command line support and associated 
 [insert:commandline]
 
 
-[t]License
-MIT License
-
-Copyright 2024 Blaiz Enterprises
+[t]MIT License
+Copyright 2026 Blaiz Enterprises ( http://www.blaizenterprises.com )
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 

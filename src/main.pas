@@ -1,13 +1,14 @@
 unit main;
 
 interface
+{$ifdef gui4} {$define gui3} {$define gamecore}{$endif}
 {$ifdef gui3} {$define gui2} {$define net} {$define ipsec} {$endif}
 {$ifdef gui2} {$define gui}  {$define jpeg} {$endif}
 {$ifdef gui} {$define snd} {$endif}
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
-{$ifdef con2} {$define jpeg} {$endif}
+{$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gossio, gossimg, gossnet, tools;
+uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gosswin2, gossio, gossimg, gossnet, tools;
 {$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
 
 //## ==========================================================================================================================================================================================================================
@@ -30,10 +31,10 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. app code (main.pas) -> Bubbles - Multi-Function Server
-//## Version.................. 3.00.10805
+//## Version.................. 3.00.11252 (+99)
 //## Items.................... 5
-//## Last Updated ............ 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
-//## Lines of Code............ 11,800+
+//## Last Updated ............ 09oct2026, 08oct2026, 09aug2025, 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
+//## Lines of Code............ 13,600+
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -45,7 +46,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version    | Date        | Update history / brief description of function
 //## |------------------------|-------------------|------------|-------------|--------------------------------------------------------
-//## | Bubbles                | family of procs   | 1.00.10195 | 19jun2025   | Bubbles - 07apr2025
+//## | Bubbles                | family of procs   | 1.00.10533 | 09oct2026   | Bubbles - 08oct2026, 09aug2025, 19jun2025, 07apr2025
 //## | tmailsender            | tobjectex         | 1.00.530   | 07apr2025   | DNS lookup and STMP mail sender
 //## | tshortdnscache         | tobjectex         | 1.00.030   | 06apr2025   | DNS A/MX record cache
 //## | tshortlist             | tobjectex         | 1.00.020   | 06apr2025   | Simple list
@@ -58,6 +59,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## causing ~2x more CPU to be consumed.  For optimal performance, these options should be disabled
 //## when compiling.
 //## ==========================================================================================================================================================================================================================
+
 
 const
    iadminpath               ='/admin/';
@@ -72,6 +74,8 @@ const
    idefaultthreshold        =10000000;//10 Mb
    idefaultcachesize        =1200;//Mb
    imaxcachesize            =1500;//Mb
+
+
    icontact_def_off         ='Unable to accept messages at this stage';
    icontact_def_ok          ='Thank you for your online message';
    icontact_def_fail        ='Your online message could not be processed';
@@ -331,6 +335,8 @@ var
    imail_allow:boolean=false;
    imail_sender:tmailsender=nil;//05apr2025
    inewvisitor:tnewvisitor=nil;//07apr2025
+   iua_mask:string='';//ban inbound http user agents - optional - 09aug2025
+   iip_mask:string='';//ban inbound http IPs - optional - 09aug2025
 
    iendofdaydone:boolean=false;
    itimerbusy:boolean=false;
@@ -358,11 +364,18 @@ var
    ibuf2:tobject;//can be tstr8 or tstr9
    igmtstr:string;
    ivars:tfastvars;
-   icontact_allow,icontact_question:boolean;
-   icontact_off,icontact_ok,icontact_fail:string;
+
+   icontact_allow               :boolean;
+   icontact_question            :boolean;
+   icontact_off                 :string;
+   icontact_ok                  :string;
+   icontact_fail                :string;
+
+   isubscribe_allow             :boolean;
+   isubscribe_question          :boolean;
 
    //settings
-   imustboost,icache,ialongsideexe,ishutidle,icsp,inorefdown,isummarynotice,iquotanotice,ireloadnotice,ireverseproxy,ilivestats,irawlogs:boolean;
+   imustboost,icache,ialongsideexe,ishutidle,icsp,inorefdown,isubscribeEachNotice,isubscribenotice,isummarynotice,iquotanotice,ireloadnotice,ireverseproxy,ilivestats,irawlogs:boolean;
    iconsolerate,iport:longint;
    iidletimeout:comp;
    imap:tfastvars;//list of domain mapping
@@ -427,8 +440,8 @@ var
    ifastfolder__root:string;
 
    //contact form question support
-   iquestion__answer:array [0..999] of longint;//0=question not set, as answers are always ">=1" - 04apr2024
-   iquestion__index:longint;
+   ispamGuard_answer            :array [0..999] of longint32;//0=question not set, as answers are always ">=1" - 04apr2024
+   ispamGuard_index             :longint32;
 
 
 //info procs -------------------------------------------------------------------
@@ -456,17 +469,16 @@ function header__make4(var a:pnetwork;xcode:longint;xacceptranges,xmustclose,xfi
 procedure stm__readdata1(var a:pnetwork);
 procedure stm__makereply2(var a:pnetwork);
 procedure stm__writedata3(var a:pnetwork);
-procedure stm__readmail(var a:pnetwork);//implements the SMTP protocol - 20feb2025: disable connection reuse for email, 11mar2024: updated to 40K search 
+procedure stm__readmail(var a:pnetwork);//implements the SMTP protocol - 20feb2025: disable connection reuse for email, 11mar2024: updated to 40K search
 
 //log report procs
 function log__info(xname:string):string;
 procedure log__makereport(var a:pnetwork;slogfilename:string);
 function log__buildreport(var a:pnetwork;d:tobject;dmakeref,slogfilename:string):boolean;
 
-//xxxxxxxxxxxxxxxxxxxxxxxx//ccccccccccccccccc
-//question support (contact form anti-spam challenge filter)
-function question__make(var xquestion:string):boolean;
-function question__checkanswer(xanswer:longint):boolean;
+//Spam Guard support - 09oct2026
+function  spamGuard__makeQuestion(var xquestion:string):boolean;
+function  spamGuard__checkAnswer(const xanswer:longint32):boolean;
 
 //support procs
 function hits__extcounts(xext:string):boolean;
@@ -480,11 +492,7 @@ procedure xsetdaily_bandwidth_quota(xquota_in_mb:comp);
 function bubbles__daily_bandwidth_exceeded:boolean;
 procedure bubbles__inc_daily_bandwidth(xlen:comp);
 function xmakehelp(xclaudehelp:boolean):string;
-function xrambytes:comp;
 function xsymbol(xname:string):string;
-function xcmdline__mustclose:boolean;
-function xcmdline__mustclose2(xforcecmd:string;var xoutput:string):boolean;
-function xcmdline__output(xforcecmd:string):string;
 function xstrcopyto(x:string;xto:char):string;
 function xforce_backslash(x:string):string;
 function xforce_slash(x:string):string;
@@ -549,7 +557,14 @@ function xhtmlback:string;
 function xhtmlfinish:string;
 function xhtmlfinish2(xbare:boolean):string;
 function xsafewebname(var x:string):boolean;
-function xcontact_html(var a:pnetwork):boolean;
+
+function  contact__html(var a:pnetwork):boolean;
+
+function  subscribe__html(var a:pnetwork;const ddiskHost:string;const xsubscribe:boolean):boolean;//08oct2026
+function  subscribe__listFilename(const ddiskHost:string;const xdailyList:boolean):string;
+function  subscribe__manageOne(const ddiskHost:string;var demail:string;const xdailyList,xaddEmail:boolean;var xoutmsg:string):boolean;//09oct2026
+function  subscribe__manageList(var xlistCount:longint32;const ddiskHost:string;const xreplaceListWithThisList:string;const xdailyList,xreplaceList,xdeleteList:boolean):string;//09oct2026
+
 function xcodeis__badrequest(xcode:longint):boolean;
 function xlogrequest_http(var a:pnetwork;xaltcode:longint):boolean;
 function xlogrequest_smtp(var a:pnetwork;xcode:longint):boolean;
@@ -558,12 +573,26 @@ function xmimelist:string;
 procedure xmime_fallback;
 function xmimetype(xext:string):string;//09apr2024: updated to allow minor modification to "html", includes common fallback defaults - 26dec2923
 function xcommonheaders(xext:string;xkeepalive,xcache,xacceptranges:boolean):string;
-function xmakehitspng(x:tstr8;xhits:comp):boolean;//make "hits.png" image
-procedure xmakepngs(xforce:boolean);//make all "hits.png" for listed disk domains "idom"
 procedure xinchit(xdiskhost:string);
 procedure xresolvehost(m:tnetbasic);//use mapping
 
 function html__checkbox(xlabel,xname:string;xchecked,xenabled,xdiv:boolean):string;
+function utf8__toplaintext7bitb(const x:string):string;//08oct2026
+function date__str(const x:tdatetime;const xtime,xmsec:boolean):string;//08oct2026
+
+function  png__makeHits(x:tstr8;xhits:longint64):boolean;//make "hits.png" image - 09oct2026
+procedure png__makeAll(const xforce:boolean);//make all "hits.png" for listed disk domains "idom"
+
+function  cmdline__mustclose:boolean;
+function  cmdline__mustclose2(xforcecmd:string;var xoutput:string):boolean;
+function  cmdline__output(const xforcecmd:string):string;
+
+function  bytes__RAM:longint64;//09oct2026
+
+function email__valid(const xemailAddress:string):boolean;
+function email__filteraddress(const xemailAddress:string):string;
+
+function domain__fromDiskSite(const xdisksite:string):string;
 
 implementation
 
@@ -589,8 +618,13 @@ try
 xname:=strlow(xname);
 
 //get
-if      (xname='ver')                 then result:='3.00.10800'
-else if (xname='date')                then result:='19jun2025'
+if (xname='language')                 then result:='english-australia'//for Clyde - 14sep2025
+else if (xname='codepage')            then result:='1252'
+else if (xname='msix.tags')           then result:='-'//for Clyde - 31jan2026
+else if (xname='msstore.name')        then result:='Bubbles'//optional - overrides default name for Clyde
+
+else if (xname='ver')                 then result:='3.00.11252'
+else if (xname='date')                then result:='09oct2026'
 else if (xname='name')                then result:='Bubbles'
 else if (xname='des')                 then result:='Multi-Function Server'
 else if (xname='infoline')            then result:='Bubbles Multi-Function Server v'+app__info('ver')+' (c) 1997-'+low__yearstr(2025)+' Blaiz Enterprises'
@@ -601,11 +635,10 @@ else if (xname='service.displayname') then result:=info__app('service.name')
 else if (xname='service.description') then result:='HTTP/1, SMTP, web panel, web mail, virtual hosting, domain mapping, redirector, logs + reports, contact form and site counters'
 else if (xname='tools')               then result:='1'//1=enable built-in tools, 0=disable built-in tools
 
-//.paid/store support
-else if (xname='paid')                then result:='0'//desktop paid status ->  programpaid -> 0=free, 1..N=paid - also works inconjunction with "system_storeapp" and it's cost value to determine PAID status is used within help etc
-else if (xname='paid.store')          then result:='1'//store paid status
-//.anti-tamper programcode checker - updated dual version (program EXE must be secured using "Blaiz Tools") - 11oct2022
-else if (xname='check.mode')          then result:='-91234356'//disable check
+//.program/splash
+else if (xname='license')             then result:='MIT License'
+else if (xname='copyright')           then result:='© 1997-'+low__yearstr(2026)+' Blaiz Enterprises'
+
 else
    begin
    //nil
@@ -662,7 +695,7 @@ var//support for IPv4 and IPv6 address spaces
 begin
 //defaults
 result:=false;
-xlen  :=frcmax32(low__len(xip),1+high(iaddr[0]) );//ignore any trailing parts of the address -> should not exceed 39 bytes for a FULL IPv6 address with [...] square brackets included
+xlen  :=frcmax32(low__len32(xip),1+high(iaddr[0]) );//ignore any trailing parts of the address -> should not exceed 39 bytes for a FULL IPv6 address with [...] square brackets included
 
 //check -> address must be 1+ chars in length
 if (xlen<=0) then exit;
@@ -891,7 +924,7 @@ begin
 //defaults
 result:=true;
 xpos  :=0;
-xlen  :=low__len(xtext);
+xlen  :=low__len32(xtext);
 //clear
 clear;
 
@@ -1258,7 +1291,7 @@ var
 
    function xlinevalue(const nlen:string):string;
    begin
-   result:=strcopy1(iline.text,low__len(nlen)+1,iline.len);
+   result:=strcopy1(iline.text,low__len32(nlen)+1,iline.len32);
    end;
 
    procedure madd(const xcmd,xdata:string);
@@ -1286,7 +1319,7 @@ var
 
    //get - extract all email addresses (addresses only)
    lp   :=1;
-   for p:=1 to low__len(v) do if (v[p-1+stroffset]=',') or (v[p-1+stroffset]=#32) then
+   for p:=1 to low__len32(v) do if (v[p-1+stroffset]=',') or (v[p-1+stroffset]=#32) then
       begin
       z :=stripwhitespace_lt(strcopy1(v,lp,p-lp));
       lp:=p+1;
@@ -1439,7 +1472,7 @@ var
 
    function xval:string;
    begin
-   result:=stripwhitespace_lt(strcopy1(isendlist.items[p]^,7,low__len(isendlist.items[p]^)));
+   result:=stripwhitespace_lt(strcopy1(isendlist.items[p]^,7,low__len32(isendlist.items[p]^)));
    end;
 begin
 //defaults
@@ -1457,7 +1490,7 @@ for p:=0 to (isendlist.count-1) do if (isendlist.items[p]^<>'') and (isendlist.i
    if (ifrom='') and strmatch(v,'[0/fr]') then ifrom:=xval;
 
    //.address
-   if (not result) and ( strmatch(v,'[0/to]') or strmatch(v,'[0/cc]') or strmatch(v,'[0/bc]') ) and low__splitstr(strcopy1(isendlist.items[p]^,7,low__len(isendlist.items[p]^)),ssAt,dn,dv) and (dn<>'') and (dv<>'') then
+   if (not result) and ( strmatch(v,'[0/to]') or strmatch(v,'[0/cc]') or strmatch(v,'[0/bc]') ) and low__splitstr(strcopy1(isendlist.items[p]^,7,low__len32(isendlist.items[p]^)),ssAt,dn,dv) and (dn<>'') and (dv<>'') then
       begin
       result    :=true;
       ito       :=dn+'@'+dv;
@@ -2057,7 +2090,7 @@ var
    xsentlen:longint;
 begin
 if      (dns__pushbuf.len<=0) then result:=true
-else if net____send2(isocket,dns__pushbuf.core^,dns__pushbuf.len,0,xsentlen) then
+else if net____send2(isocket,dns__pushbuf.core^,dns__pushbuf.len32,0,xsentlen) then
    begin
    result:=true;
    dns__pushbuf.del3(0,xsentlen);
@@ -2138,7 +2171,7 @@ var
    xsentlen:longint;
 begin
 if      (mail__buf.len<=0) then result:=true
-else if net____send2(isocket,mail__buf.core^,mail__buf.len,0,xsentlen) then
+else if net____send2(isocket,mail__buf.core^,mail__buf.len32,0,xsentlen) then
    begin
    result :=true;
    ilinger:=ms64;
@@ -2168,7 +2201,7 @@ var
 begin
 result:=false;
 mail__pull;
-for p:=0 to (mail__buf.count-1) do if (mail__buf.pbytes[p]=10) then result:=true;
+for p:=0 to (mail__buf.count32-1) do if (mail__buf.pbytes[p]=10) then result:=true;
 end;
 
 function tmailsender.mail__pullcode:boolean;
@@ -2186,7 +2219,7 @@ if mail__pulldone then
    xpos:=0;
    while str__nextline0(@mail__buf,@iline,xpos) do
    begin
-   case iline.len of
+   case iline.len32 of
    3:mail__pulledcode:=strint32(iline.text);
    4..maxint:if (iline.bytes[3]=ssSpace) then
       begin
@@ -2235,90 +2268,96 @@ need_tga;
 need_jpg;
 
 //vars
-iloaddate:=date__now;
-isessiontimeout:=mult64(2000,86400);//2 days
-icookietimeout:=mult64(1000,60*60);//retransmit ative Admin session cookie every hour
-iidletimeout:=mult64(1000,120);//2 minutes
-ibuf2:=str__new9;
-ivars:=tfastvars.create;
-imail_sender:=tmailsender.create;
-imail_sender.ouseragent:=app__info('name');
-inewvisitor:=tnewvisitor.create;
-imustmakepngs:=false;
-ihitmustsave:=false;
-ihit:=tfastvars.create;//persists - does not reset
-ihitref:=tfastvars.create;//resyncs every 24hr
-ibytes:=tfastvars.create;//reset every 24hr
-ihitpng:=tfastvars.create;
+iloaddate                       :=date__now;
+isessiontimeout                 :=mult64(2000,86400);//2 days
+icookietimeout                  :=mult64(1000,60*60);//retransmit ative Admin session cookie every hour
+iidletimeout                    :=mult64(1000,120);//2 minutes
+ibuf2                           :=str__new9;
+ivars                           :=tfastvars.create;
+imail_sender                    :=tmailsender.create;
+imail_sender.ouseragent         :=app__info('name');
+inewvisitor                     :=tnewvisitor.create;
+imustmakepngs                   :=false;
+ihitmustsave                    :=false;
+ihit                            :=tfastvars.create;//persists - does not reset
+ihitref                         :=tfastvars.create;//resyncs every 24hr
+ibytes                          :=tfastvars.create;//reset every 24hr
+ihitpng                         :=tfastvars.create;
 
-imap:=tfastvars.create;
-idom:=tfastvars.create;
-idominfo:=tfastvars.create;
-imime:=tfastvars.create;
-imime_fallback:=tfastvars.create;
-iredirect:=tfastvars.create;
+imap                            :=tfastvars.create;
+idom                            :=tfastvars.create;
+idominfo                        :=tfastvars.create;
+imime                           :=tfastvars.create;
+imime_fallback                  :=tfastvars.create;
+iredirect                       :=tfastvars.create;
 
-igmtstr:=low__gmt(date__now);
-ibubbles_png:=str__new9;
-ibubbles_ico_32px:=str__new9;
-str__addrec(@ibubbles_ico_32px,@bubbles_ico_32px,sizeof(bubbles_ico_32px));
+igmtstr                         :=low__gmt(date__now);
+ibubbles_png                    :=str__new9;
+ibubbles_ico_32px               :=str__new9;
 
-ichunksize:=high(ibuffer)+1;
+str__addrec( @ibubbles_ico_32px ,@bubbles_ico_32px ,sizeof(bubbles_ico_32px) );
+
+ichunksize                      :=high(ibuffer)+1;
 
 //.127.0.0.1
 with i127_0_0_1 do
 begin
-b0:=127;
-b1:=0;
-b2:=0;
-b3:=1;
+
+b0                              :=127;
+b1                              :=0;
+b2                              :=0;
+b3                              :=1;
+
 end;
 
 
 //admin
-iadminkey:='';
+iadminkey                       :='';
+
 for p:=0 to high(isessiontime) do
 begin
-isessiontime[p]:=0;
-isessioncookietime[p]:=0;
-isessionname[p]:='';
-isessioncookie[p]:='';
-isessionua[p]:='';
+
+isessiontime[p]                 :=0;
+isessioncookietime[p]           :=0;
+isessionname[p]                 :='';
+isessioncookie[p]               :='';
+isessionua[p]                   :='';
+
 end;//p
 
 //ram cache
-ireload_domindex:=0;
-ireload_rambytes:=0;
-ireload_ramlimit:=0;
-irambytes:=0;
-iramcount:=0;//number of RAM slots used both FULL and EMPTY slots
-iramfilescached:=0;
-iramfilecount:=0;
-iramdate:=date__now;
-iramgmt:='';
-iramid:=1;
-inref1:=new__int;
-inref2:=new__int;
-iname:=new__str;
-idata:=tdynamicstr9.create;
-isize:=new__comp;
-idate:=new__date;
-imode:=new__int;
-idomindex:=new__int;
-ihave:=new__byte;
+ireload_domindex                :=0;
+ireload_rambytes                :=0;
+ireload_ramlimit                :=0;
+irambytes                       :=0;
+iramcount                       :=0;//number of RAM slots used both FULL and EMPTY slots
+iramfilescached                 :=0;
+iramfilecount                   :=0;
+iramdate                        :=date__now;
+iramgmt                         :='';
+iramid                          :=1;
+inref1                          :=new__int;
+inref2                          :=new__int;
+iname                           :=new__str;
+idata                           :=tdynamicstr9.create;
+isize                           :=new__comp;
+idate                           :=new__date;
+imode                           :=new__int;
+idomindex                       :=new__int;
+ihave                           :=new__byte;
 
-idaily_bandwidth:=0;
-idaily_bandwidth_quota:=0;
-idaily_bandwidth_quota_bytes:=0;
-idaily_bandwidth_exceeded:=false;
+idaily_bandwidth                :=0;
+idaily_bandwidth_quota          :=0;
+idaily_bandwidth_quota_bytes    :=0;
+idaily_bandwidth_exceeded       :=false;
 
-idaily_newvisitors:=0;//persistent -> IP tracking does not reset
-idaily_visitors :=0;
-idaily_requests :=0;//counts all request types - 21feb2025
-idaily_hits     :=0;//counts only htm/html requests
-idaily_email    :=0;//counts number of emails received
-idaily_contact  :=0;//counts number of contact form submissions received
-idaily_jobs     :=0;//counts number of jobs performed by built-in tools
+idaily_newvisitors              :=0;//persistent -> IP tracking does not reset
+idaily_visitors                 :=0;
+idaily_requests                 :=0;//counts all request types - 21feb2025
+idaily_hits                     :=0;//counts only htm/html requests
+idaily_email                    :=0;//counts number of emails received
+idaily_contact                  :=0;//counts number of contact form submissions received
+idaily_jobs                     :=0;//counts number of jobs performed by built-in tools
 
 //register acceptable value names for use with settings
 app__ireg('powerlevel',idefaultpower,1,ipowerlimit);
@@ -2332,6 +2371,8 @@ app__breg('shutidle',true);
 app__breg('alongsideexe',false);
 app__breg('reverseproxy',false);
 app__breg('summary.notice',true);
+app__breg('subscribe.notice',true);//09oct2026
+app__breg('subscribe.each.notice',true);//09oct2026
 app__breg('quota.notice',true);//03apr2024
 app__breg('reload.notice',true);
 app__ireg('consolerate',5,0,60);//web console refresh rat, 0=off, 1..60=refresh interval in seconds
@@ -2351,6 +2392,10 @@ app__sreg('contact.off','');
 app__sreg('contact.ok','');
 app__sreg('contact.fail','');
 
+//.subscribe form
+app__breg('subscribe.question',false);
+app__breg('subscribe.allow',false);
+
 //.mail
 app__breg('mail.allow',false);
 app__sreg('mail.domain','');
@@ -2358,6 +2403,7 @@ app__sreg('mail.mask','');
 app__sreg('mail.fromaddress','');//03mar2025
 app__sreg('mail.dns','');//05mar2025
 app__ireg('mail.sizelimit',20,1,50);//1..50Mb
+
 //.ipsec
 app__ireg('scanfor',24*60,0,max32);//1 day
 app__ireg('banfor',7*24*60,0,max32);//1 week
@@ -2370,55 +2416,68 @@ app__ireg('badreqlimit',0,0,max32);//0=off
 app__ireg('badmaillimit',0,0,max32);//0=off
 app__creg('datalimit',5000,0,max64);//5Gb
 app__sreg('notthislink','');//07mar2025
+app__sreg('ua.mask','');//09aug2025
+app__sreg('ip.mask','');//09aug2025
 
 
 //.start built-in server tools
 tools__start;
 
 //read settings
-ipowerlevel     :=app__ival('powerlevel');
-icache          :=app__bval('cache');
-ilivestats      :=app__bval('livestats');
-irawlogs        :=app__bval('rawlogs');
-iconsolerate    :=app__ival('consolerate');
-icsp            :=app__bval('csp');
-inorefdown      :=app__bval('norefdown');
-ishutidle       :=app__bval('shutidle');
-ialongsideexe   :=app__bval('alongsideexe');
-ireverseproxy   :=app__bval('reverseproxy');
-isummarynotice  :=app__bval('summary.notice');
-iquotanotice    :=app__bval('quota.notice');
-ireloadnotice   :=app__bval('reload.notice');
-iconnlimit      :=app__ival('connlimit');
-iramlimit       :=app__ival('ramlimit');//in mb
-iport           :=app__ival('port');
-iadminkey       :=app__sval('adminkey');
-ithreshold      :=app__cval('threshold');
-xsetdaily_bandwidth_quota(app__cval('daily.bandwidth.quota'));
+ipowerlevel                     :=app__ival('powerlevel');
+icache                          :=app__bval('cache');
+ilivestats                      :=app__bval('livestats');
+irawlogs                        :=app__bval('rawlogs');
+iconsolerate                    :=app__ival('consolerate');
+icsp                            :=app__bval('csp');
+inorefdown                      :=app__bval('norefdown');
+ishutidle                       :=app__bval('shutidle');
+ialongsideexe                   :=app__bval('alongsideexe');
+ireverseproxy                   :=app__bval('reverseproxy');
+isummarynotice                  :=app__bval('summary.notice');
+isubscribenotice                :=app__bval('subscribe.notice');//09oct2026
+isubscribeEachNotice            :=app__bval('subscribe.each.notice');//09oct2026
+iquotanotice                    :=app__bval('quota.notice');
+ireloadnotice                   :=app__bval('reload.notice');
+iconnlimit                      :=app__ival('connlimit');
+iramlimit                       :=app__ival('ramlimit');//in mb
+iport                           :=app__ival('port');
+iadminkey                       :=app__sval('adminkey');
+ithreshold                      :=app__cval('threshold');
+
+xsetdaily_bandwidth_quota( app__cval('daily.bandwidth.quota') );
 
 //.contact form
-icontact_question:=app__bval('contact.question');
-icontact_allow   :=app__bval('contact.allow');
-icontact_off     :=app__sval('contact.off');
-icontact_ok      :=app__sval('contact.ok');
-icontact_fail    :=app__sval('contact.fail');
+icontact_question               :=app__bval('contact.question');
+icontact_allow                  :=app__bval('contact.allow');
+icontact_off                    :=app__sval('contact.off');
+icontact_ok                     :=app__sval('contact.ok');
+icontact_fail                   :=app__sval('contact.fail');
 
-//.question support
-iquestion__index:=0;
-low__cls(@iquestion__answer,sizeof(iquestion__answer));
+//.subscribe forms
+isubscribe_question             :=app__bval('subscribe.question');
+isubscribe_allow                :=app__bval('subscribe.allow');
+
+//.Spam Guard support - 09oct2026
+ispamGuard_index                :=0;
+
+low__cls( @ispamGuard_answer ,sizeof(ispamGuard_answer) );
 
 //.mail
-imail_allow         :=app__bval('mail.allow');
-imail_domain        :=app__sval('mail.domain');
-imail_mask          :=app__sval('mail.mask');
-imail_sender.osenderdomain:=imail_domain;
-imail_sizelimit     :=app__ival('mail.sizelimit');
-imail_fromaddress   :=mail__extractaddress(app__sval('mail.fromaddress'));
-imail_sender.dnslist:=text__fromoneline(app__sval('mail.dns'),';');
+imail_allow                     :=app__bval('mail.allow');
+imail_domain                    :=app__sval('mail.domain');
+imail_mask                      :=app__sval('mail.mask');
+imail_sender.osenderdomain      :=imail_domain;
+imail_sizelimit                 :=app__ival('mail.sizelimit');
+imail_fromaddress               :=mail__extractaddress(app__sval('mail.fromaddress'));
+imail_sender.dnslist            :=text__fromoneline(app__sval('mail.dns'),';');
 
 //.ipsec
-ipsec__setvals(app__ival('scanfor'),app__ival('banfor'),app__ival('simconnlimit'),app__ival('postlimit'),app__ival('postlimit2'),app__ival('badlimit'),app__ival('hitlimit'),app__ival('badreqlimit'),app__ival('badmaillimit'),mult64(app__cval('datalimit'),1024000));
-inotthislink:=stripwhitespace_lt(app__sval('notthislink'));//07apr2025
+ipsec__setvals( app__ival('scanfor') ,app__ival('banfor') ,app__ival('simconnlimit') ,app__ival('postlimit') ,app__ival('postlimit2') ,app__ival('badlimit') ,app__ival('hitlimit') ,app__ival('badreqlimit') ,app__ival('badmaillimit') ,mult64(app__cval('datalimit'),1024000) );
+
+inotthislink                    :=stripwhitespace_lt(app__sval('notthislink'));//07apr2025
+iua_mask                        :=app__sval('ua.mask');//09aug2025
+iip_mask                        :=app__sval('ip.mask');//09aug2025
 
 //.load hit info - 17jun2025: fxied
 xload_counter(ihit,app__settingsfile('hits.ini'));
@@ -2427,29 +2486,33 @@ xload_counter(ibytes,app__settingsfile('bytes.ini'));
 
 //.load map info (domain mapping)
 imap.fromfile(app__settingsfile('map.ini'),e);
+
 //.load mime type info
 xmime_fallback;
 imime.fromfile(app__settingsfile('mime.ini'),e);
+
 //.load redirect info
 iredirect.fromfile(app__settingsfile('redirect.ini'),e);
 
 //.create http server record
-net__makerec(ihttpserver);
-net__makerec(imailserver);
+net__makerec( ihttpserver );
+net__makerec( imailserver );
 
 //.command line parameters
-if not xcmdline__mustclose then
+if not cmdline__mustclose then
    begin
+
    app__halt;
+   
    exit;
+
    end;
 
 //.run all STARTED tool modules -> this loads the modules and their support vars into RAM for running and calls getvals
 tools__run;
 
 //.help - for server only, not required command prompt
-ihelpdata:=xmakehelp(false);
-
+ihelpdata                       :=xmakehelp(false);
 
 //.starting...
 app__writeln('');
@@ -2463,12 +2526,14 @@ scn__setvisible(ilivestats);
 
 //load
 xreload(true);
+
 except;end;
 end;
 
 procedure app__destroy;
 begin
 try
+
 //save
 //.save app settings
 app__syncandsavesettings;
@@ -2484,18 +2549,23 @@ str__free(@ibuf2);
 str__free(@ibubbles_png);
 freeobj(@ibubbles_ico_32px);
 freeobj(@inewvisitor);
+
 //.ram cache
 free__7(@inref1,@inref2,@iname,@idata,@isize,@idate,@imode);
 free__2(@ihave,@idomindex);
+
 except;end;
 end;
 
 function app__syncandsavesettings:boolean;
 var
-   e:string;
+   e                  :string;
+
 begin
+
 //defaults
-result:=false;
+result                :=false;
+
 try
 //.settings
 app__ivalset('powerlevel',ipowerlevel);
@@ -2512,6 +2582,8 @@ app__bvalset('shutidle',ishutidle);
 app__bvalset('alongsideexe',ialongsideexe);
 app__bvalset('reverseproxy',ireverseproxy);
 app__bvalset('summary.notice',isummarynotice);
+app__bvalset('subscribe.notice',isubscribenotice);
+app__bvalset('subscribe.each.notice',isubscribeeachnotice);
 app__bvalset('quota.notice',iquotanotice);
 app__bvalset('reload.notice',ireloadnotice);
 app__svalset('adminkey',iadminkey);
@@ -2524,6 +2596,10 @@ app__bvalset('contact.allow',icontact_allow);
 app__svalset('contact.off',icontact_off);
 app__svalset('contact.ok',icontact_ok);
 app__svalset('contact.fail',icontact_fail);
+
+//.subscribe forms
+app__bvalset('subscribe.question',isubscribe_question);
+app__bvalset('subscribe.allow',isubscribe_allow);
 
 //.mail
 app__bvalset('mail.allow',imail_allow);
@@ -2545,6 +2621,8 @@ app__ivalset('badreqlimit',ipsec__badreqlimit);
 app__ivalset('badmaillimit',ipsec__badmaillimit);
 app__cvalset('datalimit',div64(ipsec__datalimit,1024000));
 app__svalset('notthislink',inotthislink);//07apr2025
+app__svalset('ua.mask',iua_mask);//09aug2025
+app__svalset('ip.mask',iip_mask);//09aug2025
 
 //.all tool modules vals
 tools__setvals;
@@ -2564,52 +2642,73 @@ imime.tofile(app__settingsfile('mime.ini'),e);
 iredirect.tofile(app__settingsfile('redirect.ini'),e);
 
 //successful
-result:=true;
+result                :=true;
+
 except;end;
 end;
 
 function app__netmore:tnetmore;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
 begin
-result:=nil;try;result:=tnetbasic.create;except;end;
+
+result                :=tnetbasic.create;
+
 end;
 
 function app__onmessage(m,w,l:longint):longint;
 var
-   a:tint4;//fixed 19feb2024
-   x:pnetwork;
+   a                  :tint4;//fixed 19feb2024
+   x                  :pnetwork;
+
 begin
+
 //defaults
-result:=0;
+result                :=0;
 
 if (m=wm_onmessage_net) then
    begin
-   imustboost:=true;
+
+   imustboost         :=true;
+
    //get
-   a.val:=l;
+   a.val              :=l;
+
    case a.bytes[0] of
+
    fd_connect:;
+
    fd_close:begin
+
       case net__findbysock(x,w) of
       true :xclose_connection(x);
       false:net____closesocket(w);
+      end;//case
+
       end;
-      end;
+
    fd_accept:xaccept_connection_autotype(w);//08apr2024
+
    fd_read: if net__findbysock(x,w) then x.canread:=true;
+
    fd_write:if net__findbysock(x,w) then x.canwrite:=true;
-   end;
+
+   end;//case
+
    end
+
 else if (m=wm_onmessage_netraw) then
    begin
+
    imail_sender.onmessage(m,w,l);//04apr2025
+
    end;
+
 end;
 
 procedure app__onpaintOFF;//called when screen was live and visible but is now not live, and output is back to line by line
 begin
-try
+
 app__writeln('Bubbles online at port '+k64(iport)+'.  Live stats are off.');
-except;end;
+
 end;
 
 procedure app__onpaint(sw,sh:longint);
@@ -2642,6 +2741,7 @@ var
    end;
 begin
 try
+
 //cls
 scn__cls;
 
@@ -2659,9 +2759,9 @@ scn__down;
 nv(0,'SMTP Port',intstr32(imailport)+' ('+low__aorbstr('offline','online',net__socketgood(imailserver))+')' +insstr(' - Quota Reached',idaily_bandwidth_exceeded)+#32+imail_sender.status);
 
 scn__down;
-nv(0,'RAM',low__mbauto(xrambytes,true)+'  ('+low__percentage64str(iramfilescached,iramfilecount,true)+' of files cached: '+k64(iramfilescached)+' / '+k64(iramfilecount)+')');
+nv(0,'RAM',low__mbauto(bytes__RAM,true)+'  ('+low__percentage64str(iramfilescached,iramfilecount,true)+' of files cached: '+k64(iramfilescached)+' / '+k64(iramfilecount)+')');
 scn__down;
-nv(0,'Memory Blocks',k64(track__val(satBlock))+' ('+low__kb(block__size,true)+' per block)');
+nv(0,'Memory Blocks',k64(track__val(satBlock))+' ('+low__kb(block64__size,true)+' per block)');
 
 scn__down;
 nv(0,'Hits',k64(ihit.c['total']));
@@ -2964,7 +3064,7 @@ if msok(itimer5000) or imustport then
       end;
 
    //.remake domain based "hits.png" images
-   if imustmakepngs then xmakepngs(false);
+   if imustmakepngs then png__makeAll(false);
 
    //.save settings
    if imustsavesettings then
@@ -2986,13 +3086,17 @@ if msok(itimer5000) or imustport then
 //30s
 if msok(itimer30000) then
    begin
+
    //.save domain hit information to disk
    if ihitmustsave then
       begin
-      ihitmustsave:=false;
+
+      ihitmustsave    :=false;
+
       ihit.tofile(app__settingsfile('hits.ini'),e);
       ihitref.tofile(app__settingsfile('hitsref.ini'),e);
       ibytes.tofile(app__settingsfile('bytes.ini'),e);
+
       end;
 
    //write daily summary / reset 24 hr counters
@@ -3000,22 +3104,27 @@ if msok(itimer30000) then
 
    //reset
    msset(itimer30000,30000);
+
    end;
 
 //1s
 if msok(itimer1000) then
    begin
+
    //requestrate over 1sec
-   int1:=irequestrate0*60;
+   int1               :=irequestrate0*60;
+
    if (int1>=irequestrate) then irequestrate:=int1 else irequestrate:=(irequestrate+int1) div 2;
-   irequestrate0:=0;
+
+   irequestrate0      :=0;
 
    //.connection count over 1sec
-   iconncount_1sec:=iconncount;
-   iconncount:=0;
+   iconncount_1sec    :=iconncount;
+   iconncount         :=0;
 
    //reset
    msset(itimer1000,1000);
+
    end;
 
 //0.1s
@@ -3054,252 +3163,385 @@ itimerbusy:=false;
 except;end;
 end;
 
-function xcmdline__output(xforcecmd:string):string;
+function cmdline__output(const xforcecmd:string):string;
 begin
-xcmdline__mustclose2(xforcecmd,result);
+
+cmdline__mustclose2(xforcecmd,result);
+
 end;
 
-function xcmdline__mustclose:boolean;
+function cmdline__mustclose:boolean;
 var
-   str1:string;
+   str1     :string;
 begin
-result:=xcmdline__mustclose2('',str1);
+
+result      :=cmdline__mustclose2( '' ,str1 );
+
 end;
 
-function xcmdline__mustclose2(xforcecmd:string;var xoutput:string):boolean;
+function cmdline__mustclose2(xforcecmd:string;var xoutput:string):boolean;
 label
    redo,skipend;
-const
-   clist:array[0..17] of string=('password','connections','port','smtp','cachesize','filesize','quota','power','logs','live','install','uninstall','info','commands','run','help','rawhelp','howto');
-var
-   xout:tobject;
-   p,nlen,int1,xpos:longint;
-   xappname,n,v,vreuse,vcomment:string;
-   xforcecmdok,xrun,bol1:boolean;
 
-   procedure xaddline(x:string);
+const
+   clist                        :array[0..17] of string=('password','connections','port','smtp','cachesize','filesize','quota','power','logs','live','install','uninstall','info','commands','run','help','rawhelp','howto');
+
+var
+   xout                         :tobject;
+   p                            :longint32;
+   nlen                         :longint32;
+   int1                         :longint32;
+   xpos                         :longint32;
+   xappname                     :string;
+   n                            :string;
+   v                            :string;
+   vreuse                       :string;
+   vcomment                     :string;
+   xforcecmdok                  :boolean;
+   xrun                         :boolean;
+   bol1                         :boolean;
+
+   procedure xaddline(const x:string);
    begin
+
    case xforcecmdok of
+
    true:begin
+
       if (xout=nil) then xout:=str__new9;
+
       str__sadd(@xout,x+#10);
+
       end;
+
    false:app__writeln(x);
+
    end;//case
+
    end;
 
    procedure h(x:string);//heading (underlined)
    begin
-   x:='[ '+x+' ]';
+
+   x        :='[ '+x+' ]';
+
    xaddline(x);
-   xaddline(strcopy1('-----------------------------',1,low__len(x)));
+   xaddline(strcopy1('-----------------------------',1,low__len32(x)));
+
    end;
 
-   procedure m(x:string);//normal line
+   procedure m(const x:string);//normal line
    begin
+
    xaddline(x);
+
    end;
 
-   procedure e(x:string);//example
+   procedure e(const x:string);//example
    begin
+
    xaddline(#32+x);
+
    end;
 
-   function xenabled(x:boolean):string;
+   function xenabled(const x:boolean):string;
    begin
-   result:=low__aorbstr('Disabled','Enabled',x);
+
+   result   :=low__aorbstr('Disabled','Enabled',x);
+
    end;
 
-   function xinstalled(x:boolean):string;
+   function xinstalled(const x:boolean):string;
    begin
-   result:=low__aorbstr('Not Installed','Installed',x);
+
+   result   :=low__aorbstr('Not Installed','Installed',x);
+
    end;
 
    function xpull:string;
    begin
+
    if (vreuse<>'') then
       begin
+
       result:=vreuse;
       vreuse:='';
-      v:='';
+      v     :='';
+
       end
-   else
-      begin
+
+   else begin
+
       case xforcecmdok of
+
       true:begin
-         result:=xforcecmd;//use once only
-         xforcecmd:='';
+
+         result       :=xforcecmd;//use once only
+         xforcecmd    :='';
+
          end;
-      false:result:=low__param(xpos);
+
+      false:result    :=low__param(xpos);
+
       end;//case
+
       inc(xpos);
-      end;
+
+      end;//if
+
    //legacy support
-   if (strcopy1(result,1,1)='/') then result:='--'+strcopy1(result,2,low__len(result));
+   if (strcopy1(result,1,1)='/') then
+      begin
+
+      result          :='--'+strcopy1(result,2,low__len32(result));
+
+      end;
+
    end;
 
-   procedure vcheck(xdef:string);
+   procedure vcheck(const xdef:string);
    begin
+
    //get
-   v:=xpull;
-   vcomment:='';
+   v                  :=xpull;
+   vcomment           :='';
+
    //is the value a command
    if (strcopy1(v,1,1)='/') or (strcopy1(v,1,2)='--') then
       begin
-      vreuse:=v;
-      v:='';
+
+      vreuse          :=v;
+      v               :='';
+
       end;
+
    //use default value
    if (v='') and (xdef<>'') then
       begin
-      vcomment:=' (default used)';
-      v:=xdef;
+
+      vcomment        :=' (default used)';
+      v               :=xdef;
+
       end;
+
    end;
 
-   procedure xinforow(n,v:string);
+   procedure xinforow(const n,v:string);
    const
-      xwidth='.........................';
+      xwidth          ='.........................';
+
    begin
-   xaddline(n+#32+strcopy1(xwidth,1,low__len(xwidth)-low__len(n))+#32+v);
+
+   xaddline( n + #32 + strcopy1(xwidth,1,low__len32(xwidth)-low__len32(n)) + #32 + v );
+
    end;
 
-   procedure vok(xmsg,xvalue:string;xsavesettings:boolean);
+   procedure vok(const xmsg,xvalue:string;const xsavesettings:boolean);
    begin
+
    //save
    if xsavesettings then app__savesettings;
+
    //screen message
    if (xmsg<>'') then xinforow(xmsg,xvalue+vcomment);
+
    end;
 
    procedure xhelp(xname:string);
    var
-      xbody:string;
-      p:longint;
+      xbody           :string;
+      p               :longint32;
 
-      procedure e2(x:string);//example
+      procedure e2(const x:string);//example
       begin
+
       e(xappname+' --'+xname+x);
+
       end;
 
-      procedure e3(x:string);//example
+      procedure e3(const x:string);//example
       begin
+
       e(xappname+insstr(' --',x<>'')+x);
+
       end;
 
-      procedure xabout2(xdes,usage0,xusage,xrange:string;xexamples:boolean);//description
+      procedure xabout2(const xdes,usage0,xusage,xrange:string;const xexamples:boolean);//description
       begin
+
       xaddline('');
       xaddline('');
+
       h(xname);
+
       xaddline(strdefb(xdes,'This command does not exist. For complete help, type '+xappname+' --help'));
+
       if (xusage<>'') then
          begin
+
          xaddline('');
          xaddline('Usage:');
          xaddline(#32+xappname+' --'+xname+usage0+insstr(xusage,xusage<>'!'));
+
          end;
+
       if (xrange<>'') then
          begin
+
          xaddline('');
          xaddline('Range:');
          xaddline(#32+xrange);
+
          end;
+
       if xexamples then
          begin
+
          xaddline('');
          xaddline('Examples:');
+
          end;
+
       end;
 
-      procedure xabout(xdes,xusage,xrange:string;xexamples:boolean);//description
+      procedure xabout(const xdes,xusage,xrange:string;const xexamples:boolean);//description
       begin
+
       xabout2(xdes,#32,xusage,xrange,xexamples);
+
       end;
+
    begin
+
    //init
-   xname:=strlow(xname);
-   xbody:='';
+   xname              :=strlow(xname);
+   xbody              :='';
+
    //strip leading slash
-   if (strcopy1(xname,1,2)='--') then strdel1(xname,1,2)
-   else if (strcopy1(xname,1,1)='/') then strdel1(xname,1,1);//legacy support
+   if      (strcopy1(xname,1,2)='--') then strdel1(xname,1,2)
+   else if (strcopy1(xname,1,1)='/')  then strdel1(xname,1,1);//legacy support
 
    //body
    if (xname='filesize') then
       begin
-      xabout('Set the maximum file size threshold. All files at or below this size are loaded into the RAM cache. '+
-        'Larger files are streamed from disk when requested. '+'Set to 0 (zero) to load any file size into cache.',
-        '<size in bytes>','0..'+low__b(imaxcachesize*1024000,true),true);
+
+      xabout(
+       'Set the maximum file size threshold. All files at or below this size are loaded into the RAM cache. '+
+       'Larger files are streamed from disk when requested. '+'Set to 0 (zero) to load any file size into cache.',
+       '<size in bytes>','0..'+low__b(imaxcachesize*1024000,true)
+       ,true);
+
       e2(' 123,500');
       e2(' 1024000');
       e2(' 333');
       e2('');
       m('');
       m('Example 1 loads files of 123.5 KB or less into cache.  The second 1 MB or less.  The third to 333 bytes or less. And the fourth defaults to 10 MB.');
+
       end
+
    else if (xname='cachesize') then
       begin
-      xabout('Set the maximum RAM Cache Size. The cache stores files for rapid access without disk lag. The cache expands upto this size to accomodate files. When the cache is full, or a file is too large, it''s left on disk and streamed out when requested.',
-        '<size in MB (megabytes)>','10..'+k64(imaxcachesize),true);
+
+      xabout(
+       'Set the maximum RAM Cache Size. The cache stores files for rapid access without disk lag. The cache expands upto this size to accomodate files. When the cache is full, or a file is too large, it''s left on disk and streamed out when requested.',
+       '<size in MB (megabytes)>','10..'+k64(imaxcachesize)
+       ,true);
+
       e2(' 50');
       e2(' 250');
       e2(' 1,500');
       e2('');
       m('');
       m('Example 1 sets RAM cache to use 50 MB. The second 250 MB.  The third to 1500 MB (1.5 GB). And the fourth defaults to 1200 MB (1.2 GB)');
+
       end
+
    else if (xname='quota') then
       begin
-      xabout('Set the daily bandwidth quota. If the combined upstream (client -> server) and downstream (server -> client) bandwidth exceeds the quota limit, all traffic in and out of Bubbles is '+'suspended until midnight.  At midnight, daily bandwidth quota tracking begins afresh.',
-        '<size in MB (megabytes)>','0=Disabled (no limit), 10..N Mb',true);
+
+      xabout(
+       'Set the daily bandwidth quota. If the combined upstream (client -> server) and downstream (server -> client) bandwidth exceeds the quota limit, all traffic in and out of Bubbles is '+'suspended until midnight.  At midnight, daily bandwidth quota tracking begins afresh.',
+       '<size in MB (megabytes)>','0=Disabled (no limit), 10..N Mb'
+       ,true);
+
       e2(' 250');
       e2(' 1,000');
       e2(' 3,000,000');
       e2('');
       m('');
       m('Example 1 sets the daily bandwidth quota to 250 Mb. The second to 1 Gb (1,000 Mb).  The third to 3 Tb (3,000,000 Mb). And the fourth defaults to 0, which disables quota tracking and allows any amount of bandwidth.');
+
       end
+
    else if (xname='info') then
       begin
-      xabout('Display basic settings in a easy to view summary.',
-        '!','',false);
+
+      xabout(
+       'Display basic settings in a easy to view summary.',
+       '!',''
+       ,false);
+
       end
+
    else if (xname='run') then
       begin
-      xabout('Runs the server.',
-        '!','',true);
+
+      xabout(
+       'Runs the server.',
+       '!',''
+       ,true);
+
       e3('port 80 --password abcde --run');
       e3('port 80 --password abcde --run --cachesize 1100');
       e3('run');
       e3('');
       m('');
       m('Example 1 sets port to 80, password to abcde, and then runs the server. The second does the same, but all commands after --run are ignored, --cachesize is never executed. Both 1 and 2 are examples of command stacking. Examples 3 and 4 run the server.');
+
       end
+
    else if (xname='port') then
       begin
-      xabout('Set the broadcast port for the HTTP server.  Default is port '+intstr32(idefaultport)+'.',
-        '<a number>','2..'+k64(maxport),true);
+
+      xabout(
+       'Set the broadcast port for the HTTP server.  Default is port '+intstr32(idefaultport)+'.',
+       '<a number>','2..'+k64(maxport)
+       ,true);
+
       e2(' 80');
       e2(' 1080');
       e2(' 2000');
       m('');
       m('Example 1 sets the port to 80, the standard port for http (insecure) web servers. The second sets it to broadcast on port 1080. And the third port 2000. Typically ports above 1024 require no special administration privileges.');
+
       end
+
    else if (xname='connections') then
       begin
-      xabout('Set the maximum number of inbound connections.  Default is '+k64(idefaultconnections)+'.',
-        '<a number>','10..'+k64(net__limit),true);
+
+      xabout(
+       'Set the maximum number of inbound connections.  Default is '+k64(idefaultconnections)+'.',
+       '<a number>','10..'+k64(net__limit)
+       ,true);
+
       e2(' 500');
       e2(' 3000');
       e2(' 4000');
       e2('');
       m('');
       m('Example 1 sets the maximum number of connections to 500. The second to 3,000. And the third to 4,000. The fourth defaults to '+k64(idefaultconnections)+'.');
+
       end
+
    else if (xname='password') then
       begin
-      xabout('Set the web panel admin password. The default password is set to "'+idefaultpassword+'". We strongly recommend the password be changed to a strong/unique password before exposing the server to the internet.',
-        '<a string of unique characters>','A minimum of 5 characters',true);
+
+      xabout(
+       'Set the web panel admin password. The default password is set to "'+idefaultpassword+'". We strongly recommend the password be changed to a strong/unique password before exposing the server to the internet.',
+       '<a string of unique characters>','A minimum of 5 characters'
+       ,true);
+
       e2(' 12345');
       e2(' Ajkd?t78%1_S');
       e2('');
@@ -3308,11 +3550,17 @@ var
       m('');
       m('Security Notice:');
       m('This web server supports the HTTP protcol, which does not encrypt data, consequently if you intend to use the web panel over the internet, we suggest you do so via a frontend server '+'like Caddy. Caddy supports HTTPS which encrypts all inbound/outbound data and will keep your password and admin session secure from hackers.');
+
       end
+
    else if (xname='power') then
       begin
-      xabout('Set power level for CPU usage.  Default is '+k64(idefaultpower)+'.',
-        '<a number>','0..'+k64(ipowerlimit),true);
+
+      xabout(
+       'Set power level for CPU usage.  Default is '+k64(idefaultpower)+'.',
+       '<a number>','0..'+k64(ipowerlimit)
+       ,true);
+
       e2(' 1');
       e2(' 20');
       e2(' 30');
@@ -3320,11 +3568,17 @@ var
       e2('');
       m('');
       m('Example 1 sets power level to 1%, which uses the least amount of CPU.  The second sets it to 20%. The third to 30%. The fourth to 90%. And the fifth defaults to '+k64(idefaultpower)+'%. The higher the power level, the more CPU the server uses for request processing and file streaming. Be aware, if the server '+'shares a single CPU/virtual core with another server like Caddy, then setting the power level too high may starve the other server of CPU cycles, and result in a '+'slower than expected request-response transaction. When run with admin privileges, e.g. as a service, the server automatically steps up to a higher thread priority.');
+
       end
+
    else if (xname='logs') then
       begin
-      xabout('Set raw traffic logging.  Default is enabled.',
-        '<a value, 0 or negative=disabled, 1 or higher=enabled>','',true);
+
+      xabout(
+       'Set raw traffic logging.  Default is enabled.',
+       '<a value, 0 or negative=disabled, 1 or higher=enabled>',''
+       ,true);
+
       e2(' 1');
       e2(' 100');
       e2('');
@@ -3332,11 +3586,17 @@ var
       e2(' -10');
       m('');
       m('Examples 1, 2 and 3 enable raw traffic logs. Examples 4 and 5 disable raw traffic logs. When raw traffic logs are enabled, all request activity on the server is recorded in a daily log file (*.txt) in the Logs '+'folder. Log files can be accessed from the Logs tab on the web panel.');
+
       end
+
    else if (xname='smtp') then
       begin
-      xabout('Set SMTP (simple mail transport protocol) mode.  Default is disabled.',
-        '<a value, 0 or negative=disabled, 1 or higher=enabled>','',true);
+
+      xabout(
+       'Set SMTP (simple mail transport protocol) mode.  Default is disabled.',
+       '<a value, 0 or negative=disabled, 1 or higher=enabled>',''
+       ,true);
+
       e2(' 1');
       e2(' 100');
       e2(' 0');
@@ -3344,11 +3604,17 @@ var
       e2('');
       m('');
       m('Examples 1 and 2 enable SMTP mode.  Examples 3, 4 and 5 disable SMTP. The mail port used is port 25. All inbound mail is unencrypted. Emails are stored in the Inbox folder as *.eml files. All mail (email and contact'+' form messages) are accessible from the Inbox tab of the web panel.');
+
       end
+
    else if (xname='live') then
       begin
-      xabout('Set live stats mode (console window).  Default is enabled.',
-        '<a value, 0 or negative=disabled, 1 or higher=enabled>','',true);
+
+      xabout(
+       'Set live stats mode (console window).  Default is enabled.',
+       '<a value, 0 or negative=disabled, 1 or higher=enabled>',''
+       ,true);
+
       e2(' 1');
       e2(' 100');
       e2('');
@@ -3356,42 +3622,68 @@ var
       e2(' -10');
       m('');
       m('Examples 1, 2 and 3 enable live stats. Examples 4 and 5 disable live stats. When enabled, basic realtime information is rendered to the console window. This window can also be accessed anytime (even when live stats are disabled) '+'from the Console tab of the web panel.');
+
       end
+
    else if (xname='install') then
       begin
-      xabout('Install Bubbles as a service.',
-        '','',false);
+
+      xabout(
+       'Install Bubbles as a service.',
+       '',''
+       ,false);
+
       e2('');
       m('');
       m('Installs the server as a service with the following parameters:');
       m('Name: '+app__info('service.name'));
       m('Display Name: '+app__info('service.displayname'));
       m('Description: '+app__info('service.description'));
+
       end
+
    else if (xname='uninstall') then
       begin
-      xabout('Uninstall Bubbles as a service.',
-        '','',false);
+
+      xabout(
+       'Uninstall Bubbles as a service.',
+       '',''
+       ,false);
+
       e2('');
       m('');
       m('Removes the server from the services list.');
+
       end
+
    else if (xname='commands') then
       begin
-      xabout('List supported commands.',
-        '!','',false);
+
+      xabout(
+       'List supported commands.',
+       '!',''
+       ,false);
+
       end
+
    else if (xname='help') then
       begin
-      xabout2('Get help for a specific command.',':',
-        '<command name>','',true);
+
+      xabout2(
+       'Get help for a specific command.',':',
+       '<command name>',''
+       ,true);
+
       e2(':password');
       e2(':port');
       m('');
       m('Example 1 displays help for the Password command.  Example 2 for the Port command.');
+
       end
+
    else if (xname='rawhelp') then
       begin
+
       m('');
       m('');
       h('rawhelp');
@@ -3400,9 +3692,12 @@ var
       m('');
       m('Example:');
       e3('rawhelp > 1.txt');
+
       end
+
    else if (xname='howto') then
       begin
+
       m('');
       m('');
       h('How To');
@@ -3417,7 +3712,9 @@ var
       e3('help:port');
       m('');
       m('Available commands:');
+
       for p:=0 to high(clist) do e(clist[p]);
+
       m('');
       m('Stacked commands:');
       m('Commands may be stacked in sequence, and are processed in left to right order.');
@@ -3429,119 +3726,194 @@ var
       m('');
       m('Example 1 sets the HTTP broadcast port to 80, the password to abcde, cachesize to 1.1 GB, file size to 500 KB and finally lists an information summary. Example 2 performs the same operations, but the last command then instructs the server to run'+' and begin broadcasting. '+
         'Example 3 sets the port and password, then runs the server, ignoring all commands after --run.');
+
       end
-   else
-      begin
+
+   else begin
+
       xabout('','','',false);
+
       end;
+
    end;
 
    function xadminrequired:string;
    begin
-   result:=insstr(' - Admin Level required',not app__adminlevel);
+
+   result             :=insstr(' - Admin Level required',not app__adminlevel);
+
    end;
+
 begin
+
 //defaults
-result:=true;
-xrun:=false;
-xout:=nil;
-xoutput:='';
+result                :=true;
+xrun                  :=false;
+xout                  :=nil;
+xoutput               :='';
 
 //init
-xpos:=1;
-vreuse:='';
-vcomment:='';
-xappname:=io__remlastext(io__extractfilename(io__exename));
+xpos                  :=1;
+vreuse                :='';
+vcomment              :='';
+xappname              :=io__remlastext(io__extractfilename(io__exename));
 
 //decide
-xforcecmdok:=(xforcecmd<>'');
+xforcecmdok           :=(xforcecmd<>'');
 
 //get
 try
-redo:
-n:=strlow(xpull);
-nlen:=low__len(n);
-if (nlen>=1) then result:=false;
 
-if (nlen<=0) then goto skipend
+redo:
+
+n                     :=strlow(xpull);
+nlen                  :=low__len32(n);
+
+if (nlen>=1) then
+   begin
+
+   result             :=false;
+
+   end;
+
+if      (nlen<=0)        then goto skipend
 else if (n='--password') then
    begin
+
    vcheck(idefaultpassword);
-   if (low__len(v)>=5) then iadminkey:=xmakehash(v)
-   else
-      begin
-      v:='<must be at least 5 characters>';
-      end;
+
+   if (low__len32(v)>=5) then iadminkey   :=xmakehash(v)
+   else                       v           :='<must be at least 5 characters>';
+
    vok('Password',v,true);
+
    end
+
 else if (n='--port') then
    begin
+
    vcheck(intstr32(idefaultport));
-   int1:=strint(v);
-   if (int1<2) then int1:=idefaultport else int1:=frcrange32(int1,2,maxport);
-   iport:=int1;
+
+   int1                         :=strint32(v);
+
+   if (int1<2) then int1        :=idefaultport
+   else             int1        :=frcrange32(int1,2,maxport);
+
+   iport                        :=int1;
+
    vok('Port',intstr32(iport),true);
+
    end
+
 else if (n='--smtp') then
    begin
+
    vcheck('0');
-   imail_allow:=(strint(v)>=1);
+
+   imail_allow                  :=(strint32(v)>=1);
+
    vok('SMTP (Port 25)',xenabled(imail_allow),true);
+
    end
+
 else if (n='--power') then
    begin
+
    vcheck(k64(idefaultpower));
-   ipowerlevel:=frcrange32(strint(v),1,ipowerlimit);
+
+   ipowerlevel                  :=frcrange32(strint32(v),1,ipowerlimit);
+
    vok('Power Level',k64(ipowerlevel)+'%',true);
+
    end
+
 else if (n='--live') then
    begin
+
    vcheck('1');
-   ilivestats:=(strint(v)>=1);
+
+   ilivestats                   :=(strint32(v)>=1);
+
    vok('Live',xenabled(ilivestats),true);
+
    end
+
 else if (n='--logs') then
    begin
+
    vcheck('1');
-   irawlogs:=(strint(v)>=1);
+
+   irawlogs                     :=(strint32(v)>=1);
+
    vok('Traffic Logs',xenabled(irawlogs),true);
+
    end
+
 else if (n='--install') then
    begin
-   bol1:=service__install(int1);
+
+   bol1                         :=service__install(int1);
+
    vok('Install',low__aorbstr('Failed to install service ('+intstr32(int1)+')'+xadminrequired,'Service installed',bol1),true);
+
    end
+
 else if (n='--uninstall') then
    begin
-   bol1:=service__uninstall(int1);
+
+   bol1                         :=service__uninstall(int1);
+
    vok('Uninstall',low__aorbstr('Failed to uninstall service ('+intstr32(int1)+')'+xadminrequired,'Service uninstalled',bol1),true);
+
    end
+
 else if (n='--connections') then
    begin
+
    vcheck(intstr32(idefaultconnections));
-   iconnlimit:=frcrange32(strint(v),10,net__limit);
+
+   iconnlimit                   :=frcrange32(strint32(v),10,net__limit);
+
    vok('Connections',k64(iconnlimit),true);
+
    end
+
 else if (n='--cachesize') then
    begin
+
    vcheck(intstr32(idefaultcachesize));
-   iramlimit:=frcrange32(strint(v),10,imaxcachesize);
+
+   iramlimit                    :=frcrange32(strint32(v),10,imaxcachesize);
+
    vok('RAM Cache Size',low__mbauto(mult64(iramlimit,1000000),true),true);
+
    end
+
 else if (n='--filesize') then
    begin
+
    vcheck(intstr32(idefaultthreshold));
-   ithreshold:=frcrange32(strint(v),0,imaxcachesize*1024000);
+
+   ithreshold                   :=frcrange32(strint32(v),0,imaxcachesize*1024000);
+
    vok('Max. File Size to Cache',low__mbauto(ithreshold,true),true);
+
    end
+
 else if (n='--quota') then
    begin
+
    vcheck('0');
+
    xsetdaily_bandwidth_quota(strint64(v));
+
    vok('Daily Bandwidth Quota',low__aorbstr('Disabled',low__mbauto(idaily_bandwidth_quota_bytes,true),idaily_bandwidth_quota_bytes>=1),true);
+
    end
+
 else if (n='--info') then
    begin
+
    xaddline('');
    xaddline('--- Bubbles Information ---');
    xinforow('Version',app__info('ver'));
@@ -3558,87 +3930,128 @@ else if (n='--info') then
    xinforow('Live Stats',xenabled(ilivestats));
    xinforow('Web Panel','http://localhost:'+intstr32(iport)+iadminpath);
    xinforow('Built-in Tools',low__aorbstr('No','Yes',app__bol('tools')));
+
    end
+
 else if (n='--commands') then
    begin
+
    m('');
    m('');
    h('Supported Commands');
+
    for p:=0 to high(clist) do m(clist[p]);
+
    end
+
 else if (n='--howto') then xhelp(n)
 
 else if (n='--help:')                         then xaddline('Command name expected. Format should be "--help:<command name>"')
-else if (strcopy1(n,1,7)='--help:')           then xhelp(strcopy1(n,8,low__len(n)))
+
+else if (strcopy1(n,1,7)='--help:')           then xhelp(strcopy1(n,8,low__len32(n)))
+
 else if (n='--help') then
    begin
+
    for p:=0 to high(clist) do xhelp(clist[p]);
+
    end
 
 else if (n='--rawhelp') then
    begin
+
    xaddline(xmakehelp(true));
+
    end
 
 else if (n='--run') then
    begin
-   xrun:=true;
+
+   xrun                         :=true;
+
    goto skipend;
+
    end
 else
    begin
+
    vcheck('');
+
    xaddline('Unknown command "'+n+'".  Need help?  Type '+xappname+' --help');
+
    end;
 
 //.loop
 goto redo;
 
 skipend:
+
 //.run
-if xrun then result:=true;
+if xrun then result             :=true;
+
 except;end;
+
 try
-if (xout<>nil) then xoutput:=str__text(@xout);
+
+if (xout<>nil) then xoutput     :=str__text(@xout);
+
 str__free(@xout);
+
 except;end;
+
 end;
 
-function xmakehitspng(x:tstr8;xhits:comp):boolean;//make "hits.png" image
+function png__makeHits(x:tstr8;xhits:longint64):boolean;//make "hits.png" image - 09oct2026
 label
    skipend;
+
 const
-   dheightscale=2.5;
-   dfontsize=12;
-   dbold=true;
+   dheightscale       =2.5;
+   dfontsize          =12;
+   dbold              =true;
+
 var
-   a:tbasicimage;
-   e,str1:string;
-   bcolor,dcolor,hpad,vpad,int2,int1,aw,ah:longint;
+   a                  :tbasicimage;
+   e                  :string;
+   str1               :string;
+   bcolor             :longint32;
+   dcolor             :longint32;
+   hpad               :longint32;
+   vpad               :longint32;
+   int2               :longint32;
+   int1               :longint32;
+   aw                 :longint32;
+   ah                 :longint32;
+
 begin
+
 //defaults
-result:=false;
+result                :=false;
+a                     :=nil;
+hpad                  :=8;
+vpad                  :=4;
+
 try
-a:=nil;
-hpad:=8;
-vpad:=4;
 
 //check
 if not str__lock(@x) then exit;
 
 //range
-xhits:=frcrange64(xhits,0,max64);
+xhits                 :=frcrange64(xhits,0,max64);
 
 //init
-a:=misimg32(1,1);
-bcolor:=rgba0__int(0,0,0);
-dcolor:=rgba0__int(255,255,255);
+a                     :=misimg32(1,1);
+bcolor                :=rgba0__int(0,0,0);
+dcolor                :=rgba0__int(255,255,255);
 
 //calculate dimensions required
-str1:=intstr64(xhits);
+str1                  :=intstr64(xhits);
+
 mis__drawdigits2(a,misarea(a),hpad,vpad,dfontsize,dcolor,dheightscale,str1,dbold,false,aw,ah);
+
 inc(aw,2*hpad);
 inc(ah,2*vpad);
+
 missize(a,aw,ah);
 
 //draw background color
@@ -3654,13 +4067,15 @@ mask__copy3(a,a,dcolor,220);
 if not png__todata(a,@x,e) then goto skipend;
 
 //successful
-result:=true;
+result                :=true;
+
 skipend:
 except;end;
-try
+
+//free
 str__uaf(@x);
 freeobj(@a);
-except;end;
+
 end;
 
 procedure xinchit(xdiskhost:string);
@@ -3674,33 +4089,42 @@ ihitpng.b['mustupdate.'+xdiskhost]:=true;
 except;end;
 end;
 
-procedure xmakepngs(xforce:boolean);//make all "hits.png" for listed disk domains "idom"
+procedure png__makeAll(const xforce:boolean);//make all "hits.png" for listed disk domains "idom"
 var
-   b:tstr8;
-   p,xlen:longint;
-   st,ht:comp;
-   n:string;
+   b                            :tstr8;
+   p                            :longint32;
+   xlen                         :longint32;
+   st                           :longint64;
+   ht                           :longint64;
+   n                            :string;
 
-   procedure xmakepng(n:string;st:comp);
+   procedure xmakepng(const n:string;const st:longint64);
    begin
    try
-   //total ALWAYS updates and DISK DOMAIN only if xfore or mustupdate
+
+   //total ALWAYS updates and DISK DOMAIN only if xforce or mustupdate
    if strmatch(n,'total') or ( strmatch(strcopy1(n,1,xlen),idefaultdisksite) and (xforce or ihitpng.b['mustupdate.'+n]) ) then
       begin
+
       ihitpng.b['mustupdate.'+n]:=false;
-      xmakehitspng(b,st);
-      ihitpng.s[n]:=b.text;
+
+      png__makeHits(b,st);
+
+      ihitpng.s[n]              :=b.text;
+
       end;
+
    except;end;
    end;
 begin
 try
+
 //defaults
 b:=nil;
 //check
 if (not imustmakepngs) and (not xforce) then exit else imustmakepngs:=false;
 //init
-xlen:=low__len(idefaultdisksite);
+xlen:=low__len32(idefaultdisksite);
 b:=str__new8;
 ht:=0;
 
@@ -3751,7 +4175,7 @@ var
    if (x<>'') then
       begin
       int3:=0;
-      for p:=1 to low__len(x) do
+      for p:=1 to low__len32(x) do
       begin
       v:=byte(x[p-1+stroffset]);
       if (v=ssLSquareBracket) then inc(int3)
@@ -3803,7 +4227,7 @@ if (xhost<>'') then m.hdesthost:=xhost;
 //swap "." with "_" to make it into a disk domain
 if (xhost<>'') then
    begin
-   for p:=1 to low__len(xhost) do
+   for p:=1 to low__len32(xhost) do
    begin
    v:=byte(xhost[p-1+stroffset]);
    if (v=ssDot) then xhost[p-1+stroffset]:='_';
@@ -3830,7 +4254,7 @@ xname:='';
 //check
 if (xpath='') then exit;
 //get
-xlen:=low__len(xpath);
+xlen:=low__len32(xpath);
 xcount:=0;
 lp:=xlen;
 for p:=xlen downto 1 do
@@ -3842,7 +4266,7 @@ if (v=ssSlash) then
    if (xcount>=2) then
       begin
       xname:=strcopy1(xpath,p+1,lp-p-1);
-      result:=(low__len(xname)=isessionnameLEN);
+      result:=(low__len32(xname)=isessionnameLEN);
       break;
       end;
    lp:=p;
@@ -3935,7 +4359,7 @@ xindex:=0;
 
 try
 //check
-if (low__len(xsessionname)<>isessionnameLEN) then exit;
+if (low__len32(xsessionname)<>isessionnameLEN) then exit;
 //find
 for p:=0 to high(isessiontime) do if (isessiontime[p]<>0) and (isessionname[p]<>'') and strmatch(xsessionname,isessionname[p]) then
    begin
@@ -3978,7 +4402,7 @@ begin
 result:=false;
 
 //check
-if (low__len(xsessionname)<>isessionnameLEN) then exit;
+if (low__len32(xsessionname)<>isessionnameLEN) then exit;
 
 //find
 for p:=0 to high(isessiontime) do if (isessiontime[p]<>0) and (isessionname[p]<>'') and strmatch(xsessionname,isessionname[p]) then
@@ -4016,7 +4440,7 @@ begin
 result:=x;
 if (result<>'') then
    begin
-   for p:=1 to low__len(x) do if (x[p-1+stroffset]=xto) then
+   for p:=1 to low__len32(x) do if (x[p-1+stroffset]=xto) then
       begin
       result:=strcopy1(result,1,p-1);
       break;
@@ -4034,7 +4458,7 @@ try
 result:=x;
 if (result<>'') then
    begin
-   for p:=1 to low__len(result) do if (result[p-1+stroffset]='/') then result[p-1+stroffset]:='\';
+   for p:=1 to low__len32(result) do if (result[p-1+stroffset]='/') then result[p-1+stroffset]:='\';
    end;
 except;end;
 end;
@@ -4049,7 +4473,7 @@ try
 result:=x;
 if (result<>'') then
    begin
-   for p:=1 to low__len(result) do if (result[p-1+stroffset]='\') then result[p-1+stroffset]:='/';
+   for p:=1 to low__len32(result) do if (result[p-1+stroffset]='\') then result[p-1+stroffset]:='/';
    end;
 except;end;
 end;
@@ -4077,7 +4501,7 @@ try
 if xisfile and (xrec.name<>'') then
    begin
    //xname
-   xname:=xforce_slash(strcopy1(xfolder,low__len(ifastfolder__root)+1,low__len(xfolder))+xrec.name);//e.g. "www_blaizenterprises_com/index.html"
+   xname:=xforce_slash(strcopy1(xfolder,low__len32(ifastfolder__root)+1,low__len32(xfolder))+xrec.name);//e.g. "www_blaizenterprises_com/index.html"
    //set
    if xramnewslot(xname,i,xnew) then
       begin
@@ -4171,7 +4595,7 @@ if (xcount>=1) then
    begin
    for p:=0 to (xcount-1) do
    begin
-   if nav__get(xnav,p,xstyle,xtep,xsize,xname,xlabel) and strmatch(strcopy1(xname,1,low__len(idefaultdisksite)),idefaultdisksite) then idom.b[xname]:=true;
+   if nav__get(xnav,p,xstyle,xtep,xsize,xname,xlabel) and strmatch(strcopy1(xname,1,low__len32(idefaultdisksite)),idefaultdisksite) then idom.b[xname]:=true;
    end;//p
    end;
 
@@ -4256,8 +4680,10 @@ if ireloadnotice then
 
 //.free
 free__1(@xnav);
+
 //.make "hits.png" for each disk domain
-xmakepngs(true);
+png__makeAll(true);
+
 except;end;
 end;
 
@@ -4389,7 +4815,7 @@ try
 if (xfilename='') or (iramcount<=0) then exit;
 
 //init
-if strmatch(ifastfolder__root,strcopy1(xfilename,1,low__len(ifastfolder__root))) then strdel1(xfilename,1,low__len(ifastfolder__root));
+if strmatch(ifastfolder__root,strcopy1(xfilename,1,low__len32(ifastfolder__root))) then strdel1(xfilename,1,low__len32(ifastfolder__root));
 xfilename:=xforce_slash(xfilename);
 
 //get
@@ -4437,7 +4863,7 @@ wsmRAM:begin
    xfiledate:=idate.value[m.wramindex];
    if (xchunksize>=1) then
       begin
-      if str__splice(cache__ptr(idata.value[m.wramindex]),restrict32(xfrom),restrict32(xchunksize),m.splicemem,m.splicelen) then result:=(m.splicelen>=1);
+      if str__splice32(cache__ptr(idata.value[m.wramindex]),restrict32(xfrom),restrict32(xchunksize),m.splicemem,m.splicelen) then result:=(m.splicelen>=1);
       if xmustbuffer and (m.buf<>nil) then str__add3(@m.buf,cache__ptr(idata.value[m.wramindex]),restrict32(xfrom),restrict32(xchunksize));
       end
    else
@@ -4456,30 +4882,45 @@ end;
 function xstreamstart(var a:pnetwork;wmode:longint;xfilename:string;xcancache:boolean):boolean;
 label//Note: xfilename optional
    doNormal,skipend;
+
 var
-   m:tnetbasic;//pointer only
-   buf:pobject;//pointer only
-   wmax,xsize:comp;
-   xdate:tdatetime;
-   p,vlen,xcode:longint;
-   v2,v:string;
-   bol1,xmoduleok,xcontactok,xrangeok:boolean;
+   m                  :tnetbasic;//pointer only
+   buf                :pobject;//pointer only
+   wmax               :longint64;
+   xsize              :longint64;
+   xdate              :tdatetime;
+   p                  :longint32;
+   vlen               :longint32;
+   xcode              :longint32;
+   v2                 :string;
+   v                  :string;
+   bol1               :boolean;
+   xmoduleok          :boolean;
+   xcontactok         :boolean;
+   xsubscribeok       :boolean;
+   xunsubscribeok     :boolean;
+   xrangeok           :boolean;
+
 begin
+
 //defaults
-result:=true;//pass-thru
+result                :=true;//pass-thru
 
 try
-xrangeok:=false;
+
+xrangeok              :=false;
 
 //check
 if not net__recinfo(a,m,buf) then exit;
 
 //init
-xcode:=200;
-m.wmode:=wmode;
-m.wfilename:=xfilename;
-xcontactok:=strmatch(m.hname,'contact.html');
-xmoduleok:=(not xcontactok) and (m.hmodule_index>=0);
+xcode                 :=200;
+m.wmode               :=wmode;
+m.wfilename           :=xfilename;
+xcontactok            :=strmatch(m.hname,'contact.html');
+xsubscribeok          :=strmatch(m.hname,'subscribe.html');
+xunsubscribeok        :=strmatch(m.hname,'unsubscribe.html');
+xmoduleok             :=(not xcontactok) and (not xsubscribeok) and (not xunsubscribeok) and (m.hmodule_index>=0);
 
 //.reset the buffer
 str__softclear2(buf,ibufferlimit);
@@ -4493,21 +4934,26 @@ if (m.hrange='') or xcontactok or xmoduleok then goto doNormal;
 //404
 if not xfromfile64(m,m.wfrom,xsize,xdate,0,true,false) then//read no data
    begin
+
    if header__make4(a,404,true,false,false) then goto skipend;
+
    end;
 
 //etag match -> if it fails return 412
 if (m.hif_match<>'') and (m.hif_match<>low__makeetag(xdate)) then
    begin
+
    header__make3(a,412,true,0,xdate,xcancache,false,'');
-   m.writing:=true;
+   m.writing          :=true;
+
    goto skipend;
+
    end;
 
 //set vars
-m.wfilesize:=xsize;
-m.wfiledate:=xdate;
-wmax:=sub64(m.wfilesize,1);
+m.wfilesize           :=xsize;
+m.wfiledate           :=xdate;
+wmax                  :=sub64(m.wfilesize,1);
 
 //empty file -> can't transfer 0 bytes
 if (wmax<0) then goto donormal;
@@ -4515,24 +4961,31 @@ if (wmax<0) then goto donormal;
 //partial download being requested -> "Range: bytes=0-499" where m.hrange holds for example the value "bytes=0-499"
 if (m.hrange<>'') and strmatch(strcopy1(m.hrange,1,6),'bytes=') then
    begin
-   v:=xstrcopyto(strcopy1(m.hrange,7,low__len(m.hrange)),',');//read only the first section, ignore the rest
-   vlen:=low__len(v);
+
+   v                  :=xstrcopyto(strcopy1(m.hrange,7,low__len32(m.hrange)),',');//read only the first section, ignore the rest
+   vlen               :=low__len32(v);
+
    if (vlen>=2) then
       begin
+
       for p:=1 to vlen do if (v[p-1+stroffset]='-') then
          begin
+
          //get
-         v2:=strcopy1(v,p+1,vlen);
+         v2           :=strcopy1(v,p+1,vlen);
          //.from
-         m.wfrom:=frcrange64(strint64(strcopy1(v,1,p-1)),0,wmax);
+         m.wfrom      :=frcrange64(strint64(strcopy1(v,1,p-1)),0,wmax);
          //.to
          if (v2='') then m.wto:=wmax else m.wto:=frcrange64(strint64(v2),0,wmax);
          //.check
          if (m.wfrom>=0) and (m.wto>=0) and (m.wto>=m.wfrom) then xrangeok:=true;//OK
          //.done
          break;
+
          end;
+
       end;
+
    end;
 
 //check
@@ -4545,12 +4998,14 @@ if (m.hif_range<>'') and ( (not strmatch(m.hif_range,low__makeetag(xdate))) and 
 //404
 if not xfromfile64(m,m.wfrom,xsize,xdate,restrict32(low__inscmp(frcmax64(add64(sub64(m.wto,m.wfrom),1),ichunksize),m.hwantdata)),true,false) then
    begin
+
    if header__make4(a,404,true,false,false) then goto skipend;
+
    end;
 
 //.make the 206 Partial Content Header
 header__make206(a,m.wfrom,m.wto,m.wfilesize,m.wfiledate,xcancache);
-m.writing:=true;
+m.writing             :=true;
 goto skipend;
 
 
@@ -4559,52 +5014,80 @@ doNormal:
 //404
 if not xfromfile64(m,0,xsize,xdate,0,true,false) then//read no data -> just getting info
    begin
+
    if header__make4(a,404,true,false,false) then goto skipend;
+
    end;
 
 //dynamic page: adjust key vars and compile out data into "ibuf2"
 if xcontactok then
    begin
+
    xfromfile64(m,0,xsize,xdate,maxint,true,true);//must buffer "contact.html" so we can edit it on-the-fly - 25feb2024
-   xcontact_html(a);
+
+   contact__html(a);
+
    str__clear(@ibuf2);
    str__add(@ibuf2,buf);
    str__clear(buf);
-   xsize:=str__len(@ibuf2);
-   xdate:=date__now;
-   xcancache:=false;
+   xsize              :=str__len(@ibuf2);
+   xdate              :=date__now;
+   xcancache          :=false;
+
    end
+
+else if xsubscribeok or xunsubscribeok then
+   begin
+
+   xfromfile64(m,0,xsize,xdate,maxint,true,true);//must buffer "subscribe.html/unsubscribe.html" so we can edit it on-the-fly
+
+   subscribe__html( a ,m.hdiskhost ,xsubscribeok );
+
+   str__clear(@ibuf2);
+   str__add(@ibuf2,buf);
+   str__clear(buf);
+   xsize              :=str__len(@ibuf2);
+   xdate              :=date__now;
+   xcancache          :=false;
+
+   end
+
 else if xmoduleok then
    begin
-   xfromfile64(m,0,xsize,xdate,maxint,true,true);//must buffer "contact.html" so we can edit it on-the-fly - 25feb2024
 
+   xfromfile64(m,0,xsize,xdate,maxint,true,true);
+   
    tools__makepage2(m.hmodule_index,false,m.hname,ivars,buf,bol1);//don't search for it again, use "xmoduleindex" for direct access to the module in question
 
    str__clear(@ibuf2);
    str__add(@ibuf2,buf);
    str__clear(buf);
-   xsize:=str__len(@ibuf2);
-   xdate:=date__now;
-   xcancache:=false;
+   xsize              :=str__len(@ibuf2);
+   xdate              :=date__now;
+   xcancache          :=false;
+
    end;
 
 //set vars
-m.wfilesize:=xsize;
-m.wfiledate:=xdate;
-m.wfrom:=0;
-m.wto:=sub64(xsize,1);
+m.wfilesize           :=xsize;
+m.wfiledate           :=xdate;
+m.wfrom               :=0;
+m.wto                 :=sub64(xsize,1);
 header__make3(a,xcode,true,xsize,xdate,xcancache,false,'');
-m.writing:=true;
+m.writing             :=true;
 
 //dynamic page part 2: append data to buf which already has the header
-if xcontactok or xmoduleok then
+if xcontactok or xsubscribeok or xunsubscribeok or xmoduleok then
    begin
+
    str__add(buf,@ibuf2);
    str__clear(@ibuf2);
-   m.wmode:=wsmBuf;
+   m.wmode            :=wsmBuf;
+
    end;
 
 skipend:
+
 except;end;
 end;
 
@@ -4691,34 +5174,93 @@ end;
 
 procedure xendofday;
 var
-   h,min,s,ms:word;
-   xmsg:string;
+   h                            :word;
+   min                          :word;
+   s                            :word;
+   ms                           :word;
+   xmsg                         :string;
+   v                            :string;
+   vcount                       :longint32;
+   p                            :longint32;
+   n                            :string;//disk site
+   dn                           :string;//domain name
+
 begin
 try
+
 //other
 low__decodetime2(date__now,h,min,s,ms);
+
 case h of
 0:if not iendofdaydone then//once per day only
    begin
+
+
+   //daily summary notice ------------------------------------------------------
+
    //init
-   iendofdaydone:=true;
-   xmsg:=xdailysummary(true)+#10+'This is an information notice sent by Bubbles.';
+   iendofdaydone                :=true;
+   xmsg                         :=xdailysummary(true)+#10+'This is an information notice sent by Bubbles.';
+
    //get
    if isummarynotice then xwritemsg('Bubbles - Daily Summary',xmsg);
 
-   //reset daily bandwidth counter & state
-   idaily_bandwidth          :=0;//resets daily bandwidth counter
-   idaily_bandwidth_exceeded :=false;
-   idaily_newvisitors        :=0;//07apr2025
-   idaily_visitors           :=0;//21feb2025
-   idaily_requests           :=0;//21feb2025
-   idaily_hits               :=0;//21feb2025
-   idaily_email              :=0;//
-   idaily_contact            :=0;//
-   idaily_jobs               :=0;//22feb2025
+
+   //reset daily bandwidth counter & state -------------------------------------
+
+   idaily_bandwidth             :=0;//resets daily bandwidth counter
+   idaily_bandwidth_exceeded    :=false;
+   idaily_newvisitors           :=0;//07apr2025
+   idaily_visitors              :=0;//21feb2025
+   idaily_requests              :=0;//21feb2025
+   idaily_hits                  :=0;//21feb2025
+   idaily_email                 :=0;//
+   idaily_contact               :=0;//
+   idaily_jobs                  :=0;//22feb2025
+
+
+   //daily subscribe list + notice for each site -------------------------------
+
+   for p:=0 to (idom.count-1) do
+   begin
+
+   n                            :=strlow(idom.n[p]);
+
+   if (n<>'') then
+      begin
+
+      //get daily subscribe list for each disk site
+      if isubscribenotice then
+         begin
+
+         //get
+         dn                     :=domain__fromDiskSite( n );//disksite -> domain name
+         v                      :=subscribe__manageList( vcount ,n ,'' ,true ,false ,false );
+
+         v                      :=
+          'Daily Subscribed Emails ( '+k64(vcount)+' ) for site "' + dn + '" ( '+n+' )' + #10 +
+                                                                                          #10 +
+                                                                                          v;
+
+         //write list to inbox
+         if (vcount>=1) then xwritemsg( 'Bubbles - Daily Subscribe List for ' + dn ,v );
+
+         end;
+
+      //delete daily list even when notice is disabled - 09oct2026
+      subscribe__manageList( vcount ,n ,'' ,true ,false ,true );
+
+      end;//n
+
+   end;//p
+
+
    end;
-else iendofdaydone:=false;//reset
-end;
+
+else iendofdaydone              :=false;//reset
+
+end;//case
+
 except;end;
 end;
 
@@ -4742,8 +5284,8 @@ var
      try
      //defaults
      result:=x;
-     rlen:=low__len(result);
-     xlen:=low__len(xcol);
+     rlen:=low__len32(result);
+     xlen:=low__len32(xcol);
      //align
      if xright and (rlen<xlen) then result:=strcopy1(xcol,1,xlen-rlen)+result;
      except;end;
@@ -4891,7 +5433,7 @@ if not nav__list(xnav,nlNameD,xfolder,'*.txt','',false,false,true) then goto ski
 xcount:=nav__count(xnav);
 
 //.from
-if (strcopy1(xcmd,1,5)='from.') then xfrom:=frcrange32(restrict32(strint64(strcopy1(xcmd,6,low__len(xcmd)))),0,xcount-1) else xfrom:=0;
+if (strcopy1(xcmd,1,5)='from.') then xfrom:=frcrange32(restrict32(strint64(strcopy1(xcmd,6,low__len32(xcmd)))),0,xcount-1) else xfrom:=0;
 
 //add the info message
 b.sadd('<div class="logsinfo">You have '+k64(xcount)+' traffic logs in total<br>'+xnavbar+'</div>'+#10);
@@ -4954,7 +5496,7 @@ var
 
    function vpull(xpos:longint):byte;
    begin
-   if ((xpos<smin) or (xpos>smax)) and (not block__fastinfo(s,xpos,smem,smin,smax)) then
+   if ((xpos<smin) or (xpos>smax)) and (not block64__fastinfo32(s,xpos,smem,smin,smax)) then
       begin
       result:=0;
       exit;
@@ -4970,7 +5512,7 @@ var
    try
    lp:=1;
    c:=':';
-   for p:=1 to low__len(xline) do
+   for p:=1 to low__len32(xline) do
       begin
       if (xline[p-1+stroffset]=';') then
          begin
@@ -4978,14 +5520,14 @@ var
          v:='';
          if (n<>'') then
             begin
-            for p2:=1 to low__len(n) do if (n[p2-1+stroffset]=c) then
+            for p2:=1 to low__len32(n) do if (n[p2-1+stroffset]=c) then
                begin
                //.name and value pair
-               v:=stripwhitespace_lt(strcopy1(n,p2+1,low__len(n)));
+               v:=stripwhitespace_lt(strcopy1(n,p2+1,low__len32(n)));
                n:=stripwhitespace_lt(strlow(strcopy1(n,1,p2-1)));
                //.remove quotes from value "v"
                if (strcopy1(v,1,1)='"') then strdel1(v,1,1);
-               if (strcopy1(v,low__len(v),1)='"') then strdel1(v,low__len(v),1);
+               if (strcopy1(v,low__len32(v),1)='"') then strdel1(v,low__len32(v),1);
                //.boundary
                if (n='boundary') then v:='--'+v;
                //.store
@@ -4993,7 +5535,7 @@ var
                if (xboundarylen<=0) and (n='boundary') then
                   begin
                   xboundary:=v;
-                  xboundarylen:=low__len(v);
+                  xboundarylen:=low__len32(v);
                   end;
                //.switch from ":" to "=" separator (: for 1st item only)
                c:='=';
@@ -5021,7 +5563,7 @@ if (not str__ok(s)) or (not str__ok(d)) then exit;
 //init
 str__clear(d);
 xinfo:=tfastvars.create;
-slen:=str__len(s);
+slen:=str__len32(s);
 smax:=-2;
 smin:=-1;
 xheader:=true;
@@ -5171,7 +5713,7 @@ var
          str__clear(@d);
          end;
       dlen:=0;
-      slen:=str__len(@s);
+      slen:=str__len32(@s);
       smax:=-2;
       smin:=-1;
       p:=0;
@@ -5181,7 +5723,7 @@ var
 
       procedure vpull;
       begin
-      if ((p<smin) or (p>smax)) and (not block__fastinfo(@s,p,smem,smin,smax)) then
+      if ((p<smin) or (p>smax)) and (not block64__fastinfo32(@s,p,smem,smin,smax)) then
          begin
          v:=0;
          exit;
@@ -5206,12 +5748,12 @@ var
       procedure vadd2(x:string);
       begin
       str__sadd(@d,x);
-      dlen:=str__len(@d);
+      dlen:=str__len32(@d);
       end;
 
       function xnext(xpos:longint):byte;
       begin
-      if ((xpos<smin) or (xpos>smax)) and (not block__fastinfo(@s,xpos,smem,smin,smax)) then
+      if ((xpos<smin) or (xpos>smax)) and (not block64__fastinfo32(@s,xpos,smem,smin,smax)) then
          begin
          result:=0;
          exit;
@@ -5375,7 +5917,7 @@ var
    if not dhtml then str__settextb(@d,xhtmlstart3(a,'',false,true,false)+'<pre class="plaintext">'+str__text(@d)+'</pre>'+xhtmlfinish2(true));
 
    //.message values
-   dlen:=str__len(@d);
+   dlen:=str__len32(@d);
    smax:=-2;
    smin:=-1;
    xstartpointOK2:=false;
@@ -5477,7 +6019,7 @@ try
 s:=io__extractfilename(s);
 if (s<>'') then
    begin
-   slen:=low__len(s);
+   slen:=low__len32(s);
    for p:=1 to slen do if (s[p-1+stroffset]='_') then
       begin
       result:=true;
@@ -5513,14 +6055,14 @@ if strmatch(strcopy1(xname,1,11),'inbox.del--') then
    begin
    xcmd:='delete';
    xstyle:='inbox';
-   xorgname:=strcopy1(m.hname,12,low__len(m.hname));
+   xorgname:=strcopy1(m.hname,12,low__len32(m.hname));
    xname:=io__remlastext(xorgname);
    end
 else if strmatch(strcopy1(xname,1,11),'trash.udl--') then
    begin
    xcmd:='undelete';
    xstyle:='trash';
-   xorgname:=strcopy1(m.hname,12,low__len(m.hname));
+   xorgname:=strcopy1(m.hname,12,low__len32(m.hname));
    xname:=io__remlastext(xorgname);
    end
 else
@@ -5657,18 +6199,18 @@ var
    //defaults
    result:='';
    //get
-   y:=strint(strcopy1(x,1,4));
+   y:=strint32(strcopy1(x,1,4));
    if (y>=1900) then
       begin
-      m:=strint(strcopy1(x,5,2));
+      m:=strint32(strcopy1(x,5,2));
       if (m>=1) and (m<=12) then
          begin
-         d:=strint(strcopy1(x,7,2));
+         d:=strint32(strcopy1(x,7,2));
          if (d>=1) and (d<=31) then
             begin
-            hh:=strint(strcopy1(x,9,2));
-            mm:=frcrange32(strint(strcopy1(x,11,2)),0,59);
-            ss:=frcrange32(strint(strcopy1(x,13,2)),0,59);
+            hh:=strint32(strcopy1(x,9,2));
+            mm:=frcrange32(strint32(strcopy1(x,11,2)),0,59);
+            ss:=frcrange32(strint32(strcopy1(x,13,2)),0,59);
             result:=intstr32(d)+#32+low__month1(m,false)+#32+intstr32(y)+' / '+low__digpad11(hh,2)+' : '+low__digpad11(mm,2)+' . '+low__digpad11(ss,2);
             end;
          end;
@@ -5690,7 +6232,7 @@ var
    //split name -> datetime + subject
    d:='';
    s:=xname;
-   xlen:=low__len(xname);
+   xlen:=low__len32(xname);
    xemlok:=strmatch(strcopy1(xname,xlen-3,4),'.eml');
    if xinbox_filenameassubject(s,d,s) then d:=xdate(d);
    //get
@@ -5788,7 +6330,7 @@ if not nav__list(xnav,nlNameD,xfolder,'*.eml;*.em','',false,false,true) then got
 //.number of messages in inbox
 xcount:=nav__count(xnav);
 //.from
-if (strcopy1(xcmd,1,5)='from.') then xfrom:=frcrange32(restrict32(strint64(strcopy1(xcmd,6,low__len(xcmd)))),0,xcount-1) else xfrom:=0;
+if (strcopy1(xcmd,1,5)='from.') then xfrom:=frcrange32(restrict32(strint64(strcopy1(xcmd,6,low__len32(xcmd)))),0,xcount-1) else xfrom:=0;
 
 //read list
 io__filelist(xreadlist,false,xfolder_read,'*','');
@@ -6247,7 +6789,7 @@ var
 
       procedure xadd2(n,v:string);
       begin
-      if (strcopy1(v,1,1)='*') then v:=app__info(strcopy1(v,2,low__len(v)));
+      if (strcopy1(v,1,1)='*') then v:=app__info(strcopy1(v,2,low__len32(v)));
       result:=result+low__lcolumn(n,20)+#32+low__lcolumn(v,20)+#10;
       end;
    begin
@@ -6304,8 +6846,9 @@ xadd('Hits',k64(ihit.c['total']),false);
 xadd('Bandwidth In',low__mbPLUS(net__in,true),false);
 xadd('Bandwidth Out',low__mbPLUS(net__out,true),false);
 xadd('Connections',k64(iconncount_1sec)+' / '+k64(iconnlimit),false);
+
 //xadd('RAM',low__mbAUTO(irambytes,true),false);
-xadd2('RAM',low__mbPLUS(xrambytes,true),false,true);
+xadd2('RAM',low__mbPLUS(bytes__RAM,true),false,true);
 xadd('Files Cached',k64(iramfilescached)+' / '+k64(iramfilecount),false);
 xdata.sadd('</div>'+#10+'<br><br>'+#10);
 
@@ -6355,9 +6898,9 @@ var
    begin
    d1:=s;
    d2:='';
-   if (d1<>'') then for p:=low__len(d1) downto 1 do if (d1[p-1+stroffset]=#32) then
+   if (d1<>'') then for p:=low__len32(d1) downto 1 do if (d1[p-1+stroffset]=#32) then
       begin
-      d2:=strcopy1(d1,p+1,low__len(d1));
+      d2:=strcopy1(d1,p+1,low__len32(d1));
       d1:=strcopy1(d1,1,p-1);
       break;
       end;
@@ -6472,13 +7015,13 @@ var
    xaddress:string;
    xbytes:comp;
    xbanned:boolean;
-   xbadrequest,xbadmail,xnotthislink,xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;
+   xbadrequest,xbadmail,xbanbymask,xnotthislink,xscanfor,xbanfor,xconnlimit,xpostlimit,xpostlimit2,xbadlimit,xhitlimit,xbadreqlimit,xbadmaillimit:longint;
    xdatalimit:comp;
 
    function xcolumnRight2RED(x:string;xmaxwidth:longint):string;
    begin
    case (x<>'') and (x[0+stroffset]='*') of
-   true:result:=xred+low__rcolumn(strcopy1(x,2,low__len(x)),xmaxwidth)+xredend;
+   true:result:=xred+low__rcolumn(strcopy1(x,2,low__len32(x)),xmaxwidth)+xredend;
    false:result:=low__rcolumn(x,xmaxwidth);
    end;
    end;
@@ -6517,7 +7060,7 @@ var
    xadd(v1+low__rcolumn(xindex,6)+#32+low__rcolumn(xtype,6)+#32+low__rcolumn(xmode,10)+#32+low__rcolumn(xopentime,13)+#32+low__rcolumn(xidletime,13)+#32+low__rcolumn(xreusecount,12)+#32+low__rcolumn(xrecycled,10)+low__rcolumn(xlastip,20)+low__rcolumn(xbandwidth,20)+v2);
    end;
 
-   procedure xadd10(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xnotthislink,xbadmaildomain,xmins:string);
+   procedure xadd10(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xbadmaildomain,xbanbymask,xnotthislink,xmins:string);
    begin
    xadd(
     low__rcolumn(xip,30)+#32+
@@ -6527,12 +7070,13 @@ var
     low__rcolumn(xrequests,10)+#32+
     low__rcolumn(xbandwidth,14)+#32+
     low__rcolumn(xbadrequest,6)+#32+
-    low__rcolumn(xnotthislink,6)+#32+
     low__rcolumn(xbadmaildomain,7)+#32+
+    low__rcolumn(xbanbymask,7)+#32+
+    low__rcolumn(xnotthislink,6)+#32+
     low__rcolumn(xmins,13));//29apr2024
    end;
 
-   procedure xadd10RED(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xnotthislink,xbadmaildomain,xmins:string);
+   procedure xadd10RED(xip,xpost,xpost2,xbad,xrequests,xbandwidth,xbadrequest,xbadmaildomain,xbanbymask,xnotthislink,xmins:string);
    begin
    xadd(
     low__rcolumn(xip,30)+#32+
@@ -6542,8 +7086,9 @@ var
     xcolumnRight2RED(xrequests,10)+#32+
     xcolumnRight2RED(xbandwidth,14)+#32+
     xcolumnRight2RED(xbadrequest,6)+#32+
-    xcolumnRight2RED(xnotthislink,6)+#32+
     xcolumnRight2RED(xbadmaildomain,7)+#32+
+    xcolumnRight2RED(xbanbymask,7)+#32+
+    xcolumnRight2RED(xnotthislink,6)+#32+
     low__rcolumn(xmins,13));
    end;
 begin
@@ -6569,7 +7114,7 @@ if (xcmd='bannedips') then
    xadd('------------');
    for p:=0 to (ipsec__count-1) do
    begin
-   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink,xbytes,xbanned) and xbanned then
+   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xbanbymask,xnotthislink,xbytes,xbanned) and xbanned then
       begin
       inc(xcount);
       xadd(xaddress);
@@ -6594,12 +7139,12 @@ else if (xcmd='banlist') then
    xstart;
    xtitle:='Ban List';
 
-   xadd10('IP Address','Posts','Posts2','Bad Logins','Requests','Bandwidth','BadReq','BadBot','BadMail','Time');
-   xadd10('----------','-----','------','----------','--------','---------','------','------','-------','----');
+   xadd10('IP Address','Posts','Posts2','Bad Logins','Requests','Bandwidth','BadReq','BadMail','BadMask','BadBot','Time');
+   xadd10('----------','-----','------','----------','--------','---------','------','-------','-------','------','----');
 
    for p:=0 to (ipsec__count-1) do
    begin
-   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xnotthislink,xbytes,xbanned) and xbanned then
+   if ipsec__slot(p,xaddress,xmins,xconn,xpost,xpost2,xbad,xhits,xbadrequest,xbadmail,xbanbymask,xnotthislink,xbytes,xbanned) and xbanned then
       begin
       inc(xcount);
       xadd10RED(xaddress,
@@ -6609,8 +7154,9 @@ else if (xcmd='banlist') then
        insstr('*',(xhitlimit>=1) and (xhits>=xhitlimit))+k64(xhits),
        insstr('*',(xdatalimit>=1) and (xbytes>=xdatalimit))+low__mbPLUS(xbytes,true),
        insstr('*',(xbadreqlimit>=1) and (xbadrequest>=xbadreqlimit))+k64(xbadrequest),
-       insstr('*',xnotthislink>=1)+k64(xnotthislink),
        insstr('*',(xbadmaillimit>=1) and (xbadmail>=xbadmaillimit))+k64(xbadmail),
+       insstr('*',xbanbymask>=1)+k64(xbanbymask),
+       insstr('*',xnotthislink>=1)+k64(xnotthislink),
        low__uptime(mult64(xmins,60000),false,true,true,false,false,''));//compact versions - 500days = 13c
       end;
    end;//p
@@ -6689,148 +7235,256 @@ end;
 
 function xmanage:string;//19jun2025
 var
-   b:tstr9;
-   xsitemapsto,xcreatesite_status,str1,dname,xname,xcmd,xsite,xsitehtml,v,xmask:string;
-   xvalidlen,xsitemaps,bol1:boolean;
-   int1,p:longint;
+   b                            :tstr9;
+   xsitemapsto                  :string;
+   xcreatesite_status           :string;
+   str1                         :string;
+   str2                         :string;
+   dname                        :string;
+   xname                        :string;
+   xcmd                         :string;
+   xbuttonName                  :string;
+   xsite                        :string;
+   xsitehtml                    :string;
+   v                            :string;
+   xmask                        :string;
+   xvalidlen                    :boolean;
+   xsitemaps                    :boolean;
+   bol1                         :boolean;
+   int1                         :longint32;
+   p                            :longint32;
 
-   procedure xhead(xname,xtitle:string);
+   procedure xhead(const xname,xtitle:string);
    begin
+
    str__sadd(@b,xh2(xname,xtitle+' ['+xsitehtml+']'));
+
    end;
 
-   function xbutton(xbutton,xmoreclass:string):string;
+   function xbutton(const xbutton,xmoreclass:string):string;
    begin
+
    result:='<div class="manageoption"><div><input class="button'+xmoreclass+'" type=submit value="'+net__encodeforhtmlstr(xbutton)+'"></div></div>';
+
    end;
 
-   function xtextandbutton2(xshow:boolean;xtextname,xtext,xbutton,xmoreclass:string):string;
+   function xbuttonlist(const xbutton:array of string;const xmoreclass:string):string;
+   var
+      p               :longint32;
+      xonce           :boolean;
+
    begin
+
+   //start
+   result             :='<div class="manageoption"><div>';
+   xonce              :=true;
+
+   //get buttons
+   for p:=low(xbutton) to high(xbutton) do
+   begin
+
+   if (xbutton[p]<>'') then
+      begin
+
+      result          :=result + insstr(' &nbsp; ',not xonce) + '<input class="button'+xmoreclass+'" type="submit" name="buttonname" value="'+net__encodeforhtmlstr(xbutton[p])+'">';
+      xonce           :=false;
+
+      end;
+
+   end;//p
+
+   //finish
+   result             :=result+'</div></div>';
+
+   end;
+
+   function xtextandbutton2(const xshow:boolean;const xtextname,xtext,xbutton,xmoreclass:string):string;
+   begin
+
    result:='<div class="manageoption"><div><input'+insstr(' class="text"',xshow)+' type="'+low__aorbstr('hidden','text',xshow)+'" name="'+xtextname+'" value="'+net__encodeforhtmlstr(xtext)+'"></div><div><input class="button'+xmoreclass+'" type=submit value="'+net__encodeforhtmlstr(xbutton)+'"></div></div>';
+
    end;
 
-   function xtextandbutton(xtextname,xtext,xbutton:string):string;
+   function xtextandbutton(const xtextname,xtext,xbutton:string):string;
    begin
+
    result:=xtextandbutton2(true,xtextname,xtext,xbutton,'');
+
    end;
 
-   function xform(xname,xcmd,xsite,xcode:string):string;
+   function xform(const xname,xcmd,xsite,xcode:string):string;
    begin
+
    result:=
            '<form class="block" method=post action="manage.html'+insstr('#'+xname,xname<>'')+'">'+
     insstr('<input name="cmd" type="hidden" value="'+xcmd+'">',xcmd<>'')+
     insstr('<input name="site" type="hidden" value="'+net__encodeforhtmlstr(xsite)+'">',xsite<>'')+
     xcode+
     '</form>'+#10;
+
    end;
 
    function xuploadlog:string;
    begin
+
    result:=ivars.s['manage.upload.log'];
+
    if (result<>'') then
       begin
+
       result:=
       '<pre class="console">-- Upload Log --'+#10+
       k64(ivars.i['total'])+' files uploaded ('+low__mbauto(ivars.c['upload.size'],true)+') for site "'+xsite+'" with '+k64(ivars.i['errcount'])+' errors'+#10+
       #10+
       result+
       '</pre>';
+
       end;
+
    end;
 
    function xlistfiles(xsite,xmask:string;xdel,xuse:boolean):string;//19jun2025
    label
       skipend;
+
    var
-      xnav:tstr8;
-      xlog:tstr9;
-      xramcount,xdiskcount,xtotal,xerrcount,xstyle,xtep,xcount,p:longint;
-      xtotalsize,xsize:comp;
-      str1,xfolder,xname,xlabel:string;
+      xnav                      :tstr8;
+      xlog                      :tstr9;
+      xramcount                 :longint32;
+      xdiskcount                :longint32;
+      xtotal                    :longint32;
+      xerrcount                 :longint32;
+      xstyle                    :longint32;
+      xtep                      :longint32;
+      xcount                    :longint32;
+      p                         :longint32;
+      xtotalsize                :longint64;
+      xsize                     :longint64;
+      str1                      :string;
+      xfolder                   :string;
+      xname                     :string;
+      xlabel                    :string;
+
    begin
+
    //defaults
-   result:='';
-   xnav:=nil;
-   xlog:=nil;
-   xtotal:=0;
-   xerrcount:=0;
-   xtotalsize:=0;
-   xramcount:=0;
-   xdiskcount:=0;
+   result                       :='';
+   xnav                         :=nil;
+   xlog                         :=nil;
+   xtotal                       :=0;
+   xerrcount                    :=0;
+   xtotalsize                   :=0;
+   xramcount                    :=0;
+   xdiskcount                   :=0;
+
    //check
    if (not xuse) or (xsite='') then exit;
 
    try
+
    //init
-   xnav:=str__new8;
-   xlog:=str__new9;
+   xnav                         :=str__new8;
+   xlog                         :=str__new9;
 
    //get
    if not nav__init(xnav) then goto skipend;
-   xfolder:=io__asfolder(ifastfolder__root+xsite);
+
+   xfolder                      :=io__asfolder(ifastfolder__root+xsite);
 
    if not nav__list(xnav,nlName,xfolder,strdefb(xmask,'*'),'',false,false,true) then goto skipend;
-   xcount:=nav__count(xnav);
+
+   xcount                       :=nav__count(xnav);
+
    if (xcount>=1) then
       begin
+
       for p:=0 to (xcount-1) do
       begin
+
       if nav__get(xnav,p,xstyle,xtep,xsize,xname,xlabel) then
          begin
+
          inc(xtotal);
-         xtotalsize:=add64(xtotalsize,xsize);
+
+         xtotalsize             :=add64(xtotalsize,xsize);
+
          if xdel then
             begin
+
             case io__remfile(xfolder+xname) of
             true :begin
-               str1:='[ DELETED ]';
+
+               str1             :='[ DELETED ]';
+
                end;
             false:begin
-               str1:='[ <span class=red>Del.Err.</span>]';
+
+               str1             :='[ <span class=red>Del.Err.</span>]';
                inc(xerrcount);
+
                end;
             end;//case
+
             end
-         else
-            begin
+
+         else begin
+
             case xfileinram(xfolder+xname) of
             true :begin
-               str1:='[ RAM  ]';
+
+               str1             :='[ RAM  ]';
                inc(xramcount);
+
                end;
             false:begin
-               str1:='[ <span class=red>DISK</span> ]';//mark disk status in red
+
+               str1             :='[ <span class=red>DISK</span> ]';//mark disk status in red
                inc(xdiskcount);
+
                end;
-            end;
+            end;//case
+
             end;
 
          if (xtotal=1) then
             begin
+
             case xdel of
             true:begin
+
                str__sadd(@xlog,'Status       '+xcolumnRight('Size')+'  Name'+#10);
                str__sadd(@xlog,'------       '+xcolumnRight('----')+'  ----'+#10);
+
                end;
             false:begin
+
                str__sadd(@xlog,'Location  '+xcolumnRight('Size')+'  Name'+#10);
                str__sadd(@xlog,'--------  '+xcolumnRight('----')+'  ----'+#10);
+
                end;
             end;//case
+
             end;
 
          str__sadd(@xlog,str1+'  '+xcolumnRight(k64(xsize))+'  '+xname+#10);
+
          end;
+
       end;//p
+
       //.finalise
       if (xtotal>=1) then
          begin
+
          str__sadd(@xlog,#10+k64(xtotalsize)+' bytes ('+low__mbPLUS(xtotalsize,true)+') in total'+insstr(' with '+k64(xramcount)+' file/s in RAM and '+k64(xdiskcount)+' on DISK',not xdel)+#10);//19jun2025
+
          end;
+
       end;
 
    //successful
    if (str__len(@xlog)<=0) then str__sadd(@xlog,'There are no files for this site.  The site is empty and can be deleted.');
+
    result:=
     '<pre class="console">'+
     k64(xtotal)+' files '+low__aorbstr('listed','deleted',xdel)+' for site "'+xsite+'" with '+k64(xerrcount)+' errors'+#10+
@@ -6841,70 +7495,93 @@ var
     //site is empty -> offer up the "Delete Site" button
    if nav__init(xnav) and nav__list(xnav,nlName,ifastfolder__root+xsite,'*','',false,false,true) and (nav__count(xnav)<=0) then
       begin
-      result:=result+xform('del','manage.del','',xtextandbutton2(false,'name',xsite,'Delete Site',''));
+
+      result                    :=result+xform('del','manage.del','',xtextandbutton2(false,'name',xsite,'Delete Site',''));
+
       end;
 
    skipend:
    except;end;
-   try
+
+   //free
    str__free(@xnav);
    str__free(@xlog);
-   except;end;
+
    end;
+   
 begin
+
 //defaults
-result:='';
-b:=nil;
+result                          :='';
+b                               :=nil;
 
 try
+
 //init
-xcmd:=strlow(ivars.s['cmd']);
-xsite:=io__extractfilename(strlow(net__decodestrb(ivars.s['site'])));
-xsitehtml:=net__encodeforhtmlstr(xsite);
-xmask:=io__extractfilename(net__decodestrb(ivars.s['mask']));
-xname:=io__extractfilename(strlow(net__decodestrb(ivars.s['name'])));
-xcreatesite_status:='';
-b:=str__new9;
+xcmd                            :=strlow(ivars.s['cmd']);
+xbuttonName                     :=strlow(ivars.s['buttonname']);//09oct2026
+xsite                           :=io__extractfilename(strlow(net__decodestrb(ivars.s['site'])));
+xsitehtml                       :=net__encodeforhtmlstr(xsite);
+xmask                           :=io__extractfilename(net__decodestrb(ivars.s['mask']));
+xname                           :=io__extractfilename(strlow(net__decodestrb(ivars.s['name'])));
+xcreatesite_status              :='';
+b                               :=str__new9;
 
 //decide
 if (xcmd='') or (xsite='') then
    begin
+
    //.new site -> do action here so "idom" can be updated BEFORE we list the sites
    if (xcmd='manage.new') then
       begin
-      dname:=xname;
+
+      dname                     :=xname;
+
       if (dname<>'') then
          begin
-         for p:=1 to low__len(dname) do
+
+         for p:=1 to low__len32(dname) do
          begin
+
          case byte(dname[p-1+stroffset]) of
-         ssDot:dname[p-1+stroffset]:='_';
+         ssDot:dname[p-1+stroffset]       :='_';
          ssSlash,ssBackSlash:;
-         end;
+         end;//case
+
          end;//p
 
          //enforce leading "www_"
-         if not strmatch( strcopy1(dname,1,low__len(idefaultdisksite)) , idefaultdisksite ) then dname:=idefaultdisksite+dname;
+         if not strmatch( strcopy1(dname,1,low__len32(idefaultdisksite)) , idefaultdisksite ) then dname:=idefaultdisksite+dname;
 
          //check + create + log
          if strmatch(dname,idefaultdisksite+'localhost') or strmatch(dname,idefaultdisksite) then xvalidlen:=true
          else
             begin
-            int1:=0;
-            for p:=1 to low__len(dname) do if (dname[p-1+stroffset]='_') then inc(int1);
-            xvalidlen:=(int1>=2);
+
+            int1                :=0;
+
+            for p:=1 to low__len32(dname) do if (dname[p-1+stroffset]='_') then inc(int1);
+
+            xvalidlen           :=(int1>=2);
+
             end;
 
-         if not xvalidlen then xcreatesite_status:='<pre class="console">Invalid site name "'+dname+'".</pre>'
+         if not xvalidlen                                  then xcreatesite_status:='<pre class="console">Invalid site name "'+dname+'".</pre>'
          else if io__folderexists(ifastfolder__root+dname) then xcreatesite_status:='<pre class="console">Site name "'+dname+'" already exists.</pre>'
          else
             begin
-            bol1:=io__makefolder(ifastfolder__root+dname);
-            xcreatesite_status:='<pre class="console">'+low__aorbstr('Failed to create site "'+dname+'".','Site "'+dname+'" created.',bol1)+'</pre>';
+
+            bol1                :=io__makefolder(ifastfolder__root+dname);
+
+            xcreatesite_status  :='<pre class="console">'+low__aorbstr('Failed to create site "'+dname+'".','Site "'+dname+'" created.',bol1)+'</pre>';
+
             //.include the new site name immediately in the "idom" so any cleaning will retain the new site data - 18feb2024
             if bol1 then idom.b[dname]:=true;
+
             end;
+
          end;
+
       end;
 
    //.sites
@@ -6916,15 +7593,22 @@ if (xcmd='') or (xsite='') then
    str__sadd(@b,xvsep);
    str__sadd(@b,'<br>Select a site below to manage its contents:');
 
-   int1:=0;
+   int1                         :=0;
+
    for p:=0 to (idom.count-1) do
    begin
-   v:=strlow(idom.n[p]);
+
+   v                            :=strlow(idom.n[p]);
+
    if (v<>'') then
       begin
+
       inc(int1);
+
       str__sadd(@b,xform('','manage.options',v,'<input class="button buttonaslink" type=submit value="'+k64(int1)+'. &nbsp;'+net__encodeforhtmlstr(v)+'">'));
+
       end;
+
    end;//p
 
    //.new site
@@ -6940,54 +7624,68 @@ if (xcmd='') or (xsite='') then
     'Type a domain name or disk site name (e.g. mydomain.com or mydomain_com) to remove it from Bubbles.  '+
     'A site must be empty before it can be deleted.  To empty a site, click the site button from the list above, then scroll down and click the "Delete Files..." button, and confirm by clicking the "Permanently Delete Files" button.  '+
     'All files on the site are removed and the site can be deleted.  Click the "Delete Site" button.  The site is deleted.'+xtextandbutton('name',xname,'Delete Site')));
+
    if (xcmd='manage.del') then
       begin
-      dname:=xname;
+
+      dname                     :=xname;
+
       if (dname<>'') then
          begin
-         for p:=1 to low__len(dname) do
+
+         for p:=1 to low__len32(dname) do
          begin
+
          case byte(dname[p-1+stroffset]) of
          ssDot:dname[p-1+stroffset]:='_';
          ssSlash,ssBackSlash:;
-         end;
+         end;//case
+
          end;//p
+
          //enforce leading "www_"
-         if not strmatch( strcopy1(dname,1,low__len(idefaultdisksite)) , idefaultdisksite ) then dname:=idefaultdisksite+dname;
+         if not strmatch( strcopy1(dname,1,low__len32(idefaultdisksite)) , idefaultdisksite ) then dname:=idefaultdisksite+dname;
+
          //delete + log
-         if not io__folderexists(ifastfolder__root+dname) then str1:='Site "'+dname+'" does not exist/was previously deleted.'
-         else if strmatch(dname,idefaultdisksite) then str1:='Can''t delete default site.'
-         else if io__deletefolder(ifastfolder__root+dname) then str1:='Site "'+dname+'" deleted.'
-         else if io__folderexists(ifastfolder__root+dname) then str1:='Unable to delete site "'+dname+'" as it contains files which must first be deleted.<br><form class="inline-block" method=post action="manage.html#delete"><input name="cmd" type="hidden" value="manage.options"><input name="site" type="hidden" value="'+net__encodeforhtmlstr(dname)+'"><input class="button" type=submit value="Delete Files..."></form>'
+         if not io__folderexists(ifastfolder__root+dname)   then str1:='Site "'+dname+'" does not exist/was previously deleted.'
+         else if strmatch(dname,idefaultdisksite)           then str1:='Can''t delete default site.'
+         else if io__deletefolder(ifastfolder__root+dname)  then str1:='Site "'+dname+'" deleted.'
+         else if io__folderexists(ifastfolder__root+dname)  then str1:='Unable to delete site "'+dname+'" as it contains files which must first be deleted.<br><form class="inline-block" method=post action="manage.html#delete"><input name="cmd" type="hidden" value="manage.options"><input name="site" type="hidden" value="'+net__encodeforhtmlstr(dname)+'"><input class="button" type=submit value="Delete Files..."></form>'
          else                                                    str1:='Failed.';
 
          str__sadd(@b,'<pre class="console">'+str1+'</pre>');
+
          end;
+
       end;
+
    end
-else
-   begin
+
+else begin
+
    //.site support info
-   xsitemapsto:=xdommapping2(xsite,int1);
-   xsitemaps:=not strmatch(xsitemapsto,xsite);
+   xsitemapsto                  :=xdommapping2(xsite,int1);
+   xsitemaps                    :=not strmatch(xsitemapsto,xsite);
 
    //.general
    xhead('general',xsymbol('manage')+'General');
+
    str__sadd(@b,
-   insstr('<div class="bad">This site reroutes to "'+net__encodeforhtmlstr(xsitemapsto)+'".  Files, site hit counter and redirects do not apply.</div>',xsitemaps)+
-   xminiconsole);
+    insstr('<div class="bad">This site reroutes to "'+net__encodeforhtmlstr(xsitemapsto)+'".  Files, site hit counter and redirects do not apply.</div>',xsitemaps)+
+    xminiconsole);
+
    str__sadd(@b,'Refresh the memory cache and update the site list to reflect changes made to one or more sites.');
    str__sadd(@b,xform('','reload','','<input type="hidden" name="site" value="'+xsitehtml+'"><input class="button buttonaslink" type=submit value="Reload Site(s)">'));
 
    //.upload
    xhead('upload','Upload Files');
    str__sadd(@b,
-   '<form class="block" method=post action="manage.html" enctype="multipart/form-data"><input name="cmd" type="hidden" value="manage.upload.'+xsitehtml+'">'+
-   '<div class="manageoption"><div><input type="file" name="filename" id="filename" multiple></div><div><input class="button" type="submit" value="Upload Files" name="submit"></div></div>'+
-   '</form>'+#10+
-   'The combined maximum upload size is ~'+low__mbauto2(imaxuploadsize_admin,0,true)+' for the selected files.'+
-   xuploadlog
-   );
+    '<form class="block" method=post action="manage.html" enctype="multipart/form-data"><input name="cmd" type="hidden" value="manage.upload.'+xsitehtml+'">'+
+    '<div class="manageoption"><div><input type="file" name="filename" id="filename" multiple></div><div><input class="button" type="submit" value="Upload Files" name="submit"></div></div>'+
+    '</form>'+#10+
+    'The combined maximum upload size is ~'+low__mbauto2(imaxuploadsize_admin,0,true)+' for the selected files.'+
+    xuploadlog
+    );
 
    //.list
    xhead('list','List Files');
@@ -6999,30 +7697,43 @@ else
    //.delete
    xhead('delete','Delete Files');
    str__sadd(@b,xvsep);
+
    if (xcmd='manage.delete') then
       begin
+
       //confirm prompt
       str__sadd(@b,
       xform('delete','manage.option',xsite,xtextandbutton2(false,'mask',xmask,'ABORT',' abort'))+
       xform('delete','manage.delete2',xsite,'Type a complex mask or leave blank to delete all files (e.g. *.zip or *.zip;*ab*.exe;)'+xtextandbutton('mask',xmask,'Permanently Delete Files'))+
       '');
+
       end
-   else
-      begin
+
+   else begin
+
       //delete
       str__sadd(@b,xform('delete','manage.delete',xsite,'Type a complex mask or leave blank to delete all files (e.g. *.zip or *.zip;*ab*.exe;)'+xtextandbutton('mask',xmask,'Delete Files...')));
+
       if (xcmd='manage.delete2') then str__sadd(@b,xlistfiles(xsite,xmask,true,true));
+
       end;
 
    //.hit counters
    if (xcmd='manage.counter') then
       begin
-      ihit.c[xsite]:=strint64(net__decodestrb(ivars.s['counter']));
-      xmakepngs(true);//update counter pngs
-      imustsavesettings:=true;
+
+      ihit.c[xsite]             :=strint64(net__decodestrb(ivars.s['counter']));
+
+      png__makeAll(true);//update counter pngs
+
+      imustsavesettings         :=true;
+
       end;
+
    xhead('counter','Hit Counter');
+
    str__sadd(@b,xvsep);
+
    str__sadd(@b,
     insstr('<div class="bad">This site reroutes to "'+net__encodeforhtmlstr(xsitemapsto)+'".  The "site hit counter" below does not apply.</div>',xsitemaps)+
     'A site''s counter increments each time a "html" or "htm" document is requested, and can be displayed on your page(s) by loading the ".hits.png" image <img src=".hits.png" style="max-height:1em; vertical-align:text-bottom;">.  '+'Each site has its own hit counter.  Load the ".totalhits.png" image <img src=".totalhits.png" style="max-height:1em; vertical-align:text-bottom;"> to show the total hits across all sites.  Each counter updates after a short delay.<br><br>'+#10+
@@ -7042,12 +7753,16 @@ else
     //.redirect
    if (xcmd='manage.redirect') then
       begin
+
       xredirect__addlocal(xsite,net__decodestrb(ivars.s['manage.redirect.list']));
       imustsavesettings:=true;
+
       end;
 
    xhead('redirect','Redirect Links');
+
    str__sadd(@b,xvsep);
+
    str__sadd(@b,
     xform('redirect','manage.redirect',xsite,
     insstr(xvsep+'<div class="bad">This site reroutes to "'+net__encodeforhtmlstr(xsitemapsto)+'".  The redirects below do not apply.</div>',xsitemaps)+
@@ -7066,12 +7781,70 @@ else
     xvsep+
     xbutton('Save',''))
     );
+
+
+   //subscribe list
+   if (xbuttonname='save and replace') then
+      begin
+
+      //.replace list -> read list
+      str2                      :=subscribe__manageList( int1 ,xsite ,net__decodestrb(ivars.s['manage.subscribe.list']) ,false ,true ,false );//09oct2026
+
+      end
+
+   else if (xbuttonname='load') then
+      begin
+
+      //.read list only
+      str2                      :=subscribe__manageList( int1 ,xsite ,'' ,false ,false ,false );//09oct2026
+
+      end
+
+   else begin
+
+      //.no list -> user needs to hit the "load" button first - 09oct2026
+      str2                      :='';
+      int1                      :=0;
+
+      end;
+
+   xhead('subscribe','Subscribe List');
+
+   str__sadd(@b,xvsep);
+
+
+   case (xbuttonname<>'') of
+   true:str1          :='There '+low__aorbstr('is','are',int1<>1)+#32+k64(int1)+' subscribed email address'+insstr('es',int1<>1)+' for the site.  ';
+   else str1          :='List of subscribed email addresses for the site.  ';
+   end;//case
+
+   str1               :=str1 +
+    'Click the "Load" button to view the list.  '+
+    'The list is automatically filtered, e.g. white space, duplicates, and invalid entires are removed.  '+
+    'A date/time stamped backup copy of the list is stored in the "subscribe\backup\" folder each time it''s submitted using the text box below.  '+
+    '<br>'+
+    '<textarea class="textbox" spellcheck="false" rows="12" wrap="no" name="manage.subscribe.list">'+net__encodeforhtmlstr(str2)+'</textarea>'+#10+
+    xvsep;
+
+    str2              :='';//reduce mem
+
+    case (xbuttonname<>'') of
+    true:str1         :=str1 + xbuttonlist( [ 'Load','Save and Replace' ],'');
+    else str1         :=str1 + xbuttonlist( [ 'Load'                    ],'');
+    end;//case
+
+   str__sadd( @b ,xform('subscribe' ,'manage.subscribe' ,xsite ,str1) );
+
    end;
 
 //set
-result:=str__text(@b);
+result                          :=str__text(@b);
+
 except;end;
-try;str__free(@b);except;end;
+
+//free
+str__free(@b);
+
 end;
 
 function xredirect__have(sname:string;var dnameORurl:string):boolean;
@@ -7095,7 +7868,7 @@ if iredirect.sfound(sname,dnamelist) and (dnamelist<>'') then
    dnamelist:=dnamelist+#32;
    lvsep:=true;
    //get
-   for p:=1 to low__len(dnamelist) do
+   for p:=1 to low__len32(dnamelist) do
    begin
    v:=byte(dnamelist[p-1+stroffset]);
    vsep:=(v=ssspace) or (v=sscomma) or (v=sstab);
@@ -7146,10 +7919,10 @@ var
    //split
    if (x<>'') then
       begin
-      for p:=1 to low__len(x) do if (x[p-1+stroffset]='/') then
+      for p:=1 to low__len32(x) do if (x[p-1+stroffset]='/') then
          begin
          xsite:=strcopy1(x,1,p-1);
-         xname:=strcopy1(x,p+1,low__len(x));
+         xname:=strcopy1(x,p+1,low__len32(x));
          break;
          end;
       end;
@@ -7229,10 +8002,10 @@ var
    //split
    if (x<>'') then
       begin
-      for p:=1 to low__len(x) do if (x[p-1+stroffset]='/') then
+      for p:=1 to low__len32(x) do if (x[p-1+stroffset]='/') then
          begin
          xsite:=strcopy1(x,1,p-1);
-         xname:=strcopy1(x,p+1,low__len(x));
+         xname:=strcopy1(x,p+1,low__len32(x));
          break;
          end;
       end;
@@ -7661,7 +8434,7 @@ begin
 result:=false;
 try
 //init
-xlen:=low__len(x);
+xlen:=low__len32(x);
 if (xlen<=0) then
    begin
    result:=true;
@@ -7693,25 +8466,42 @@ skipend:
 except;end;
 end;
 
-function xcontact_html(var a:pnetwork):boolean;
+function contact__html(var a:pnetwork):boolean;
 label//Important: Uses values from global "ivars" handler
    skipend;
+
 var
-   m:tnetbasic;//ptr only
-   buf:pobject;//ptr only
-   xemail,xmsg:tstr9;
-   xsubject,xreplymessage,x,n,e:string;
-   xlen,p2,p,int1,int2:longint;
-   bol1,xcontact_question,xhaveinput,xmustspamguardreply,xmustreply,ok:boolean;
+   m                  :tnetbasic;//ptr only
+   buf                :pobject;//ptr only
+   xemail             :tstr9;
+   xmsg               :tstr9;
+   xsubject           :string;
+   dspamCheck_ok      :boolean;
+   xreplymessage      :string;
+   x                  :string;
+   n                  :string;
+   e                  :string;
+   xlen               :longint32;
+   p2                 :longint32;
+   p                  :longint32;
+   int1               :longint32;
+   int2               :longint32;
+   xcontact_question  :boolean;
+   xhaveinput         :boolean;
+   xmustspamguardreply:boolean;
+   xmustreply         :boolean;
+   ok                 :boolean;
 
    procedure xspamguard;
    var
-      p:longint;
-      xquestion:string;
+      p               :longint32;
+      xquestion       :string;
 
       function xspamguard_code(xfull:boolean):string;
       begin
+
       case xfull of
+
       true:begin
          result:=
          '<div style="display:inline-block;background-color:#eeeeee61;color:#777;margin:1em 0;;padding:0.5em;border:#ddd 1px solid;border-radius:10px;">'+
@@ -7721,54 +8511,74 @@ var
          '</div>'+
          '';
          end;
+
       false:result:=xquestion;
+
       end;//case
+
       end;
    begin
    try
+
    if (x<>'') then
       begin
+
       //.question value
-      if xcontact_question and (not xhaveinput) then question__make(xquestion) else xquestion:='';
+      if xcontact_question and (not xhaveinput) then spamGuard__makeQuestion(xquestion)
+      else                                           xquestion:='';
 
       //insert SpamGuard at the "((spamguard))"
       for p:=1 to xlen do if (x[p-1+stroffset]='(') and strmatch(strcopy1(x,p,13),'((spamguard))') then
          begin
-         x:=strcopy1(x,1,p-1)+xspamguard_code(xquestion<>'')+strcopy1(x,p+13,xlen);
-         xlen:=low__len(x);
+
+         x            :=strcopy1(x,1,p-1)+xspamguard_code(xquestion<>'')+strcopy1(x,p+13,xlen);
+         xlen         :=low__len32(x);
          xmustspamguardreply:=true;
+
          break;
+
          end;//p
 
       //fallback: tag "((spamguard))" not found -> insert the SpamGuard code at the bottom of the form - 04apr2024
       if (not xmustspamguardreply) and (xquestion<>'') then
          begin
+
          for p:=1 to xlen do
          begin
+
          if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,7),'</form>') then
             begin
+
             //insert Spam Guard
-            x:=strcopy1(x,1,p-1)+xspamguard_code(true)+strcopy1(x,p,xlen);
-            xlen:=low__len(x);
+            x         :=strcopy1(x,1,p-1)+xspamguard_code(true)+strcopy1(x,p,xlen);
+            xlen      :=low__len32(x);
             xmustspamguardreply:=true;
+
             break;
+
             end;
+
          end;//p
+
          end;
+
       end;
+
    except;end;
    end;
+
 begin
+
 //defaults
-result:=true;//pass-thru
-xlen:=0;
-xmustreply:=false;
-xmustspamguardreply:=false;
-xmsg:=nil;
-xemail:=nil;
-ok:=false;
-xreplymessage:='';
-xcontact_question:=icontact_question;
+result                :=true;//pass-thru
+xlen                  :=0;
+xmustreply            :=false;
+xmustspamguardreply   :=false;
+xmsg                  :=nil;
+xemail                :=nil;
+ok                    :=false;
+xreplymessage         :='';
+xcontact_question     :=icontact_question;
 
 try
 
@@ -7776,10 +8586,10 @@ try
 if (ivars=nil) or (not net__recinfo(a,m,buf)) then exit;
 
 //init
-xhaveinput:=(ivars.count>=1);//inbound data
-xmustreply:=xhaveinput;
-x:=str__text(buf);
-xlen:=low__len(x);
+xhaveinput            :=(ivars.count>=1);//inbound data
+xmustreply            :=xhaveinput;
+x                     :=str__text(buf);
+xlen                  :=low__len32(x);
 
 //SpamGuard
 xSpamGuard;
@@ -7787,131 +8597,809 @@ xSpamGuard;
 //contact form submissions have been disabled
 if not icontact_allow then
    begin
-   xmustreply:=true;
+
+   xmustreply         :=true;
    goto skipend;
+
    end;
 
 //check
 if not xmustreply then
    begin
+
    goto skipend;//check this second
+
    end;
 
 //init
-xemail:=str__new9;
-xmsg:=str__new9;
+xemail                :=str__new9;
+xmsg                  :=str__new9;
 
 //get
+
 //.subject
-xsubject:=strdefb(ivars.s['subject'],'(no subject)');
+xsubject              :=strdefb(ivars.s['subject'],'(no subject)');
+dspamCheck_ok         :=(not xcontact_question) or spamGuard__checkAnswer(ivars.i['answer']);//08oct2026
+
 //.text
 xmsg.sadd(strdefb(strdefb(ivars.s['message'],ivars.s['msg']),'(no message)'));
 
 //.append any other "name=value" pairs at the end of the message body
 xmsg.sadd(#10+#10+'--( More Information )----------------------------'+#10);
 xmsg.sadd('sender-ip: '+m.hip+#10);//sender-ip
+
 if (ivars.count>=1) then for p:=0 to (ivars.count-1) do
    begin
-   n:=strlow(ivars.n[p]);
+
+   n                  :=strlow(ivars.n[p]);
    if (n<>'') and (n<>'subject') and (n<>'message') and (n<>'msg') then xmsg.sadd(n+': '+ivars.v[p]+#10);
+
    end;//p
+
 //set
 //.make standard 7bit email message
-//if not mail__makemsg(@xemail,m.hip,ivars.s['email'],'contact.html@'+m.hdiskhost,xsubject,xmsg.text,now,e) then goto skipend;
 if not mail__makemsg(@xemail,m.hip,ivars.s['email'],'inbox@localhost',xsubject,xmsg.text,date__now,e) then goto skipend;
 
 
-//.write email message to inbox -> if it fails the challenge question it's written to trash instead
-bol1:=(not xcontact_question) or question__checkanswer(ivars.i['answer']);
-if not mail__writemsg(@xemail,xsubject,io__makefolder2(xinbox__folder(low__aorbstr('trash','inbox',bol1),false))) then goto skipend;
+//.write email message to inbox -> if it fails the challenge question drop it and return an error message to the user's browswer - 08oct2026
+if dspamCheck_ok and (not mail__writemsg(@xemail,xsubject,io__makefolder2(xinbox__folder('inbox',false)))) then
+   begin
 
-//.daily tracker
-if bol1 then low__roll64(idaily_contact,1);
+   goto skipend;
+
+   end;
+
+//.daily tracker -> track all attemps, even failed ones - 09oct2026
+low__roll64(idaily_contact,1);
 
 //successful
-ok:=true;
+ok                    :=true;
 skipend:
+
 except;end;
 try
+
 if xmustreply then
    begin
    //decide
-   if not icontact_allow    then xreplymessage:=strdefb(icontact_off,icontact_def_off)
-   else if ok               then xreplymessage:=strdefb(icontact_ok,icontact_def_ok)
-   else                          xreplymessage:=strdefb(icontact_fail,icontact_def_fail);
+   if not icontact_allow     then xreplymessage:=strdefb(icontact_off,icontact_def_off)
+   else if not dspamCheck_ok then xreplymessage:='The supplied Spam Guard answer is wrong.'//08oct2026
+   else if ok                then xreplymessage:=strdefb(icontact_ok,icontact_def_ok)
+   else                           xreplymessage:=strdefb(icontact_fail,icontact_def_fail);
 
    //reply value #1 -> replace "<!--reply-->...<!--endreply-->" with reply content -> this way we are able to swap out a whole chunk of static html code and replace with a fully customisable html reply
    if (x<>'') then
       begin
       //init
-      int1:=0;
-      int2:=0;
+      int1            :=0;
+      int2            :=0;
+
       for p:=1 to xlen do if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,12),'<!--reply-->') then
          begin
-         int1:=p;
+
+         int1         :=p;
          break;
+
          end;//p
+
       if (int1>=1) then for p:=1 to xlen do if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,15),'<!--endreply-->') then
          begin
-         int2:=p+15;
+
+         int2         :=p+15;
          break;
+
          end;//p
+
       //get
       if (int1>=1) and (int2>=1) then
          begin
-         x:=strcopy1(x,1,int1-1)+xreplymessage+strcopy1(x,int2,xlen);
-         xlen:=low__len(x);
-         xmustreply:=false;//done
+
+         x            :=strcopy1(x,1,int1-1)+xreplymessage+strcopy1(x,int2,xlen);
+         xlen         :=low__len32(x);
+         xmustreply   :=false;//done
+
          end;
+
       end;
 
    //reply value #2 -> "<form " or "<form>" -> insert reply above "<form*>"
    if xmustreply and (xlen>=1) then
       begin
+
       for p:=1 to xlen do if (x[p-1+stroffset]='<') and (strmatch(strcopy1(x,p,6),'<form>') or strmatch(strcopy1(x,p,6),'<form ')) then
          begin
-         x:=strcopy1(x,1,p-1)+xreplymessage+strcopy1(x,p,xlen);
-         xlen:=low__len(x);
-         xmustreply:=false;//done
+
+         x            :=strcopy1(x,1,p-1)+xreplymessage+strcopy1(x,p,xlen);
+         xlen         :=low__len32(x);
+         xmustreply   :=false;//done
          break;
+
          end;//p
+
       end;
 
    //reply value #3 -> "<body " or "<body>" -> insert reply at end of "<body...>"
    if xmustreply and (xlen>=1) then
       begin
+
       //.p
       for p:=1 to xlen do if (x[p-1+stroffset]='<') and (strmatch(strcopy1(x,p,6),'<body>') or strmatch(strcopy1(x,p,6),'<body ')) then
          begin
+
          //.p2
          for p2:=p to xlen do if (x[p2-1+stroffset]='>') then//fixed 24oct2019
             begin
-            x:=strcopy1(x,1,p2)+xreplymessage+strcopy1(x,p2+1,xlen);
-            //xlen:=low__len(x);
+
+            x         :=strcopy1(x,1,p2)+xreplymessage+strcopy1(x,p2+1,xlen);
+            //xlen:=low__len32(x);
             xmustreply:=false;//done
             break;
+
             end;//p2
 
          break;
+
          end;//p
+
       end;
 
    //reply value #4 -> none of the above tags were found, so just insert reply at beginning of static file "str1"
    if xmustreply then
       begin
-      x:=xreplymessage+x;
+
+      x               :=xreplymessage+x;
       //xmustreply:=false;
+
       end;
 
    //set
    str__settext(buf,x);
+
    end
+
 else if xmustspamguardreply then str__settext(buf,x);
+
 except;end;
-try
+
+//free
 str__free(@xemail);
 str__free(@xmsg);
+
+end;
+
+function subscribe__html(var a:pnetwork;const ddiskHost:string;const xsubscribe:boolean):boolean;//08oct2026
+label//Important: Uses values from global "ivars" handler
+   skipend;
+
+var
+   m                  :tnetbasic;//ptr only
+   buf                :pobject;//ptr only
+   xmsg               :tstr9;
+   dsubject           :string;
+   demail             :string;
+   dspamCheck_ok      :boolean;
+   dlistMsg           :string;
+   xreplymessage      :string;
+   x                  :string;
+   n                  :string;
+   e                  :string;
+   xlen               :longint32;
+   p2                 :longint32;
+   p                  :longint32;
+   int1               :longint32;
+   int2               :longint32;
+   xsubscribe_question:boolean;
+   xhaveinput         :boolean;
+   xmustspamguardreply:boolean;
+   xmustreply         :boolean;
+   xnotused           :string;
+
+   procedure xspamguard;
+   var
+      p               :longint32;
+      xquestion       :string;
+
+      function xspamguard_code(xfull:boolean):string;
+      begin
+
+      case xfull of
+
+      true:begin
+         result:=
+         '<div style="display:inline-block;background-color:#eeeeee61;color:#777;margin:1em 0;;padding:0.5em;border:#ddd 1px solid;border-radius:10px;">'+
+         '<div style="display:block;font-weight:bold;font-size:140%;">Spam Guard</div>'+
+         '<div style="display:inline-block;padding:0 .5em 0 0;">'+xquestion+'</div>'+
+         '<input style="padding:.2em .5em;border:#ddd 1px solid;border-radius:10px;" name="answer" value="">'+
+         '</div>'+
+         '';
+         end;
+
+      false:result:=xquestion;
+
+      end;//case
+
+      end;
+   begin
+   try
+
+   if (x<>'') then
+      begin
+
+      //.question value
+      if xsubscribe_question and (not xhaveinput) then spamGuard__makeQuestion(xquestion)
+      else                                             xquestion:='';
+
+      //insert SpamGuard at the "((spamguard))"
+      for p:=1 to xlen do if (x[p-1+stroffset]='(') and strmatch(strcopy1(x,p,13),'((spamguard))') then
+         begin
+
+         x            :=strcopy1(x,1,p-1)+xspamguard_code(xquestion<>'')+strcopy1(x,p+13,xlen);
+         xlen         :=low__len32(x);
+         xmustspamguardreply:=true;
+
+         break;
+
+         end;//p
+
+      //fallback: tag "((spamguard))" not found -> insert the SpamGuard code at the bottom of the form - 04apr2024
+      if (not xmustspamguardreply) and (xquestion<>'') then
+         begin
+
+         for p:=1 to xlen do
+         begin
+
+         if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,7),'</form>') then
+            begin
+
+            //insert Spam Guard
+            x         :=strcopy1(x,1,p-1)+xspamguard_code(true)+strcopy1(x,p,xlen);
+            xlen      :=low__len32(x);
+            xmustspamguardreply:=true;
+
+            break;
+
+            end;
+
+         end;//p
+
+         end;
+
+      end;
+
+   except;end;
+   end;
+
+begin
+
+//defaults
+result                :=true;//pass-thru
+xlen                  :=0;
+xmustreply            :=false;
+xmustspamguardreply   :=false;
+xmsg                  :=nil;
+xreplymessage         :='';
+xsubscribe_question   :=isubscribe_question and xsubscribe;//not required for "unsubscribe" requests - 08oct2026
+dspamCheck_ok         :=true;
+dlistMsg              :='';
+
+try
+
+//check
+if (ivars=nil) or (not net__recinfo(a,m,buf)) then exit;
+
+//init
+xhaveinput            :=(ivars.count>=1);//inbound data
+xmustreply            :=xhaveinput;
+x                     :=str__text(buf);
+xlen                  :=low__len32(x);
+
+//SpamGuard
+xSpamGuard;
+
+//contact form submissions have been disabled
+if not isubscribe_allow then
+   begin
+
+   xmustreply         :=true;
+   goto skipend;
+
+   end;
+
+//check
+if not xmustreply then
+   begin
+
+   goto skipend;//check this second
+
+   end;
+
+//Spam Guard
+dspamCheck_ok         :=(not xsubscribe_question) or spamGuard__checkAnswer(ivars.i['answer']);
+
+//update subscribe list + write notification email
+if dspamCheck_ok then
+   begin
+
+   //get email address -> note: "subscribe__manageOne()" returns a filtered version of "demail" - 09oct2026
+   demail             :=ivars.s['email'];
+
+   //sync "dailyList" as well - 09oct2026
+   subscribe__manageOne( ddiskHost ,demail ,true ,xsubscribe ,xnotused );
+
+   //sync subscribe list -> true=listChanged -> write notification email - 09oct2026
+   if subscribe__manageOne( ddiskHost ,demail ,false ,xsubscribe ,dlistMsg ) and isubscribeEachNotice then
+      begin
+
+      //init
+      xmsg            :=str__new9;
+
+      //get
+      //.email subject
+      dsubject        :=low__aorbstr('Unsubscribe','Subscribe',xsubscribe) + ' Request for ' + m.hdesthost;
+
+      //.email body
+      xmsg.sadd( '-- '     + dsubject + ' --'                                     + #10 );
+      xmsg.sadd( 'Email: ' + demail                                               + #10 );
+      xmsg.sadd( 'Mode: '  + low__aorbstr('Del','Add',xsubscribe)                 + #10 );
+      xmsg.sadd( 'Site: '  + m.hdesthost+' ( '+m.hdiskhost+' )'                   + #10 );//site being subscribed to - 09ct2026
+
+      //.append any other "name=value" pairs at the end of the message body
+      xmsg.sadd( #10+#10+'--( More Information )----------------------------'     + #10 );
+      xmsg.sadd( 'sender-ip: ' + m.hip                                            + #10 );//sender-ip
+
+      if (ivars.count>=1) then for p:=0 to (ivars.count-1) do
+         begin
+
+         n                  :=strlow(ivars.n[p]);
+         if (n<>'') and (n<>'email') and (n<>'pin') then xmsg.sadd(n+': '+ivars.v[p]+#10);
+
+         end;//p
+
+      //.write message to inbox
+      xwritemsg( 'Bubbles - '+dsubject ,xmsg.text );
+
+      end;
+
+   end;
+
+//.daily tracker -> track all attempts, including failed attempts - 09oct2026
+low__roll64(idaily_contact,1);
+
+//successful
+skipend:
+
 except;end;
+try
+
+if xmustreply then
+   begin
+
+   //decide
+   case xsubscribe of
+
+   true:begin
+
+      if not isubscribe_allow    then xreplymessage :='Subscribe service is currently offline.'
+      else if not dspamCheck_ok  then xreplymessage :='Your answer to the Spam Guard question is incorrect.'
+      else                            xreplymessage :=strdefb(dlistMsg,'Subscribe request processed.');
+
+      end;
+
+   else begin
+
+      if not isubscribe_allow    then xreplymessage :='Unsubscribe service is currently offline.'
+      else                            xreplymessage :=strdefb(dlistMsg,'Unsubscribe request processed.');
+
+      end;
+
+   end;//case
+
+
+   //reply value #1 -> replace "<!--reply-->...<!--endreply-->" with reply content -> this way we are able to swap out a whole chunk of static html code and replace with a fully customisable html reply
+   if (x<>'') then
+      begin
+      //init
+      int1            :=0;
+      int2            :=0;
+
+      for p:=1 to xlen do if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,12),'<!--reply-->') then
+         begin
+
+         int1         :=p;
+         break;
+
+         end;//p
+
+      if (int1>=1) then for p:=1 to xlen do if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,15),'<!--endreply-->') then
+         begin
+
+         int2         :=p+15;
+         break;
+
+         end;//p
+
+      //get
+      if (int1>=1) and (int2>=1) then
+         begin
+
+         x            :=strcopy1(x,1,int1-1)+xreplymessage+strcopy1(x,int2,xlen);
+         xlen         :=low__len32(x);
+         xmustreply   :=false;//done
+
+         end;
+
+      end;
+
+   //reply value #2 -> "<form " or "<form>" -> insert reply above "<form*>"
+   if xmustreply and (xlen>=1) then
+      begin
+
+      for p:=1 to xlen do if (x[p-1+stroffset]='<') and (strmatch(strcopy1(x,p,6),'<form>') or strmatch(strcopy1(x,p,6),'<form ')) then
+         begin
+
+         x            :=strcopy1(x,1,p-1)+xreplymessage+strcopy1(x,p,xlen);
+         xlen         :=low__len32(x);
+         xmustreply   :=false;//done
+         break;
+
+         end;//p
+
+      end;
+
+   //reply value #3 -> "<body " or "<body>" -> insert reply at end of "<body...>"
+   if xmustreply and (xlen>=1) then
+      begin
+
+      //.p
+      for p:=1 to xlen do if (x[p-1+stroffset]='<') and (strmatch(strcopy1(x,p,6),'<body>') or strmatch(strcopy1(x,p,6),'<body ')) then
+         begin
+
+         //.p2
+         for p2:=p to xlen do if (x[p2-1+stroffset]='>') then//fixed 24oct2019
+            begin
+
+            x         :=strcopy1(x,1,p2)+xreplymessage+strcopy1(x,p2+1,xlen);
+            //xlen:=low__len32(x);
+            xmustreply:=false;//done
+            break;
+
+            end;//p2
+
+         break;
+
+         end;//p
+
+      end;
+
+   //reply value #4 -> none of the above tags were found, so just insert reply at beginning of static file "str1"
+   if xmustreply then
+      begin
+
+      x               :=xreplymessage+x;
+      //xmustreply:=false;
+
+      end;
+
+   //set
+   str__settext(buf,x);
+
+   end
+
+else if xmustspamguardreply then str__settext(buf,x);
+
+except;end;
+
+//free
+str__free(@xmsg);
+
+end;
+
+function subscribe__listFilename(const ddiskHost:string;const xdailyList:boolean):string;
+begin
+
+result                :=app__subfolder2('subscribe',ialongsideexe) + ddiskHost + '__subscribe' + insstr('-daily',xdailyList) + '.txt';
+
+end;
+
+function subscribe__manageOne(const ddiskHost:string;var demail:string;const xdailyList,xaddEmail:boolean;var xoutmsg:string):boolean;//09oct2026
+var//returns TRUE if list changes, FALSE if list remains the same
+   e                            :string;
+   f                            :string;
+   slen                         :longint32;
+   spos                         :longint32;
+   sline                        :string;
+   s                            :string;
+   d                            :tstr8;
+   dfound                       :boolean;
+
+   procedure dsave;
+   begin
+
+   if (f<>'') then
+      begin
+
+      if (d.len32>=1) then io__tofile( f ,@d ,e )
+      else                 io__remfile( f );//list is empty -> delete file
+
+      end;
+
+   end;
+
+begin
+
+//defaults
+result                          :=false;
+d                               :=nil;
+xoutmsg                         :='';
+
+//check
+if (ddiskHost='') then exit;
+
+//filter email address
+demail                          :=email__filteraddress( demail );
+
+if (demail='') then
+   begin
+
+   xoutmsg                      :='Your email address is not valid.';
+
+   exit;
+
+   end;
+
+try
+
+//init
+f                               :=subscribe__listFilename(ddiskHost,xdailyList);
+d                               :=str__new8;
+dfound                          :=false;
+
+//.read list from file -> "s"
+io__fromfilestr( f , s ,e );
+
+spos                            :=0;
+slen                            :=low__len32( s );
+
+//add email address ------------------------------------------------------------
+
+if xaddEmail then
+   begin
+
+   //scan each line
+   while low__nextline1( s ,sline ,slen ,spos ) do
+   begin
+
+   sline                        :=email__filterAddress( sline );
+
+   if strmatch( sline ,demail ) then
+      begin
+
+      dfound                    :=true;//email already in list -> no need to save list
+
+      break;//stop
+
+      end;
+
+   if (sline<>'') then
+      begin
+
+      d.sadd( sline + #10 );
+
+      end;
+
+   end;//loop
+
+   //set
+   case dfound of
+
+   true:xoutmsg                 :='Your email address is already subscribed.';
+
+   else begin
+
+      d.sadd( demail + #10 );//append to list
+
+      dsave;//save changes
+
+      xoutmsg                   :='Your email address has been subscribed.';
+
+      result                    :=true;
+
+      end;
+
+   end;//case
+
+   end
+
+//delete email address ---------------------------------------------------------
+
+else begin
+
+   //scan each line
+   while low__nextline1( s ,sline ,slen ,spos ) do
+   begin
+
+   sline                        :=email__filterAddress( sline );
+
+   case strmatch( sline ,demail ) of
+
+   true:dfound                  :=true;//email detected -> exlude email from list -> need to save changes
+
+   else if (sline<>'') then d.sadd( sline + #10 );
+
+   end;//case
+
+   end;//loop
+
+   //save changes to list
+   case dfound of
+
+   true:begin
+
+      dsave;
+
+      xoutmsg                   :='Your email address has been unsubscribed.';
+
+      result                    :=true;
+
+      end
+
+   else begin
+
+      xoutmsg                   :='Your email address is not currently subscribed.';
+
+      end;
+
+   end;//case
+
+   end;
+
+except;end;
+
+//free
+freeobj(@d);
+
+end;
+
+function subscribe__manageList(var xlistCount:longint32;const ddiskHost:string;const xreplaceListWithThisList:string;const xdailyList,xreplaceList,xdeleteList:boolean):string;//09oct2026
+var
+   e                  :string;
+   f                  :string;
+
+   function xfilterList(const s:string):string;
+   var
+      d               :tstr8;
+      spos            :longint32;
+      slen            :longint32;
+      sline           :string;
+
+   begin
+
+   //defaults
+   result             :='';
+   d                  :=nil;
+
+   try
+
+   //init
+   d                  :=str__new8;
+   slen               :=low__len32( s );
+   spos               :=0;
+
+   //get
+   while low__nextline1( s ,sline ,slen ,spos ) do
+   begin
+
+   sline              :=email__filterAddress( sline );
+
+   if (sline<>'') then
+      begin
+
+      d.sadd( sline + #10 );
+
+      end;
+
+   end;//loop
+
+   //remove duplicates
+   result             :=low__remdup2( d.text ,false ,false ,false );
+
+   except;end;
+
+   //free
+   freeobj(@d);
+
+   end;
+
+   procedure xbackup;
+   var
+      e               :string;
+
+   begin
+
+   //make a backup
+   io__copyfile( f ,io__asfolder(io__extractfilepath(f)+'backup') + io__remlastext(io__extractfilename(f)) +'--'+date__str(date__now,true,true)+'.txt' ,e );
+
+   end;
+
+   procedure xfindListCount;
+   var
+      sline           :string;
+      slen            :longint32;
+      spos            :longint32;
+
+   begin
+
+   //defaults
+   xlistCount         :=0;
+
+   //init
+   slen               :=low__len32( result );
+   spos               :=0;
+
+   //get
+   while low__nextline1( result ,sline ,slen ,spos ) do
+   begin
+
+   if (sline<>'') then inc(xlistCount);
+
+   end;//loop
+
+   end;
+
+begin
+
+//defaults
+result                          :='';
+f                               :=subscribe__listFilename(ddiskHost,xdailyList);
+xlistCount                      :=0;
+
+try
+
+//delete list
+if xdeleteList then
+   begin
+
+   //backup the list before deleting -> excludes "daily"
+   if not xdailyList then xbackup;
+
+   //delete list
+   io__remfile( f );
+
+   end
+
+//replace list
+else if xreplaceList then
+   begin
+
+   //backup the list before replacing -> excludes "daily"
+   if not xdailyList then xbackup;
+
+   //get
+   result             :=xfilterList( xreplaceListWithThisList );
+
+   xfindListCount;
+
+   //replace list
+   if (result<>'') then io__tofilestr( f ,result ,e )
+   else                 io__remfile( f );//remove empty list
+
+   end
+
+//return list
+else begin
+
+   //get
+   io__fromfilestr( f ,result ,e );
+
+   //filter
+   result             :=xfilterList( result );
+
+   xfindListCount;
+
+   end;
+
+except;end;
+
 end;
 
 function xcodeis__badrequest(xcode:longint):boolean;
@@ -7949,16 +9437,22 @@ if net__recinfo(a,m,buf) and m.vmustlog then
 
    //ipsec -> update tracking -> don't count admin posts, logged in or not - 07feb2024
    ipsec__incHit(m.hslot);
-   if (m.hmethod=hmPOST) and (not strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath)) then
+
+   if (m.hmethod=hmPOST) and (not strmatch(strcopy1(m.hpath,1,low__len32(iadminpath)),iadminpath)) then
       begin
+
       if tools__canprefix(m.hname) then ipsec__incPost2(m.hslot)//server tools (tools-*) are tracked using incPost2
       else                              ipsec__incPost(m.hslot);//normal posts (contact.html/email) tracked using incPost
+
       end;
+
    ipsec__update(m.hslot);
 
    //add entry to logs
    if irawlogs then log__addentry(ifastfolder__logs,'',a,xaltcode);
+
    end;
+
 except;end;
 end;
 
@@ -8111,7 +9605,7 @@ var
    vpre:=insstr('<span class=red>',vcustom);
    vpost:=insstr('</span>',vcustom);
    //get
-   str__sadd(@a,vpre+n+strcopy1(xleftcol,1,xleftcolwidth-low__len(n))+vpost+'   '+vpre+v+vpost+#10);
+   str__sadd(@a,vpre+n+strcopy1(xleftcol,1,xleftcolwidth-low__len32(n))+vpost+'   '+vpre+v+vpost+#10);
    end;
 begin
 //defaults
@@ -8119,7 +9613,7 @@ result:='';
 a:=nil;
 xlist:=nil;
 xnamelist:=nil;
-xleftcolwidth:=low__len(xleftcol);
+xleftcolwidth:=low__len32(xleftcol);
 
 try
 //init
@@ -8234,7 +9728,7 @@ if net__recinfo(a,m,buf) then
    //header
    str__settextb(buf,
    'HTTP/1.1 '+intstr32(xcode)+#32+xcodedes(xcode)+#10+
-   'Content-Length: '+intstr32(low__len(xtext))+#10+
+   'Content-Length: '+intstr32(low__len32(xtext))+#10+
    insstr('Location: '+xval+#10,(xcode=307) or (xcode=308) )+//redirection header -> note: only include path+name e.g. "/admin/index.html" as the client insert the host name - 26dec2023
    xcommonheaders('html',m.hka,false,xacceptranges)+
    xmoreheaders+
@@ -8244,7 +9738,7 @@ if net__recinfo(a,m,buf) then
    //set
    m.wcode:=xcode;//for logs
    m.wlen:=str__len(buf);
-   m.wheadlen:=frcmin64( sub64(m.wlen, low__inscmp(low__len(xtext),m.hwantdata) ) ,0);
+   m.wheadlen:=frcmin64( sub64(m.wlen, low__inscmp(low__len32(xtext),m.hwantdata) ) ,0);
 
    //successful
    result:=true;
@@ -8362,7 +9856,7 @@ var
    //defaults
    result:=m.r10 or m.r13;
    //init
-   blen:=str__len(buf);
+   blen:=str__len32(buf);
    //get
    if (not result) and (blen>=2) then
       begin
@@ -8410,7 +9904,7 @@ var
    v:='';
    v2:='';
    //get
-   xlen:=frcrange32(xhlen,0,str__len(buf));
+   xlen:=frcrange32(xhlen,0,str__len32(buf));
    if (xlen<=0) or (xpos>=xlen) then exit;
    if (xpos<0) then xpos:=0;
    xfirstline:=(xpos<=0);
@@ -8494,7 +9988,7 @@ var
    begin
    //init
    x:=x+';';
-   xlen:=low__len(x);
+   xlen:=low__len32(x);
 
    //check
    if (xlen<=2) then exit;
@@ -8566,7 +10060,7 @@ if (len>=1) then
 
    //add to buffer
    str__addrec(buf,@ibuffer,len);
-   blen:=str__len(buf);
+   blen:=str__len32(buf);
 
    //track upload bandwidth #1 -> can only do this once a "hslot" is set
    if (m.hslot>=0) then ipsec__incBytes(m.hslot,len);//18aug2024: fixed incorrect bandwidth tracking -> was str__len(buf)
@@ -8662,15 +10156,15 @@ if (len>=1) then
          //.path + name
          if (v<>'') then
             begin
-            for p:=low__len(v) downto 1 do if (strbyte1(v,p)=ssSlash) then
+            for p:=low__len32(v) downto 1 do if (strbyte1(v,p)=ssSlash) then
                begin
                m.hpath:=strcopy1(v,1,p);
-               m.hname:=strcopy1(v,p+1,low__len(v));
+               m.hname:=strcopy1(v,p+1,low__len32(v));
                if (m.hname<>'') then
                   begin
-                  for p2:=1 to low__len(m.hname) do if (strbyte1(m.hname,p2)=ssquestion) then
+                  for p2:=1 to low__len32(m.hname) do if (strbyte1(m.hname,p2)=ssquestion) then
                      begin
-                     m.hgetdat:=strcopy1(m.hname,p2+1,low__len(m.hname));
+                     m.hgetdat:=strcopy1(m.hname,p2+1,low__len32(m.hname));
                      m.hname:=strcopy1(m.hname,1,p2-1);
                      break;
                      end;//p2
@@ -8688,7 +10182,7 @@ if (len>=1) then
                bol1:=true;
                int3:=0;
                int2:=-1;
-               for p:=1 to low__len(m.hpath) do
+               for p:=1 to low__len32(m.hpath) do
                begin
                int1:=byte(m.hpath[p-1+stroffset]);
                case int1 of
@@ -8702,7 +10196,7 @@ if (len>=1) then
                      if bol1 and (int1<>ssSlash) and (int2=ssSlash) then bol1:=false;
                      if not bol1 and (int1=ssSlash) then
                         begin
-                        m.hpath:=strcopy1(m.hpath,p,low__len(m.hpath));
+                        m.hpath:=strcopy1(m.hpath,p,low__len32(m.hpath));
                         break;
                         end;
                      end;
@@ -8777,7 +10271,7 @@ if (len>=1) then
          begin
          int3:=0;
 
-         for p:=1 to low__len(m.hhost) do
+         for p:=1 to low__len32(m.hhost) do
          begin
          int1:=byte(m.hhost[p-1+stroffset]);
          case int1 of
@@ -8786,7 +10280,7 @@ if (len>=1) then
          ssColon,ssSlash:begin
             if (int3=0) then
                begin
-               if (int1=ssColon) then m.hport:=restrict32(strint64(strcopy1(m.hhost,p+1,low__len(m.hhost))));
+               if (int1=ssColon) then m.hport:=restrict32(strint64(strcopy1(m.hhost,p+1,low__len32(m.hhost))));
                m.hhost:=strcopy1(m.hhost,1,p-1);//IPv6 starts and ends with [..] square brackets
                break;
                end;
@@ -8807,7 +10301,7 @@ if (len>=1) then
       if inewvisitor.new(m.hip) then low__roll64(idaily_newvisitors,1);//07apr2025
 
       //.are we logged into the admin panel?
-      if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) and xextractsessionname(m.hpath,str1) then
+      if strmatch(strcopy1(m.hpath,1,low__len32(iadminpath)),iadminpath) and xextractsessionname(m.hpath,str1) then
          begin
          if xsessionok(str1,m.hcookie_k,m.hua,m.hip,m.hname,int1) then
             begin
@@ -8819,11 +10313,17 @@ if (len>=1) then
          //was: if not m.vsessvalid then ipsec__incbad(m.hslot);
          end;
 
-      //.not this link "Bad Bot" detection - 07apr2025
-      if (not m.vsessvalid) and (inotthislink<>'') and strmatch(m.hname,inotthislink) then ipsec__incNotThisLink(m.hslot);
-
       //.client is banned (rate limited) -> abort right now BUT only if we're not logged into admin panel
       if (not m.vsessvalid) and ipsec__banned(m.hslot) and header__make4(a,403,true,true,true) then goto skipend;
+
+      //.user-agent mask - 09aug2025
+      if (not m.vsessvalid) and (iua_mask<>'') and filter__matchlist(m.hua,iua_mask) and ipsec__incBanByMask(m.hslot) and header__make4(a,403,true,true,true) then goto skipend;
+
+      //.IP address mask - 09aug2025
+      if (not m.vsessvalid) and (iip_mask<>'') and filter__matchlist(m.hip,iip_mask) and ipsec__incBanByMask(m.hslot) and header__make4(a,403,true,true,true) then goto skipend;
+
+      //.not this link "Bad Bot" detection - 07apr2025
+      if (not m.vsessvalid) and (inotthislink<>'') and strmatch(m.hname,inotthislink) and ipsec__incNotThisLink(m.hslot) and header__make4(a,403,true,true,true) then goto skipend;
 
       //.too many simultaneous connections -> don't enforce limit when using admin panel
       if (not m.vsessvalid) and ipsec__incConn(m.hslot,true) and header__make4(a,503,true,true,true) then goto skipend;
@@ -8893,8 +10393,13 @@ end;
 
 function xminiconsole:string;
 begin
-result:='';
-try;result:='<div class="console2 miniinfo">RAM '+low__mbauto(xrambytes,true)+' &nbsp; &nbsp; Files Cached (All Sites) '+k64(iramfilescached)+' of '+k64(iramfilecount)+'</div>'+#10;except;end;
+
+result      :=
+
+ '<div class="console2 miniinfo">RAM '+low__mbauto(bytes__RAM,true)+' &nbsp; &nbsp; '+
+ 'Files Cached (All Sites) '+k64(iramfilescached)+' of '+k64(iramfilecount)+'</div>' +
+ #10;
+
 end;
 
 function xpowerlevel:string;
@@ -9072,7 +10577,7 @@ var
             //get
             if (strcopy1(xcmd,1,14)='manage.upload.') then
                begin
-               xsite:=io__extractfilename(strcopy1(xcmd,15,low__len(xcmd)));
+               xsite:=io__extractfilename(strcopy1(xcmd,15,low__len32(xcmd)));
                ivars.s['site']:=xsite;
                net__decodestr(xsite);
                xcmd:='manage.upload';
@@ -9082,7 +10587,7 @@ var
          //decide
          if (xfilename<>'') and (xcmd='manage.upload') and (xsite<>'') then
             begin
-            if strmatch(strcopy1(xsite,1,low__len(idefaultdisksite)),idefaultdisksite) and idom.b[xsite] then//site must exist
+            if strmatch(strcopy1(xsite,1,low__len32(idefaultdisksite)),idefaultdisksite) and idom.b[xsite] then//site must exist
                begin
                n:=io__extractfilename(xfilename);
                if (n<>'""') then
@@ -9171,7 +10676,7 @@ else if (m.hmodule_index>=0) and (m.hmodule_canmakeraw) then
    end;
 
 //admin ------------------------------------------------------------------------
-if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
+if strmatch(strcopy1(m.hpath,1,low__len32(iadminpath)),iadminpath) then
    begin
    //check - we don't accept HEAD request for admin
    if (not m.hwantdata) and xheadonly(400,false) then goto skipend;
@@ -9259,17 +10764,19 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       int1:=ivars.i['port']; if (int1<2) then int1:=idefaultport;
       iport          :=app__ivalset('port',int1);
 
-      ishutidle      :=ivars.checked['shutidle'];
-      xalongsideexe  :=ivars.checked['alongsideexe'];
-      ireverseproxy  :=ivars.checked['reverseproxy'];
-      isummarynotice :=ivars.checked['summary.notice'];
-      iquotanotice   :=ivars.checked['quota.notice'];
-      ireloadnotice  :=ivars.checked['reload.notice'];
-      icsp           :=ivars.checked['csp'];
-      inorefdown     :=ivars.checked['norefdown'];
-      icache         :=ivars.checked['cache'];
-      ilivestats     :=ivars.checked['livestats'];
-      irawlogs       :=ivars.checked['rawlogs'];
+      ishutidle                 :=ivars.checked['shutidle'];
+      xalongsideexe             :=ivars.checked['alongsideexe'];
+      ireverseproxy             :=ivars.checked['reverseproxy'];
+      isummarynotice            :=ivars.checked['summary.notice'];
+      isubscribenotice          :=ivars.checked['subscribe.notice'];//09oct2026
+      isubscribeeachnotice      :=ivars.checked['subscribe.each.notice'];//09oct2026
+      iquotanotice              :=ivars.checked['quota.notice'];
+      ireloadnotice             :=ivars.checked['reload.notice'];
+      icsp                      :=ivars.checked['csp'];
+      inorefdown                :=ivars.checked['norefdown'];
+      icache                    :=ivars.checked['cache'];
+      ilivestats                :=ivars.checked['livestats'];
+      irawlogs                  :=ivars.checked['rawlogs'];
 
       //.power level
       ipowerlevel:=app__ivalset('powerlevel',ivars.i['powerlevel']);
@@ -9292,12 +10799,18 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    //.limits
    if (xcmd='limits') then
       begin
+
       ipsec__setvals(ivars.i['scanfor'],ivars.i['banfor'],ivars.i['simconnlimit'],ivars.i['postlimit'],ivars.i['postlimit2'],ivars.i['badlimit'],ivars.i['hitlimit'],ivars.i['badreqlimit'],ivars.i['badmaillimit'],mult64(ivars.c['datalimit'],1024000));
       inotthislink :=stripwhitespace_lt(ivars.s['notthislink']);
       imail_mask   :=stripwhitespace_lt(ivars.s['mailmask']);//19jun2025
+      iua_mask     :=stripwhitespace_lt(ivars.s['ua.mask']);//09aug2025
+      iip_mask     :=stripwhitespace_lt(ivars.s['ip.mask']);//09aug2025
+
       //.trigger a save event
       imustsavesettings:=true;
+
       end;
+
    if (xcmd='hits') and (xcmd2='') then
       begin
       ihit.text:=ivars.s['hitinfo'];
@@ -9316,16 +10829,32 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       //.trigger a save event
       imustsavesettings:=true;
       end;
+
    if (xcmd='contact') then
       begin
+
       icontact_question :=ivars.checked['contact.question'];
       icontact_allow    :=ivars.checked['contact.allow'];
       icontact_off      :=ivars.s['contact.off'];
       icontact_ok       :=ivars.s['contact.ok'];
       icontact_fail     :=ivars.s['contact.fail'];
+
       //.trigger a save event
       imustsavesettings:=true;
+
       end;
+
+   if (xcmd='subscribe') then
+      begin
+
+      isubscribe_question :=ivars.checked['subscribe.question'];//08oct2026
+      isubscribe_allow    :=ivars.checked['subscribe.allow'];
+
+      //.trigger a save event
+      imustsavesettings:=true;
+
+      end;
+
    if (xcmd='mail') then
       begin
       imail_allow         :=ivars.checked['mail.allow'];
@@ -9348,7 +10877,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
          str2:=ivars.s['pass2'];
          //check
          if (str1<>str2)               then xpassstatus:='<div class="bad">The new passwords do not match.  Please try again.</div>'
-         else if (low__len(str1)<5) then xpassstatus:='<div class="bad">The new password is too short.  It must be 5 characters or more.</div>'
+         else if (low__len32(str1)<5) then xpassstatus:='<div class="bad">The new password is too short.  It must be 5 characters or more.</div>'
          else
             begin
             iadminkey:=xmakehash(str1);
@@ -9367,7 +10896,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    //.console
    if strmatch(strcopy1(xcmd,1,8),'console.') then
       begin
-      iconsolerate:=app__ivalset('consolerate',strint(strcopy1(xcmd,9,low__len(xcmd))));
+      iconsolerate:=app__ivalset('consolerate',strint32(strcopy1(xcmd,9,low__len32(xcmd))));
       //.trigger a save event
       imustsavesettings:=true;
       end;
@@ -9456,6 +10985,10 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       '<div><input name="norefdown" type="checkbox" '+insstr('checked',inorefdown)+'>No referrer info sent when downgrading from https to http</div>'+#10+
       '<div><input name="summary.notice" type="checkbox" '+insstr('checked',isummarynotice)+'>Bubbles daily summary notices (delivered to inbox)</div>'+#10+
       '<div><input name="quota.notice" type="checkbox" '+insstr('checked',iquotanotice)+'>Bubbles quota notices (delivered to inbox)</div>'+#10+
+
+      '<div><input name="subscribe.notice" type="checkbox" '+insstr('checked',isubscribenotice)+'>Bubbles daily subscribe notices (delivered to inbox)</div>'+#10+
+      '<div><input name="subscribe.each.notice" type="checkbox" '+insstr('checked',isubscribeeachnotice)+'>Bubbles subscribe notices (delivered per request to inbox)</div>'+#10+
+
       '<div><input name="reload.notice" type="checkbox" '+insstr('checked',ireloadnotice)+'>Bubbles reload notices (boot/reboot/reload - delivered to inbox)</div>'+#10+
       '<div><input name="shutidle" type="checkbox" '+insstr('checked',ishutidle)+'>Shut idle connections (2m)</div>'+#10+
       '<div><input name="livestats" type="checkbox" '+insstr('checked',ilivestats)+'>Live stats via OS console window</div>'+#10+
@@ -9524,7 +11057,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       '<div class="inlineblock">'+xbold('Ban for')+xsmall2('in minutes (60..N, 1,440=day, 10,080=week)')+'<input class="text" name="banfor" type="text" value="'+k64(ipsec__banfor)+'"></div>'+#10+
       '<div class="inlineblock">'+xbold('Hit limit')+xsmall2('(0=unlimited or 100..N)')+'<input class="text" name="hitlimit" type="text" value="'+k64(ipsec__hitlimit)+'"></div>'+#10+
       '<div class="inlineblock">'+xbold('Bandwidth limit')+xsmall2('in megabytes (0=unlimited or 1..N)')+'<input class="text" name="datalimit" type="text" value="'+k64(div64(ipsec__datalimit,1024000))+insstr(' Mb',ipsec__datalimit>=1)+'"></div>'+#10+
-      '<div class="inlineblock">'+xbold('Post limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of contact form submissions and/or emails sent by an IP address)')+'<input class="text" name="postlimit" type="text" value="'+k64(ipsec__postlimit)+'"></div>'+#10+
+      '<div class="inlineblock">'+xbold('Post limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of contact form submissions, subscribe/unsubscribe requests, and/or emails sent by an IP address)')+'<input class="text" name="postlimit" type="text" value="'+k64(ipsec__postlimit)+'"></div>'+#10+
       '<div class="inlineblock">'+xbold('Post 2 limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of server tool submisions (e.g. Icon Maker) sent by an IP address)')+'<input class="text" name="postlimit2" type="text" value="'+k64(ipsec__postlimit2)+'"></div>'+#10+
       '<div class="inlineblock">'+xbold('Bad login limit')+xsmall2('(0=unlimited or 10..N, e.g. limit the number of unsuccessful Admin login attempts)')+'<input class="text" name="badlimit" type="text" value="'+k64(ipsec__badlimit)+'"></div>'+#10+
       '<div class="inlineblock">'+xbold('Bad request limit')+xsmall2('(0=unlimited or 1..N, e.g. limit the number of 502 and 400 codes)')+'<input class="text" name="badreqlimit" type="text" value="'+k64(ipsec__badreqlimit)+'"></div>'+#10+
@@ -9534,6 +11067,14 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
 
       '<br>'+#10+
       '<div class="inlineblock">'+xbold('Mail mask')+' ('+low__aorbstr('Off','On',imail_mask<>'')+')<br><div style="display:block;font-size:70%">A set of one or more complex masks to filter acceptable inbound email addresses, e.g. "*@blaizenterprises.com" (without quotes) the leading asterisk permits all '+'emails addressed to @blaizenterprises.com, but bans emails with a different domain name.  Emails which fail the mask filter test count towards the "'+xbold('Bad mail')+'" value above.  Separate multiple masks with the semi-colon "'+fesep+'" character, e.g. "*@blaizenterprises.com;*blaiz*.com" (without quotes).  Upto to 2 "*" asterisks permitted per mask.  Leave mask filter blank to turn off/disable and allow all emails through.</div><input class="text"'+insstr(' style="background-color:#0f02;"',imail_mask<>'')+' name="mailmask" type="text" value="'+net__encodeforhtmlstr(imail_mask)+'"></div>'+#10+
+
+      '<br>'+#10+
+      '<br>'+#10+
+      '<div class="inlineblock">'+xbold('User-Agent mask')+' ('+low__aorbstr('Off','On',iua_mask<>'')+')<br><div style="display:block;font-size:70%">A set of one or more complex masks to exclude inbound http user-agents, e.g. "*badbot3*" (without quotes) '+' which immediately bans any IP address that matches the pattern.  Separate multiple masks with the semi-colon "'+fesep+'" character, e.g. "*badbot3*;*reallybadbot4*" (without quotes).  Upto to 2 "*" asterisks permitted per mask.  Leave mask filter blank to turn off/disable and allow all user-agents through.'+'  Once the IP address of a user-agent is banned, it remains banned for the "'+xbold('Ban for')+'" time period above.</div><input class="text"'+insstr(' style="background-color:#0f02;"',iua_mask<>'')+' name="ua.mask" type="text" value="'+net__encodeforhtmlstr(iua_mask)+'"></div>'+#10+
+
+      '<br>'+#10+
+      '<br>'+#10+
+      '<div class="inlineblock">'+xbold('IP Address mask')+' ('+low__aorbstr('Off','On',iip_mask<>'')+')<br><div style="display:block;font-size:70%">A set of one or more complex masks to exclude inbound http IP addresses, e.g. "10.*.0.*" (without quotes) '+' which immediately bans any IP address that matches the pattern.  Separate multiple masks with the semi-colon "'+fesep+'" character, e.g. "10.*.0.*;127.0.0.1" (without quotes).  Upto to 2 "*" asterisks permitted per mask.  Leave mask filter blank to turn off/disable and allow all IP addresses through.'+'  Once an IP address is banned, it remains banned for the "'+xbold('Ban for')+'" time period above.</div><input class="text"'+insstr(' style="background-color:#0f02;"',iip_mask<>'')+' name="ip.mask" type="text" value="'+net__encodeforhtmlstr(iip_mask)+'"></div>'+#10+
 
       '<br>'+#10+
       '<br>'+#10+
@@ -9600,7 +11141,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
 
    else if (strcopy1(hname_low,1,7)='inbox--') then
       begin
-      str1:=strcopy1(hname_low,8,low__len(hname_low));
+      str1:=strcopy1(hname_low,8,low__len32(hname_low));
       if (io__readfileext_low(str1)='txt') then
          begin
          str1:=io__remlastext(str1);
@@ -9625,7 +11166,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    //trash--*.eml (message download handler)------------------------------------
    else if (strcopy1(hname_low,1,7)='trash--') then
       begin
-      str1:=strcopy1(hname_low,8,low__len(hname_low));
+      str1:=strcopy1(hname_low,8,low__len32(hname_low));
       if (io__readfileext_low(str1)='txt') then
          begin
          str1:=io__remlastext(str1);
@@ -9664,7 +11205,7 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
    //log--*.txt/log--*.html (log download handler)------------------------------------------
    else if (strcopy1(hname_low,1,5)='log--') then
       begin
-      str1:=strcopy1(hname_low,6,low__len(hname_low));
+      str1:=strcopy1(hname_low,6,low__len32(hname_low));
       net__decodestr(str1);
       if (io__readfileext_low(str1)='html') then log__makereport(a,ifastfolder__logs+io__remlastext(str1));//make log report when requesting ".html" version of log
       xstreamstart(a,wsmDisk,ifastfolder__logs+str1,false);//don't mark logs as cacheable
@@ -9730,17 +11271,28 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
       if xheadonly2(200,false,'',
       xhtmlstart(a,true)+
 
+
       xh2('contact',xsymbol('contact')+'Contact Form Responses')+
       '<form class="block" method=post action="contact.html">'+
       '<div class="grid2">'+#10+
       '<div><input name="contact.allow" type="checkbox" '+insstr('checked',icontact_allow)+'>Allow Contact Form Submissions (use contact.html).  Messages are stored in the "Inbox" '+'folder as files in ".eml" format.  HTML code is permitted within the response messages 1-3 below.  Leave reply boxes blank for default repsonses.</div>'+#10+
-      '<div><input name="contact.question" type="checkbox" '+insstr('checked',icontact_question)+'>Protect against mass spam with Spam Guard.  Presents a simple math question on the contact form.  A correct answer stores the message in the Inbox, and an incorrect one in the Trash folder.</div>'+#10+
+      '<div><input name="contact.question" type="checkbox" '+insstr('checked',icontact_question)+'>Protect against mass spam with Spam Guard.  Presents a simple math question on the contact form.  A correct answer stores the message in the Inbox, and an incorrect answer returns an error.</div>'+#10+
       '<div class="inlineblock">1. '+net__encodeforhtmlstr(icontact_def_ok)+'<br><input class="text" name="contact.ok" type="text" value="'+net__encodeforhtmlstr(icontact_ok)+'"></div>'+#10+
       '<div class="inlineblock">2. '+net__encodeforhtmlstr(icontact_def_fail)+'<br><input class="text" name="contact.fail" type="text" value="'+net__encodeforhtmlstr(icontact_fail)+'"></div>'+#10+
       '<div class="inlineblock">3. '+net__encodeforhtmlstr(icontact_def_off)+'<br><input class="text" name="contact.off" type="text" value="'+net__encodeforhtmlstr(icontact_off)+'"></div>'+#10+
       '</div>'+#10+
       xvsep+
       '<input name="cmd" type="hidden" value="contact"><input class="button" type=submit value="Save"></form>'+#10+
+
+
+      xh2('subscribe','Subscribe Settings')+
+      '<form class="block" method=post action="contact.html#subscribe">'+
+      '<div class="grid2">'+#10+
+      '<div><input name="subscribe.allow" type="checkbox" '+insstr('checked',isubscribe_allow)+'>Allow Subscribe/Unsubscribe Requests (use subscribe.html and unsubscribe.html).</div>'+#10+
+      '<div><input name="subscribe.question" type="checkbox" '+insstr('checked',isubscribe_question)+'>Protect against mass spam with Spam Guard.  Presents a simple math question on the subscribe form.  A correct answer processes the subscribe request, and an incorrect answer returns an error. An unsubscribe request does not require Spam Guard.</div>'+#10+
+      '</div>'+#10+
+      xvsep+
+      '<input name="cmd" type="hidden" value="subscribe"><input class="button" type=submit value="Save"></form>'+#10+
 
 
       xh2('mail','SMTP Mail Server')+
@@ -9904,8 +11456,8 @@ if strmatch(strcopy1(m.hpath,1,low__len(iadminpath)),iadminpath) then
 
 //public access area (front facing file system) --------------------------------
 //decode path and filename
-str1:=m.hpath+m.hname;
-if (hname_low='contact.html') or (m.hmodule_index>=0) then xreadpost;
+str1                  :=m.hpath+m.hname;
+if (hname_low='contact.html') or (hname_low='subscribe.html')  or (hname_low='unsubscribe.html') or (m.hmodule_index>=0) then xreadpost;
 
 //path+name check -> ensure path+name is safe -> no directory escapement "/../" or bad characters
 if (not xsafewebname(str1)) and header__make4(a,400,true,false,false) then goto skipend;
@@ -9913,7 +11465,9 @@ if (not xsafewebname(str1)) and header__make4(a,400,true,false,false) then goto 
 //redirect check
 if xredirect__have(m.hdiskhost+str1,str2) then
    begin
+
    xheadonly2(307,false,str2,'','','');
+
    goto skipend;
    end;
 
@@ -10008,7 +11562,7 @@ begin
 try
 //check
 if not net__recinfo(a,m,buf) then exit;
-blen:=str__len(buf);
+blen:=str__len32(buf);
 xramstage2:=false;
 xcount:=8;
 
@@ -10022,7 +11576,7 @@ if (m.wbufsent>=blen) and (m.wmode<>wsmBuf) and m.hwantdata then
    //.data problem with streaming -> must close the connection to resolve
    else if xdataproblem and xreset(true) then goto skipend;
    //.continue
-   blen:=str__len(buf);
+   blen:=str__len32(buf);
    if (m.wmode=wsmRAM) and (m.wsent>=blen) then
       begin
       blen:=m.splicelen;
@@ -10062,7 +11616,7 @@ if (m.wlen>=1) and (m.wsent<m.wlen) and (blen>=1) then
       else
       //buffer data -> Disk (~80 Mb/sec) / Dynamic page / or RAM stage 1 -> str__splice() returns a memory address to a memory block and a length that is bound to that block's upper boundary
          begin
-         case block__fastinfo(buf,m.wbufsent,smem,smin,smax) and str__splice(buf,m.wbufsent,len,dmem,dlen) of
+         case block64__fastinfo32(buf,m.wbufsent,smem,smin,smax) and str__splice32(buf,m.wbufsent,len,dmem,dlen) of
          true:begin
             case net____send2(a.sock,dmem^,dlen,0,bsent) of
             true:xsent(bsent);
@@ -10124,7 +11678,7 @@ var
    //check
    if (str__len(buf)<1) then exit;
    //get
-   for p:=0 to (str__len(buf)-1) do
+   for p:=0 to (str__len32(buf)-1) do
    begin
    v:=str__bytes0(buf,p);
    if (v=10) or (v=13) then
@@ -10148,7 +11702,7 @@ var
 
    try
    //init
-   xlen:=str__len(buf);
+   xlen:=str__len32(buf);
    //check
    if (xlen<3) then exit;
    //get
@@ -10199,7 +11753,7 @@ var
 
    try
    //init
-   xlen:=frcmax32(str__len(buf),40000);//search first 40K of message only, 11mar2024: 40k search instead of previous 7K
+   xlen:=frcmax32(str__len32(buf),40000);//search first 40K of message only, 11mar2024: 40k search instead of previous 7K
    if (xlen<10) then exit;
 
    //get
@@ -10218,7 +11772,7 @@ var
    //trim to return code
    if (result<>'') then
       begin
-      for p:=1 to low__len(result) do if (result[p-1+stroffset]=#10) or (result[p-1+stroffset]=#13) then
+      for p:=1 to low__len32(result) do if (result[p-1+stroffset]=#10) or (result[p-1+stroffset]=#13) then
          begin
          result:=strcopy1(result,1,p-1);
          break;
@@ -10310,7 +11864,7 @@ if m.writing then
    else if (len>=1) then
       begin
       //fill buffer with some data
-      blen:=str__len(buf);
+      blen:=str__len32(buf);
       bp:=restrict32(m.wsent);
       smin:=-1;
       smax:=-2;
@@ -10318,7 +11872,7 @@ if m.writing then
       begin
       if (bp<blen) then
          begin
-         if (bp>smax) then block__fastinfo(buf,bp,smem,smin,smax);
+         if (bp>smax) then block64__fastinfo32(buf,bp,smem,smin,smax);
          if (bp<=smax) then ibuffer[p]:=smem[bp-smin] else ibuffer[p]:=0;
          end
       else ibuffer[p]:=0;
@@ -10365,7 +11919,7 @@ if not m.writing then
       str__addrec(buf,@ibuffer,len);
 
       //size limit check
-      if ((str__len(buf) div 1024000)>imail_sizelimit) then
+      if ((str__len32(buf) div 1024000)>imail_sizelimit) then
          begin
          str__softclear2(buf,ibufferlimit);
          xlogrequest_smtp(a,503);
@@ -10410,13 +11964,13 @@ if not m.writing then
             end
          else if (xcmd='mail') then
             begin
-            if (m.hua='') then m.hua:=swapcharsb(strcopy1(xline,11,low__len(xline)),'"','''');//1st one only
+            if (m.hua='') then m.hua:=swapcharsb(strcopy1(xline,11,low__len32(xline)),'"','''');//1st one only
             xreply('250 OK'+rcode);//mail from:
             end
          else if (xcmd='rcpt') then
             begin
             //.1st to address
-            if (m.hreferer='') then m.hreferer:=swapcharsb(strcopy1(xline,9,low__len(xline)),'"','''');//1st one only
+            if (m.hreferer='') then m.hreferer:=swapcharsb(strcopy1(xline,9,low__len32(xline)),'"','''');//1st one only
 
             //Inbound Email Filter -> security check -> ensure "to: address" is within the specified email mask
             if (imail_mask<>'') then
@@ -10428,7 +11982,7 @@ if not m.writing then
                if (strlast(str1) ='>') then strdellast(str1);
 
                //compare using complex mask -> if email not within complex mask then discard email AND optionally ban the mail sender
-               if not low__matchmasklist(str1,imail_mask) then
+               if not filter__matchlist(str1,imail_mask) then
                   begin
                   ipsec__incBadmail(m.hslot);//increment the "Bad mail" counter for this sender's IP address - 19jun2025
                   xlogrequest_smtp(a,403);
@@ -10465,133 +12019,174 @@ skipend:
 except;end;
 end;
 
-function question__make(var xquestion:string):boolean;
+function spamGuard__makeQuestion(var xquestion:string):boolean;
 var
-   xindex,v1,v2:longint;
+   xindex                       :longint32;
+   v1                           :longint32;
+   v2                           :longint32;
+
 begin
+
 //defaults
-result:=false;
-xindex:=iquestion__index;
-xquestion:='';
+result                          :=false;
+xindex                          :=ispamGuard_index;
+xquestion                       :='';
 
-try
 //inc
-inc(iquestion__index);
-if (iquestion__index>high(iquestion__answer)) then iquestion__index:=0;
+inc(ispamGuard_index);
 
-//question
-v1:=frcmin32(random(100000),1);//1..100,000
-v2:=frcmin32(random(11),1);//1..10
-xquestion:='What is '+k64(v1)+' + '+k64(v2)+'?';
-iquestion__answer[xindex]:=v1+v2;//always 1..N
+if (ispamGuard_index>high(ispamGuard_answer)) then
+   begin
+
+   ispamGuard_index             :=0;
+
+   end;
+
+//make question
+v1                              :=1 + random(100001);//1..100,000
+v2                              :=1 + random(10);//1..10
+xquestion                       :='What is '+k64(v1)+' + '+k64(v2)+'?';
+ispamGuard_answer[xindex]       :=v1 + v2;//important: answer is always 1 or more
 
 //successful
-result:=true;
-except;end;
+result                          :=true;
+
 end;
 
-function question__checkanswer(xanswer:longint):boolean;
+function spamGuard__checkAnswer(const xanswer:longint32):boolean;
 var
-   p:longint;
-begin
-//defaults
-result:=false;
+   p                            :longint32;
 
-try
+begin
+
+//defaults
+result                          :=false;
+
+//get
 if (xanswer>=1) then
    begin
-   for p:=0 to high(iquestion__answer) do if (xanswer=iquestion__answer[p]) then
+
+   for p:=0 to high(ispamGuard_answer) do
+   begin
+
+   if (xanswer=ispamGuard_answer[p]) then
       begin
-      iquestion__answer[p]:=0;//reset so it cannot be reused
+
+      //reset slot -> only reset 1 slot in case there are 2+ slots with same answers representing 2+ separate requests - 09oct2026
+      ispamGuard_answer[p]      :=0;
+
       //answer is correct
-      result:=true;
+      result                    :=true;
+
+      //stop
+      break;
+
       end;
+
+   end;//p
+
    end;
-except;end;
+
 end;
 
-function xrambytes:comp;
+function bytes__RAM:longint64;//09oct2026
 var
-   p:longint;
-   n:string;
-   v1,v2:comp;
+   p        :longint32;
+   n        :string;
+   v1       :longint64;
+   v2       :longint64;
+
 begin
-result:=irambytes;
-for p:=0 to max32 do if tools__bytes(p,n,v1,v2) then result:=add64(result,v1) else break;
+
+result      :=irambytes;
+
+for p:=0 to max32 do
+begin
+
+if tools__bytes(p,n,v1,v2) then result    :=add64( result ,v1 )
+else                            break;//last tool -> stop checking
+
+end;//p
+
 end;
 
 function xmakehelp(xclaudehelp:boolean):string;
 const
-   //compressed (.zip) version of plain text help document
+   //compressed (.zip) version of plain text help document - 09oct2026
    xhelpdata
-
-:array[0..18651] of byte=(
-120,1,205,157,107,115,27,199,146,166,191,227,87,244,98,99,86,164,15,65,18,224,77,162,47,51,148,68,89,12,139,162,150,164,198,235,240,56,78,52,129,38,9,11,183,131,6,68,209,31,246,183,239,243,102,86,117,55,64,64,134,53,222,160,120,78,88,0,186,186,42,43,43,239,149,149,245,235,228,183,159,111,211,73,210,205,147,231,211,171,171,94,150,111,36,233,160,147,220,233,199,206,48,203,147,252,54,227,195,191,215,46,248,151,86,105,146,119,251,163,94,182,145,100,105,126,159,76,134,201,52,207,146,215,151,151,239,146,187,236,42,201,179,241,199,108,156,76,66,159,87,227,225,29,63,37,237,225,96,50,30,246,122,89,199,187,111,167,163,148,193,146,225,181,189,209,29,220,36,249,36,157,116,219,201,117,23,24,146,161,119,194,136,131,73,54,30,100,19,134,235,78,110,233,41,159,140,179,180,159,117,146,235,241,176,159,116,186,249,135,141,100,56,230,195,56,107,79,252,199,243,163,211,228,142,214,195,233,36,233,165,55,155,181,218,107,94,252,241,253,73,146,118,250,221,65,151,46,24,106,56,72,70,233,32,235,217,164,218,237,44,207,233,116,114,59,
-30,78,111,110,147,251,225,116,108,243,137,19,88,203,54,111,54,147,250,237,100,50,58,220,218,234,13,219,105,239,118,152,79,14,155,219,79,183,183,172,219,173,122,242,143,164,147,93,167,211,222,132,158,243,252,110,56,238,104,130,117,123,92,95,223,0,169,221,246,109,196,5,168,236,245,18,155,82,54,153,128,1,126,0,241,31,187,147,180,151,92,79,7,109,129,168,213,160,85,119,144,48,235,222,164,219,207,152,205,209,40,29,135,169,10,221,66,158,97,109,195,214,138,53,170,96,151,169,182,63,24,122,187,147,140,206,243,238,36,79,214,248,111,6,28,83,33,55,7,48,112,151,117,173,163,172,159,118,123,26,21,140,140,4,149,129,155,10,181,195,113,63,201,167,87,253,110,158,11,50,67,49,63,140,70,67,65,195,26,92,140,210,126,242,227,52,29,135,69,166,87,80,80,12,78,39,140,49,185,79,210,60,233,164,0,192,138,247,71,66,250,56,189,190,102,233,123,195,155,124,51,73,68,104,105,47,31,50,235,118,111,218,129,26,210,228,106,218,237,77,26,160,129,54,160,41,237,221,139,170,52,104,63,245,233,101,3,200,16,108,11,161,115,29,94,222,102,60,19,114,135,
-70,66,215,89,58,153,142,233,151,119,51,123,161,63,28,103,162,217,65,21,117,227,233,96,32,224,251,44,104,23,138,23,61,8,113,97,230,189,238,100,194,143,48,192,96,72,39,105,39,109,223,106,117,68,107,0,221,189,25,136,178,122,221,155,219,137,141,205,108,161,120,39,127,6,202,62,77,0,185,251,49,75,174,160,166,15,141,171,84,244,215,207,0,229,30,192,6,233,77,214,207,6,147,36,191,207,39,89,63,161,173,129,28,105,230,67,118,159,12,71,153,19,114,110,60,24,222,5,73,240,232,148,225,186,3,122,212,180,199,89,175,107,236,70,191,131,108,12,144,181,95,39,191,189,10,104,168,125,147,60,15,108,234,64,44,226,18,26,137,199,183,154,85,46,95,43,200,93,36,32,86,88,167,221,197,41,178,192,232,40,74,131,53,35,145,214,158,158,138,57,95,8,85,80,97,201,241,177,229,150,113,52,18,0,17,16,103,167,183,46,3,137,188,129,68,146,181,25,234,17,233,15,144,8,185,218,241,60,121,225,116,157,172,5,58,73,198,233,221,12,73,168,225,201,187,228,138,85,232,33,12,96,219,116,58,25,246,77,252,164,157,78,178,5,194,250,72,160,146,11,147,53,216,2,102,25,164,
-131,54,63,143,51,72,173,10,222,201,224,106,248,201,80,13,160,249,173,11,22,0,253,216,205,238,28,21,57,163,72,8,22,156,4,192,57,107,108,80,191,8,15,94,205,178,88,2,65,118,122,144,19,152,130,64,93,62,140,179,81,175,203,103,232,110,97,127,73,67,244,152,183,199,221,209,68,130,113,212,155,222,184,252,248,215,20,25,217,209,228,95,119,39,17,75,129,152,59,221,27,147,59,200,211,81,47,189,79,214,70,16,126,183,15,128,235,198,101,38,48,242,81,214,238,138,81,183,76,62,27,41,210,19,16,177,252,112,10,61,191,24,246,161,177,14,120,29,192,223,21,217,0,101,241,98,30,37,221,90,245,89,193,96,109,127,155,137,2,58,152,22,172,231,83,232,89,34,224,231,238,160,131,50,73,46,36,242,88,133,181,1,11,198,34,117,7,208,17,50,82,195,78,97,88,255,54,68,120,153,248,28,103,54,239,60,57,146,236,7,103,14,224,8,237,49,154,104,128,159,157,171,147,211,146,231,92,47,172,77,71,189,97,138,162,145,70,218,112,82,9,159,59,89,47,67,128,217,183,200,97,69,83,67,216,144,249,75,58,73,176,68,185,97,211,201,92,83,149,234,103,141,69,113,229,197,146,166,214,
-39,8,158,142,123,166,215,198,76,107,216,239,221,187,102,75,29,10,196,156,15,109,237,140,132,94,163,140,74,73,197,43,208,107,78,63,113,108,38,122,154,142,130,198,99,72,212,28,19,216,66,210,140,64,181,52,188,222,16,85,165,3,147,146,2,246,221,120,248,233,158,245,253,215,52,163,247,184,100,107,136,192,207,142,133,24,190,54,2,160,67,83,164,81,137,70,165,140,20,78,6,25,194,73,2,252,229,219,11,141,245,92,82,16,158,172,72,65,35,127,73,96,53,99,89,101,48,60,16,144,188,250,18,149,117,15,120,172,44,178,19,240,33,15,22,236,106,56,156,148,223,144,129,90,161,240,212,22,45,207,218,211,177,20,82,248,81,56,66,195,38,151,247,163,44,98,202,37,113,210,70,158,98,110,244,245,120,194,99,161,86,54,202,184,219,1,119,174,244,35,43,231,67,224,12,36,20,181,182,91,55,57,144,229,54,27,100,79,231,174,219,153,220,66,190,172,243,20,251,230,22,205,188,33,158,30,96,200,152,130,205,38,109,97,230,242,150,94,144,3,200,68,169,251,82,189,124,200,178,17,130,224,22,20,5,69,67,235,163,206,239,192,106,86,67,193,109,243,235,192,247,2,48,173,9,8,
-240,245,96,249,145,51,19,204,11,122,58,51,22,194,24,217,221,222,221,188,157,244,123,76,234,166,228,234,181,40,43,0,32,247,71,90,39,26,39,175,224,152,228,45,216,127,133,40,238,36,160,105,136,153,65,151,239,134,119,128,255,38,251,136,217,181,246,226,221,123,244,150,137,24,153,93,81,155,78,238,178,244,67,130,116,165,55,176,15,167,99,169,245,134,119,201,72,47,203,198,73,225,24,99,14,107,169,110,182,146,143,13,108,141,12,53,249,177,59,30,14,164,57,115,198,123,142,241,147,1,65,192,91,164,96,193,41,171,213,230,142,29,41,201,30,27,9,147,88,5,47,80,4,136,65,179,250,212,92,202,207,233,52,90,34,183,89,111,20,36,124,164,235,104,172,106,170,72,194,145,132,253,85,119,32,170,92,3,17,76,189,153,156,62,215,211,227,210,118,230,219,78,139,102,19,214,190,147,137,1,140,66,160,14,81,22,34,232,94,179,161,213,59,164,172,241,192,218,221,109,54,16,209,70,217,39,53,47,17,169,105,66,251,235,174,223,145,156,102,191,4,187,222,122,21,231,93,119,199,16,136,108,201,218,201,181,24,148,110,12,1,90,125,164,109,209,62,109,139,249,244,74,
-156,216,134,53,207,177,172,123,157,164,13,127,66,15,122,94,216,1,209,236,93,51,27,98,61,185,202,64,158,89,122,166,33,100,108,97,225,93,14,145,55,34,92,8,126,102,68,153,244,234,47,74,105,147,34,182,30,249,208,45,39,169,191,20,154,248,110,128,102,141,86,246,15,190,146,169,228,63,178,170,248,93,246,160,9,160,246,237,16,188,28,214,126,253,240,219,149,123,57,73,163,17,223,158,235,235,215,173,223,106,181,51,140,75,1,99,4,139,65,218,235,217,203,155,255,181,218,235,88,87,172,191,105,194,55,210,132,23,174,9,107,175,160,164,78,134,101,134,35,4,46,32,32,9,147,57,184,244,187,1,113,41,198,186,235,162,219,204,76,129,107,32,164,136,26,87,112,197,98,5,210,134,10,122,67,22,205,40,91,29,201,158,110,203,243,146,104,23,106,39,67,4,126,68,11,26,82,194,234,206,84,171,90,152,193,162,102,78,36,14,226,112,212,109,99,51,178,106,6,71,101,129,10,167,49,42,7,196,209,195,9,5,144,115,155,148,80,128,225,213,29,64,24,50,185,96,238,40,185,23,188,170,102,197,107,6,13,237,33,244,104,137,68,108,44,120,85,173,15,191,139,13,100,33,254,96,
-61,29,127,194,235,232,45,66,250,161,236,24,181,49,196,7,241,150,251,58,49,236,45,50,8,20,33,85,13,145,102,211,14,166,253,43,216,154,185,216,111,230,6,187,176,1,97,47,162,57,211,199,162,186,202,146,39,72,86,228,81,231,137,186,201,62,161,125,80,193,165,235,33,53,140,100,150,131,61,184,97,85,110,134,244,17,160,205,231,104,196,6,127,186,93,165,226,244,170,141,196,104,52,218,50,174,243,238,31,89,210,108,110,171,133,153,10,250,190,183,189,189,177,109,63,9,173,181,10,41,203,124,255,239,245,198,56,112,242,106,125,138,229,87,135,179,186,104,200,79,208,47,157,23,66,14,88,22,105,167,157,34,207,12,35,224,245,233,246,134,47,79,20,69,252,102,168,65,183,22,152,225,183,230,102,51,249,241,249,134,219,91,134,46,126,4,67,201,79,207,205,56,184,70,110,247,48,43,68,242,112,213,66,138,221,76,194,242,36,173,168,176,28,182,28,106,43,61,4,217,34,132,34,4,116,79,160,70,154,228,7,117,75,56,98,218,14,147,10,138,10,80,132,36,153,180,87,217,13,68,81,204,19,210,40,71,221,41,177,97,211,87,251,40,213,12,11,232,249,41,102,160,70,246,158,
-55,18,252,210,225,88,114,93,54,115,128,132,249,93,19,9,240,53,12,222,225,107,167,118,197,1,48,60,212,195,34,183,208,5,77,213,200,171,157,202,169,150,179,90,200,38,164,24,96,72,23,33,141,126,150,189,81,125,33,25,164,31,187,55,138,7,48,235,207,197,87,146,181,192,101,54,87,235,34,170,42,115,180,241,147,77,223,13,7,235,204,225,72,161,2,48,23,100,155,137,81,55,250,141,91,211,2,81,192,116,172,56,136,3,21,209,135,147,25,66,57,244,29,35,56,182,32,237,94,23,67,213,22,211,6,96,105,39,195,129,180,218,114,28,129,234,32,78,128,236,34,154,157,88,72,166,149,46,17,172,214,85,62,53,108,95,79,69,120,90,76,252,80,89,229,60,189,65,97,200,84,140,51,46,220,154,25,84,130,193,104,227,180,135,195,15,242,19,77,19,164,172,180,28,35,226,9,24,34,166,184,89,141,117,25,65,72,227,27,236,11,233,9,87,235,33,206,134,142,96,142,24,35,4,155,160,102,5,138,146,235,30,132,58,213,82,49,234,19,38,133,80,11,176,41,214,38,136,101,132,204,88,213,178,97,134,114,31,5,191,227,216,189,229,187,116,236,203,117,141,218,198,1,191,133,44,101,252,199,48,
-81,160,67,220,51,119,221,202,176,93,35,57,67,21,74,85,33,169,225,179,240,37,193,58,194,101,150,129,77,240,174,80,42,50,153,114,58,83,83,211,106,27,193,97,184,112,135,97,35,46,141,83,185,204,112,103,60,166,227,38,186,112,55,85,200,17,163,52,58,74,107,193,177,114,247,24,76,57,107,183,118,81,19,211,177,236,26,112,103,97,61,57,179,253,110,103,160,64,16,96,188,37,240,163,192,208,133,155,242,23,196,64,104,157,10,120,100,62,88,199,115,135,44,48,187,171,42,50,189,18,130,53,140,243,241,19,130,124,211,241,152,133,51,207,130,176,18,180,115,43,43,208,36,140,185,58,178,240,54,146,41,86,60,194,72,107,83,58,29,113,70,12,12,133,96,221,232,95,245,30,244,25,96,216,50,200,18,43,252,145,128,67,204,54,226,154,6,238,70,114,161,64,98,152,131,75,202,12,33,251,16,73,21,171,68,195,76,134,10,114,186,199,83,58,209,193,183,51,159,0,122,124,131,172,236,221,187,52,63,242,249,27,142,224,226,143,24,199,249,12,130,88,26,5,188,36,216,96,130,192,37,37,86,32,17,5,45,227,252,132,13,147,249,252,4,99,126,96,106,71,142,94,153,71,134,43,252,
-17,236,63,231,2,120,0,67,23,183,3,28,41,246,227,44,143,78,38,60,145,17,13,34,226,211,224,147,176,238,104,244,246,12,34,98,114,131,79,238,136,55,49,164,173,229,235,246,142,2,155,225,165,50,50,86,9,109,91,172,221,220,25,192,34,10,32,207,202,13,111,194,75,216,192,80,175,197,34,136,109,42,218,208,33,62,67,140,199,166,224,177,74,53,178,0,185,55,147,243,241,102,120,35,106,58,98,217,27,184,104,227,118,247,74,138,78,161,53,99,99,126,247,96,73,142,232,55,79,116,205,67,177,194,174,201,155,225,221,32,56,25,11,217,211,24,188,246,139,216,208,121,29,122,199,103,1,127,82,58,93,130,101,230,22,34,219,122,206,107,80,89,25,25,171,198,152,133,243,66,128,4,25,235,174,117,116,186,181,220,132,69,178,107,233,213,222,180,47,137,143,134,17,149,41,76,40,18,184,250,93,91,3,90,213,34,42,164,47,106,226,97,202,171,33,190,30,164,160,95,198,198,167,73,242,54,197,107,69,121,184,3,20,35,24,57,157,203,188,178,166,110,44,99,86,207,208,12,180,244,162,80,17,113,112,115,100,2,49,133,200,159,0,87,15,154,149,252,161,187,129,115,109,132,10,123,
-165,232,166,126,124,250,166,142,41,50,248,64,235,83,143,28,22,175,136,17,12,30,9,248,14,209,247,48,43,55,176,147,250,102,214,239,213,81,252,22,77,143,19,138,64,8,17,34,172,116,194,2,220,70,66,227,183,78,7,49,52,196,6,170,178,153,68,192,16,50,35,236,86,98,143,121,232,139,71,62,175,135,61,252,220,25,216,95,102,189,2,246,179,10,146,89,54,214,29,145,28,220,128,8,146,169,234,168,46,13,57,242,157,45,224,86,12,58,51,192,57,33,11,121,153,0,98,228,86,15,12,26,241,18,59,158,89,97,87,8,50,248,250,10,157,105,7,4,97,234,219,31,198,234,1,2,196,190,177,163,22,121,173,210,116,93,195,93,185,148,88,235,177,23,22,251,88,135,219,64,1,11,117,38,84,84,187,52,48,161,66,237,60,33,80,90,27,201,78,66,144,135,166,199,146,154,238,210,242,160,141,185,121,11,34,89,153,234,66,8,88,7,208,215,97,28,100,143,176,34,166,250,100,198,234,12,106,2,62,164,25,81,67,106,24,252,63,125,20,16,22,71,65,16,219,179,216,161,203,55,193,89,181,46,24,84,219,6,11,57,222,22,223,84,108,149,12,108,3,36,237,50,99,196,13,34,123,96,138,13,89,19,72,198,160,43,
-249,53,210,156,164,110,154,212,161,27,5,89,37,166,2,201,231,155,155,155,197,226,174,133,153,184,129,183,14,18,141,237,156,192,17,56,97,18,243,134,95,160,164,42,229,241,42,145,206,54,1,73,94,142,2,21,193,196,192,129,116,176,41,20,13,208,47,66,26,114,210,172,163,25,154,151,117,128,199,207,36,123,247,160,138,208,74,26,95,23,30,162,241,51,131,31,96,36,158,165,104,202,224,9,161,34,86,3,132,219,242,43,12,39,154,102,101,174,112,250,37,9,34,235,214,161,119,103,168,132,64,174,53,211,236,143,138,209,170,12,228,129,199,32,197,34,35,200,72,186,202,112,62,194,235,200,194,161,47,181,145,145,58,187,65,153,42,230,141,45,47,82,177,149,146,42,102,38,178,12,32,13,17,41,246,223,88,97,9,217,109,107,252,208,198,148,144,250,121,0,114,88,75,134,177,249,151,139,88,229,201,98,135,84,2,198,69,108,132,248,10,199,57,82,77,21,131,15,25,161,250,244,33,63,132,209,255,132,31,74,193,251,229,28,129,146,205,69,4,243,155,79,38,91,216,72,194,218,3,103,57,214,196,69,220,20,1,42,80,0,186,21,4,176,61,46,69,45,16,231,236,157,223,195,38,80,95,
-58,26,101,169,199,27,220,208,34,178,32,90,172,238,160,154,140,54,221,36,39,135,184,91,123,218,227,157,78,122,143,213,136,150,71,37,206,68,132,120,32,234,180,32,191,22,86,42,193,49,32,235,37,40,157,35,147,78,194,155,193,193,238,151,92,215,25,249,80,50,114,49,20,203,99,146,173,248,1,115,84,19,195,33,204,110,4,21,178,128,17,247,228,52,12,25,214,226,140,31,217,252,213,94,57,35,196,121,65,117,35,104,21,68,64,155,110,69,69,110,16,72,116,81,21,84,14,162,143,100,212,203,164,153,122,84,41,181,218,249,220,134,32,122,168,63,146,247,33,92,74,85,59,131,99,169,35,30,137,202,20,218,91,182,187,156,128,184,37,2,61,7,119,73,76,82,137,254,200,226,210,79,182,23,26,93,111,215,35,252,42,29,137,190,240,117,149,28,51,101,162,246,21,5,19,31,187,142,17,135,99,164,106,223,216,194,87,73,62,232,66,11,236,147,73,206,204,17,153,5,139,154,173,131,205,109,254,215,196,200,107,36,191,182,158,109,157,166,227,173,214,118,107,247,112,187,121,184,221,58,220,221,77,254,209,220,222,217,254,45,169,255,120,124,153,108,221,221,221,253,243,170,
-151,18,41,146,59,108,248,200,255,9,102,182,204,249,104,164,3,246,3,145,73,155,218,26,244,189,224,205,102,61,105,161,148,158,237,236,110,47,203,141,168,39,245,211,225,31,208,110,186,181,183,185,157,172,253,28,182,241,222,94,178,97,188,185,253,173,246,245,246,119,191,77,62,237,239,174,39,71,35,34,115,40,152,159,186,147,173,189,157,131,205,157,253,100,237,167,215,151,167,111,130,40,250,49,107,127,24,174,39,47,216,46,232,103,91,205,214,142,205,112,59,185,72,175,211,113,55,188,82,79,126,109,246,243,164,245,116,154,180,218,191,213,254,62,60,224,63,177,123,222,48,116,108,254,62,154,199,194,206,179,61,220,191,37,41,34,143,134,134,221,105,178,255,255,3,11,100,168,44,192,65,179,185,191,221,220,249,170,144,176,215,130,24,192,194,193,223,138,5,231,137,233,21,41,52,211,69,120,104,181,118,15,190,46,60,236,30,128,135,102,107,154,236,252,173,136,24,230,237,116,188,0,3,207,154,219,7,205,175,138,16,118,247,133,128,230,52,217,253,91,17,16,164,2,206,39,155,156,11,16,241,180,185,135,164,253,154,196,194,238,30,136,216,153,
-38,123,43,225,97,239,47,105,9,114,138,22,40,136,157,167,251,207,190,66,13,241,108,85,13,241,215,112,208,201,59,11,112,112,176,179,187,255,117,225,96,71,106,114,111,85,253,176,42,14,54,21,214,91,52,255,189,103,95,21,23,108,7,113,184,154,52,88,117,246,174,23,58,36,145,118,23,200,130,230,211,189,237,253,167,95,21,26,14,158,10,15,72,131,213,212,194,254,138,210,128,45,227,15,127,12,135,125,79,28,153,53,23,119,118,15,118,191,46,213,96,180,128,141,240,247,226,32,191,198,241,24,46,96,133,230,238,206,65,107,25,21,204,96,238,81,204,70,97,99,103,123,85,217,184,42,69,124,129,92,120,124,84,72,66,138,57,86,19,18,171,162,226,230,118,9,97,180,246,90,123,95,55,93,192,36,171,153,13,171,226,162,88,227,135,110,101,107,119,255,235,70,198,254,170,186,243,175,34,163,65,132,134,248,28,161,193,201,34,45,178,243,116,7,175,123,137,73,89,32,84,41,123,143,34,63,118,228,113,53,49,44,86,18,167,123,219,127,81,165,84,144,211,90,132,157,131,167,187,207,150,186,94,143,143,157,125,195,14,164,179,26,118,90,127,17,59,155,7,127,204,69,103,
-118,91,187,159,137,207,60,62,66,154,7,187,162,151,131,85,49,178,106,216,170,152,217,31,221,209,28,74,246,158,53,247,158,30,124,189,28,212,122,102,206,58,17,172,213,136,100,85,235,180,64,9,217,103,115,40,105,238,52,89,136,165,142,106,241,230,163,73,149,125,247,223,241,217,254,94,156,16,143,204,62,45,50,83,159,62,107,238,124,197,114,196,164,108,11,51,237,239,69,199,114,51,109,169,197,90,98,240,81,212,141,204,213,22,97,157,213,240,112,176,162,60,37,203,188,63,28,220,47,34,140,230,206,222,222,114,202,120,100,108,152,83,223,90,53,204,183,247,87,209,241,208,74,219,217,95,74,24,85,28,62,30,105,172,234,219,174,140,139,47,96,145,175,2,19,77,140,247,149,28,153,149,49,145,15,175,39,156,224,236,166,139,156,220,214,246,254,82,251,253,209,241,17,66,95,43,249,50,43,163,35,204,170,98,160,46,178,79,155,7,7,203,67,97,143,142,152,167,18,167,216,98,43,109,26,49,143,213,182,16,31,98,102,145,233,222,218,126,214,220,95,106,130,60,58,106,246,119,64,13,134,251,106,68,243,229,168,217,89,64,53,173,230,206,65,243,235,69,13,71,13,
-156,108,86,192,205,14,251,207,127,141,108,54,23,152,171,187,187,79,249,255,50,19,254,241,105,229,64,8,193,128,95,13,33,59,43,34,100,169,234,249,106,237,17,161,1,155,125,37,52,52,87,117,118,73,158,25,144,159,88,17,180,123,155,55,221,235,121,151,102,127,127,249,30,108,232,194,236,187,199,179,77,86,139,57,239,28,254,85,204,44,50,91,159,237,111,239,44,149,32,143,109,181,90,80,4,103,230,239,165,147,47,96,151,71,167,11,89,38,59,184,51,43,228,174,124,1,93,60,180,223,119,155,75,67,206,143,142,11,9,143,214,106,129,196,191,142,139,138,244,88,160,112,201,100,57,120,186,212,126,125,116,204,20,49,214,21,12,250,191,128,26,25,244,59,139,76,179,230,193,179,165,202,246,209,145,33,50,81,98,199,223,43,60,194,180,42,100,178,16,49,251,7,251,203,109,214,71,71,205,193,51,112,131,25,178,130,57,15,153,172,26,90,125,136,154,69,54,43,52,243,108,127,105,148,245,209,81,99,230,60,166,201,106,168,89,117,11,39,78,235,97,208,153,204,56,12,146,101,22,107,124,239,209,226,171,45,243,252,154,232,224,213,16,178,106,228,104,169,14,94,30,108,
-126,100,99,36,138,147,213,240,176,170,159,199,121,189,156,12,177,198,61,57,242,195,187,69,6,218,206,206,211,189,165,66,246,107,192,9,81,197,191,23,39,95,64,27,11,208,248,104,230,187,178,41,87,211,57,95,72,36,15,173,181,102,147,253,210,37,59,191,95,19,106,118,64,205,106,22,236,151,161,230,79,180,242,179,189,131,229,123,192,95,11,158,60,84,191,218,78,48,202,249,191,141,168,5,86,110,235,96,159,200,210,215,78,80,30,93,82,30,206,74,226,167,181,106,120,233,11,196,207,215,32,134,9,26,172,134,135,85,163,74,145,33,70,58,96,106,149,158,230,19,246,118,182,151,110,242,124,13,24,89,45,137,117,231,176,245,69,24,89,32,133,119,254,156,105,10,100,62,154,122,218,129,97,86,146,193,43,163,229,11,24,230,1,109,61,26,58,90,171,101,152,252,5,42,161,182,194,80,7,183,23,8,214,189,3,66,118,127,162,167,31,159,66,36,82,87,50,96,86,166,144,234,114,255,137,142,110,238,145,17,255,167,186,231,113,145,100,238,115,19,21,77,152,197,10,17,89,89,153,120,52,111,254,108,32,199,248,40,126,227,39,87,195,233,251,225,181,170,68,80,109,148,195,
-205,156,96,84,21,136,151,42,160,98,5,8,84,130,141,154,131,25,181,79,58,42,30,236,53,24,255,193,169,77,42,24,252,195,138,61,232,4,40,31,237,104,33,133,47,38,67,206,153,36,161,154,5,239,158,83,14,77,53,193,58,28,29,182,90,117,58,142,183,118,246,147,14,161,91,41,190,181,217,90,124,42,255,240,252,94,7,48,117,152,82,39,106,57,233,169,79,107,162,99,175,173,172,54,148,181,160,106,31,39,29,169,67,201,215,247,170,19,115,164,58,49,42,187,169,218,70,215,42,73,164,210,206,27,201,217,133,14,177,235,173,147,106,81,47,175,98,152,212,127,229,208,246,111,117,63,64,109,101,26,24,212,138,44,28,90,13,58,67,25,39,61,135,84,91,237,81,222,162,87,28,174,228,120,105,159,239,28,203,212,217,80,142,132,150,197,73,84,210,196,209,204,163,80,47,49,185,227,84,51,5,109,188,126,171,125,240,242,125,29,138,60,114,100,241,39,170,37,114,152,92,37,67,195,241,77,85,62,214,58,228,61,74,233,253,79,205,169,236,237,51,103,221,159,167,3,59,233,206,191,42,176,251,70,37,100,99,77,10,149,118,115,192,202,37,7,82,184,66,181,90,88,42,59,45,68,41,150,
-251,88,163,132,115,157,151,28,252,204,187,159,24,93,245,43,138,195,229,156,108,165,216,7,5,239,252,228,107,92,169,74,89,152,64,90,71,78,90,156,242,44,7,181,217,216,210,178,46,239,168,112,144,243,184,68,96,168,115,176,165,25,47,174,188,33,250,224,213,231,212,204,124,163,226,68,179,239,95,123,9,59,210,152,245,164,159,118,68,200,231,94,40,116,182,101,196,181,53,10,5,21,205,196,240,234,3,86,99,150,250,88,94,37,177,168,130,33,130,18,146,116,38,214,41,212,96,137,21,121,26,156,35,118,98,181,5,44,105,119,65,141,27,94,188,84,5,156,134,147,27,197,213,40,31,24,203,40,121,153,59,10,103,120,121,66,206,27,151,231,236,195,184,181,159,253,64,118,96,20,63,129,205,34,121,37,139,176,158,170,125,35,96,41,164,97,21,75,6,84,97,177,26,218,170,157,69,129,18,200,90,167,128,85,152,148,202,14,84,170,170,146,64,96,221,80,81,72,165,69,103,86,101,43,212,243,240,99,196,86,48,34,148,24,137,103,160,235,239,7,192,161,74,9,197,193,250,54,37,41,168,216,36,252,85,64,116,122,7,26,21,210,21,80,62,41,171,78,144,234,200,255,166,74,36,38,11,
-254,160,172,72,102,84,75,48,122,170,210,134,78,101,219,1,242,220,223,125,14,95,121,241,36,255,174,21,168,45,232,150,146,99,241,143,167,246,49,252,19,62,23,13,252,229,216,184,17,250,210,247,133,253,242,92,135,159,249,95,104,25,255,213,215,226,115,19,51,206,255,118,55,119,154,79,41,206,25,190,38,219,205,254,178,126,213,228,240,176,25,90,22,125,241,189,248,220,108,61,13,143,119,55,91,173,237,106,191,219,253,90,141,114,159,46,59,130,82,128,40,168,89,53,232,108,154,138,89,90,100,227,5,178,174,38,113,3,245,233,252,125,41,173,188,138,14,21,239,134,237,46,218,69,7,233,93,255,112,158,159,51,248,172,169,222,69,198,33,108,84,220,214,106,43,37,167,168,13,129,121,166,206,140,71,248,114,66,165,217,226,11,114,223,11,69,243,224,60,107,223,67,85,29,189,225,239,151,52,81,243,117,225,129,62,84,86,80,109,253,153,253,254,153,47,177,149,222,40,95,241,95,125,37,90,60,48,61,104,77,238,40,147,101,208,219,183,164,249,52,80,158,190,110,183,42,95,146,36,174,69,146,180,212,71,252,43,14,134,123,247,162,132,229,221,239,85,122,108,
-238,86,190,36,201,179,216,33,89,136,197,71,125,8,4,232,221,239,242,67,217,61,98,29,193,90,252,205,244,184,189,61,211,189,224,242,191,207,117,191,71,147,178,251,121,228,60,171,244,56,139,156,102,9,50,116,90,254,205,33,231,224,11,187,167,48,98,252,155,129,126,174,123,173,208,114,232,151,47,109,21,250,114,34,9,199,156,67,237,3,199,189,86,104,105,247,173,230,82,228,84,41,103,57,114,154,122,244,223,237,126,57,244,54,199,165,221,175,70,247,196,142,202,191,89,228,224,166,124,14,250,253,10,114,102,198,170,210,125,83,228,49,251,135,128,52,220,155,128,253,18,232,11,201,204,106,138,184,227,223,28,244,179,108,53,79,247,159,161,156,146,48,43,68,52,79,57,54,242,114,232,151,11,133,214,126,132,55,73,42,31,249,177,42,20,154,122,180,180,251,214,65,5,247,179,92,91,33,76,138,167,148,127,115,200,249,60,215,46,135,190,218,253,103,160,255,60,215,86,133,228,140,124,75,168,122,85,252,105,253,202,191,25,228,124,150,107,103,122,156,249,130,148,47,59,172,34,103,22,247,38,237,190,4,247,108,146,22,127,149,137,204,201,28,147,118,75,
-187,159,1,120,230,203,12,244,149,145,24,50,34,167,6,55,63,208,255,110,63,88,41,83,46,19,144,73,62,166,210,176,74,244,80,44,157,127,58,148,148,68,95,82,232,157,250,59,169,126,199,65,164,44,215,159,155,28,170,16,93,123,233,247,66,96,103,96,117,84,174,120,176,50,67,114,156,98,209,202,162,174,252,172,5,34,23,231,218,46,59,177,106,169,42,43,100,70,112,165,40,153,60,177,80,79,141,14,101,184,90,145,52,217,211,86,56,103,214,119,52,119,163,44,189,232,159,244,82,168,242,195,115,228,58,110,44,200,80,117,198,35,110,248,216,4,23,254,61,52,194,136,199,23,80,65,31,247,49,121,9,166,88,246,146,215,223,142,181,138,228,201,239,160,169,203,214,241,147,183,219,217,14,157,170,33,30,212,226,138,139,75,234,45,150,181,250,172,174,17,174,249,103,252,209,88,63,138,194,178,161,6,171,95,1,64,233,72,85,140,199,103,15,158,67,40,72,170,98,168,191,222,254,102,196,89,212,21,182,250,201,184,181,170,84,230,110,131,23,84,6,163,248,37,177,7,91,53,121,168,3,43,162,171,106,97,170,228,184,230,110,196,122,213,34,117,87,163,218,215,76,137,38,
-252,115,247,140,188,190,176,251,99,20,105,138,78,144,195,120,154,126,218,164,58,162,138,133,202,128,13,23,35,152,247,221,79,63,117,251,211,126,197,167,173,154,195,118,255,84,168,80,38,94,129,7,112,195,162,215,7,213,169,230,161,194,55,138,36,4,23,188,250,190,168,206,47,26,72,82,142,129,220,224,221,149,238,18,96,138,238,229,125,217,156,22,192,172,90,158,86,110,218,202,140,26,192,148,128,135,208,122,221,62,37,221,32,240,80,236,20,168,40,162,102,209,10,197,59,178,155,244,202,194,51,152,239,148,110,243,74,205,184,167,20,241,178,112,144,28,5,74,121,81,178,212,238,131,240,234,204,192,15,127,86,127,73,210,143,195,46,101,69,73,131,237,88,107,221,131,197,138,176,202,20,73,158,116,193,167,88,141,44,74,10,42,89,151,183,148,189,76,62,42,0,1,78,66,53,177,45,24,79,94,157,5,46,130,31,15,34,173,96,235,38,213,168,32,34,91,32,43,74,106,229,84,153,130,131,207,180,66,253,186,129,221,248,99,184,168,93,120,217,118,243,129,239,0,105,172,170,170,214,95,172,38,87,116,176,214,84,169,114,43,87,254,127,169,250,29,17,83,220,40,0,
-18,161,173,236,147,221,16,21,75,52,66,172,5,226,65,202,69,95,107,102,224,154,91,126,165,162,91,6,73,135,167,111,108,248,27,74,79,11,100,143,182,33,223,88,120,107,103,226,6,58,23,174,157,24,253,154,145,210,179,253,223,83,8,51,89,219,254,126,0,33,109,80,205,170,241,54,57,189,90,23,27,58,7,69,18,133,130,40,19,100,49,179,194,45,230,114,153,16,192,80,220,175,8,189,33,247,32,206,64,184,16,164,215,29,150,180,134,86,67,113,97,9,172,238,80,83,136,248,52,57,31,81,68,93,88,139,4,26,2,1,40,249,30,252,253,72,253,71,24,181,68,106,248,253,242,74,133,197,44,194,33,225,249,47,155,18,136,69,140,83,230,84,247,120,129,193,72,15,128,161,78,36,179,32,224,192,76,79,180,14,32,201,10,218,85,171,140,234,205,16,234,136,12,66,105,202,74,184,137,176,135,42,192,186,160,240,130,179,22,70,3,160,35,134,209,69,94,46,184,124,85,66,233,85,198,191,190,102,65,142,202,170,202,220,68,167,234,153,118,211,214,220,44,16,121,229,229,78,64,228,101,181,171,93,23,221,90,137,65,43,228,205,2,218,205,103,101,95,10,225,36,212,165,227,110,9,102,78,132,
-245,15,46,208,89,143,211,246,213,118,220,129,53,143,32,133,75,198,124,118,172,24,108,79,120,114,96,252,15,19,17,0,152,169,46,109,119,173,56,157,85,46,73,113,90,82,21,208,17,193,95,4,158,116,120,113,111,10,85,111,117,145,138,36,66,88,12,80,119,201,50,138,153,193,158,224,183,38,94,67,217,110,26,208,203,230,199,219,197,126,72,50,7,77,49,3,38,137,28,170,70,98,67,200,171,8,225,109,193,212,80,6,215,238,97,67,48,214,169,42,84,170,199,126,150,162,21,174,41,130,170,97,167,99,174,60,145,98,176,34,156,177,240,104,91,101,86,193,94,0,46,220,107,166,14,115,105,36,74,37,70,241,44,250,11,119,151,192,128,197,125,8,126,209,139,93,243,82,220,247,226,189,20,69,19,77,138,217,61,49,1,55,226,36,69,247,8,250,250,221,111,177,227,34,26,183,69,101,65,106,127,114,251,159,5,94,243,169,174,162,179,144,120,137,42,40,213,110,156,48,2,10,225,100,110,124,251,168,162,201,148,124,166,88,97,44,57,76,169,243,156,106,202,10,219,230,186,7,144,249,170,60,185,120,129,40,179,46,191,225,193,8,190,54,179,195,98,52,118,195,205,56,185,188,124,245,
-60,89,147,58,178,21,176,59,90,36,152,188,150,125,117,78,244,185,247,111,90,42,167,59,175,61,91,202,24,129,109,188,190,189,253,111,70,2,86,83,144,95,157,186,102,175,196,169,93,122,49,123,80,30,46,20,9,84,16,215,130,152,58,183,239,205,92,163,195,194,191,183,203,108,172,26,40,28,237,149,130,41,43,9,189,89,117,72,74,130,169,58,164,27,7,186,26,207,138,199,67,166,162,72,39,42,40,175,18,172,54,177,194,67,161,7,138,149,205,50,107,63,158,13,96,93,163,78,89,40,1,84,43,17,25,1,229,231,171,140,171,144,8,187,34,176,184,2,73,154,106,246,106,31,227,14,196,171,174,157,145,60,13,33,92,187,172,193,110,116,164,198,229,132,91,27,63,168,26,186,38,163,134,220,67,104,50,89,208,233,23,153,208,241,58,28,70,228,182,34,130,103,130,92,115,208,252,22,13,202,107,119,41,165,204,111,133,72,194,178,224,199,175,239,129,95,216,104,9,55,17,233,237,41,5,100,219,227,251,145,192,143,208,112,143,208,7,233,20,219,178,49,49,165,177,32,30,118,137,34,4,122,23,216,163,196,100,173,253,6,35,91,191,57,144,52,11,85,188,196,170,16,169,26,241,6,52,6,
-113,21,43,172,199,43,62,17,163,83,63,67,127,97,42,193,11,99,75,240,88,181,127,109,62,21,80,199,27,35,10,115,235,201,188,26,48,84,73,19,96,89,128,97,64,140,37,232,17,237,232,54,236,170,112,141,128,124,128,201,45,168,19,79,8,201,178,69,23,221,67,33,1,18,75,233,162,179,88,52,172,42,80,44,177,38,141,26,217,62,82,203,2,178,70,136,220,115,202,221,120,92,18,207,220,40,161,21,72,163,229,233,155,24,75,112,158,172,25,158,109,118,90,37,43,234,25,110,112,144,13,10,209,113,203,134,91,206,200,4,9,15,102,234,202,220,100,143,152,95,23,7,220,96,181,153,121,7,167,11,0,243,216,174,50,139,246,115,31,92,142,42,97,98,80,243,9,197,206,253,74,81,221,26,165,166,245,139,91,43,181,204,178,86,193,94,107,245,215,235,145,109,250,186,31,76,70,167,202,49,203,73,212,58,10,185,224,88,87,138,217,231,234,219,230,108,22,34,110,142,152,92,170,80,90,244,3,166,46,218,41,172,171,86,213,76,45,219,196,162,231,176,93,136,117,210,186,93,247,61,21,31,94,54,3,90,160,184,2,37,150,90,143,208,200,227,28,121,149,91,38,24,76,9,222,177,218,250,206,182,
-54,144,48,215,153,22,87,86,249,21,3,229,142,87,161,196,180,89,165,169,206,144,2,162,133,249,143,83,171,101,44,145,23,198,241,217,93,76,198,93,42,200,199,169,25,205,235,222,184,209,144,186,204,247,181,19,196,249,56,216,124,212,63,71,206,107,169,138,86,46,0,67,65,219,18,227,204,89,157,134,155,26,77,2,122,161,250,120,237,221,33,23,8,25,143,52,46,194,149,26,141,119,54,224,97,120,169,145,143,219,201,19,89,159,79,190,77,134,246,242,204,79,87,80,69,131,205,207,162,77,32,235,70,144,143,13,221,154,148,55,180,252,79,28,12,250,49,179,62,226,166,131,125,246,224,102,61,93,141,162,109,84,5,22,192,163,149,140,150,213,43,125,143,220,55,163,46,242,171,213,141,118,9,147,22,246,107,188,154,3,242,150,27,22,80,189,197,219,241,134,216,134,221,13,17,56,41,24,74,21,45,59,83,85,191,30,129,109,204,222,235,81,247,181,139,79,221,60,67,36,216,30,220,194,41,252,172,45,5,45,126,165,75,55,242,253,166,150,186,102,101,30,95,152,22,27,131,114,246,3,147,10,85,165,89,55,111,74,155,242,49,153,4,0,88,39,208,11,93,37,31,6,220,179,99,138,140,
-194,190,109,237,16,219,0,254,182,118,180,131,37,62,59,25,180,36,134,135,4,156,207,70,87,29,110,141,179,240,143,61,107,232,98,136,7,171,116,146,231,220,229,200,20,213,84,28,99,151,36,66,0,212,16,174,246,25,168,21,134,43,28,42,105,141,16,63,97,225,217,155,45,67,65,136,4,191,183,109,153,120,86,161,114,65,197,134,59,99,197,37,161,67,219,121,165,187,45,186,142,159,173,55,106,167,99,212,235,238,52,131,80,207,245,33,96,113,230,183,128,134,69,56,53,92,198,142,80,173,159,112,64,17,157,96,217,187,11,161,144,229,66,147,171,28,134,50,180,162,49,227,14,201,140,108,245,171,147,164,123,185,95,148,27,189,76,148,199,56,27,34,101,144,163,211,128,27,102,46,212,72,91,189,114,191,42,213,189,181,95,7,60,28,94,52,93,227,217,24,246,92,203,132,200,9,47,201,140,150,11,1,155,65,11,74,67,65,198,176,196,161,0,120,101,120,161,149,242,200,210,38,90,49,191,246,213,132,124,48,65,203,78,227,181,28,229,208,178,203,46,222,129,252,251,226,126,9,192,112,87,189,125,59,29,124,144,73,107,10,73,98,131,247,168,138,143,49,130,17,138,137,29,23,
-246,46,229,238,8,105,113,183,80,131,27,193,176,252,42,242,131,141,138,157,254,72,59,93,238,10,185,120,71,38,128,223,24,24,196,181,233,60,168,144,165,67,254,218,248,72,126,129,91,116,32,15,34,237,131,147,24,188,170,216,234,8,186,96,223,92,193,46,149,121,187,157,19,186,226,254,48,243,235,88,139,94,3,59,199,221,170,114,128,17,55,3,4,74,121,101,215,91,176,50,66,127,174,43,26,143,255,207,113,237,57,200,10,183,69,173,193,147,4,149,164,87,33,246,136,16,221,226,164,235,105,180,164,126,67,70,165,7,169,94,122,9,89,0,245,43,191,160,80,103,158,255,169,24,10,247,13,212,33,159,139,233,149,191,73,31,24,140,212,7,179,141,94,169,101,166,161,197,40,37,211,134,87,217,223,80,220,145,230,172,143,162,24,166,159,209,191,177,27,187,89,204,110,204,49,221,94,87,253,239,186,220,13,67,100,176,177,195,93,143,49,70,101,45,219,220,214,196,198,178,89,110,241,46,41,93,84,224,21,234,49,225,116,219,10,30,143,1,20,164,59,118,158,41,10,172,44,187,33,217,136,134,203,154,69,20,50,3,141,177,237,234,117,45,174,212,186,93,50,32,58,244,235,110,
-72,255,193,131,19,61,64,223,208,61,87,67,16,10,32,160,134,91,41,115,30,30,154,121,19,153,10,154,60,216,109,82,52,4,137,52,176,182,137,100,137,65,135,225,46,29,134,63,146,143,22,75,241,99,149,229,68,168,31,90,99,12,238,152,129,81,20,151,211,141,223,191,78,127,139,247,192,53,236,218,211,75,215,242,197,21,98,220,203,147,173,163,206,15,255,43,16,68,188,70,178,186,200,255,101,248,249,179,70,134,189,63,107,68,90,78,254,103,109,180,218,171,180,89,84,17,126,110,202,62,221,153,249,61,152,203,3,184,231,97,156,135,103,89,53,122,179,79,200,69,224,146,149,249,178,247,121,45,106,240,1,198,173,213,244,151,95,207,189,93,84,181,103,181,37,67,230,42,229,155,40,18,111,4,105,6,193,232,150,4,160,181,27,233,163,65,2,121,216,61,6,0,45,242,115,145,67,199,18,100,122,155,222,7,228,219,52,96,74,238,138,151,21,239,178,10,45,233,31,66,208,64,20,218,214,253,96,38,111,76,140,165,247,162,61,177,168,246,101,42,148,105,81,85,6,171,106,9,247,173,204,107,251,216,197,207,165,59,99,113,143,155,89,16,69,191,5,45,197,203,230,103,92,77,115,
-124,79,164,56,208,27,67,121,92,145,28,42,238,96,195,104,67,162,35,89,73,79,244,207,69,32,177,228,73,134,114,223,200,250,48,62,71,34,152,143,130,123,37,212,206,199,174,139,168,77,110,65,216,210,156,190,12,168,21,194,37,36,162,124,136,78,34,40,139,82,19,248,185,150,71,183,233,40,192,9,174,109,110,74,63,212,76,132,31,23,227,6,143,4,137,173,50,243,15,137,148,49,83,209,60,192,8,1,43,233,247,78,77,134,4,245,16,17,244,197,229,122,40,30,57,78,120,34,74,204,8,142,151,109,145,196,172,75,198,82,107,223,183,42,188,33,187,224,33,54,145,44,184,253,237,45,249,141,49,125,82,81,12,150,131,120,134,217,120,210,41,55,227,84,247,204,248,166,150,238,59,52,125,168,15,114,36,42,142,80,17,40,137,30,145,169,22,235,14,8,21,139,149,25,83,230,105,250,16,72,247,224,128,176,224,228,243,251,56,38,138,221,87,79,214,108,208,195,173,173,245,136,124,209,177,44,247,79,132,35,252,198,167,106,211,106,75,35,9,17,37,64,7,138,32,234,194,5,142,186,235,203,150,212,253,158,194,81,115,148,188,209,214,159,196,165,118,78,82,101,140,178,92,149,171,
-103,203,253,197,200,65,44,5,221,133,155,161,162,158,14,55,222,189,8,59,144,239,48,59,185,228,126,75,166,85,165,179,8,99,140,18,41,167,84,168,179,200,206,124,204,40,6,6,44,32,32,190,193,160,54,197,22,239,169,8,161,109,169,252,94,242,227,251,19,49,60,242,4,134,194,244,119,161,98,42,19,170,243,7,22,189,79,123,4,45,20,145,178,157,34,232,55,154,57,73,61,0,139,51,145,94,73,169,193,146,40,35,66,27,138,83,72,83,204,208,127,136,131,42,51,15,226,90,114,251,210,27,109,42,229,182,255,87,220,140,107,129,102,120,91,1,212,130,146,92,126,232,114,149,46,17,115,108,78,54,80,48,110,68,254,198,68,33,106,25,241,109,198,168,44,194,34,125,153,25,137,118,67,250,90,92,112,187,20,133,45,9,227,27,196,31,176,70,30,54,103,86,38,31,108,169,183,244,182,84,240,84,25,139,246,13,94,11,6,98,57,12,47,96,99,144,14,141,37,5,222,65,182,134,226,218,162,156,192,6,155,82,136,79,52,180,153,8,78,96,23,138,56,170,13,160,7,51,188,176,7,53,180,71,89,34,124,178,69,98,179,210,72,3,117,114,97,217,238,235,134,141,55,219,87,40,144,87,130,7,133,17,174,
-22,255,249,118,30,220,16,17,105,190,174,225,143,31,181,251,48,63,50,208,64,53,128,180,160,95,95,4,136,38,236,222,67,148,1,211,66,153,8,240,65,112,205,144,41,11,50,208,46,246,93,148,168,80,168,239,175,152,104,196,38,19,67,89,170,118,49,78,85,183,112,61,151,146,86,77,178,165,228,142,239,36,71,190,55,251,106,56,190,234,118,120,236,23,185,59,194,159,63,196,247,153,34,217,21,98,43,241,37,113,241,96,74,118,247,17,229,210,63,102,24,202,88,143,30,41,43,102,172,197,20,154,2,65,75,217,66,89,17,157,229,250,1,206,209,32,222,195,123,88,91,64,8,218,0,219,216,229,134,154,181,166,212,251,122,237,33,236,106,194,102,35,87,32,211,134,136,238,7,110,55,60,209,50,105,17,187,186,242,212,236,221,72,212,198,43,129,78,108,89,22,17,176,38,224,227,6,130,116,101,5,211,25,121,192,236,54,161,107,221,174,106,180,20,58,113,74,130,1,2,113,105,233,1,195,9,193,118,58,194,93,80,208,73,88,179,21,168,66,208,96,94,112,171,156,68,115,166,45,77,51,243,233,249,119,197,3,77,252,219,205,66,16,247,115,44,109,223,238,178,80,181,196,152,72,25,45,97,
-183,210,219,70,152,44,246,95,116,89,153,221,5,111,17,127,141,65,73,38,187,0,149,48,223,198,83,240,25,230,238,55,82,50,135,160,36,238,117,139,213,26,213,174,55,246,57,176,16,27,1,212,207,98,143,136,103,128,43,195,2,49,4,0,37,136,222,213,151,148,177,112,67,163,12,91,221,156,178,64,192,240,102,228,25,242,231,165,159,114,60,4,71,98,69,158,217,205,176,74,134,128,0,141,151,29,43,92,163,137,94,13,183,190,137,10,81,218,35,100,38,251,230,22,228,212,133,121,76,92,247,36,9,15,0,141,105,160,118,213,7,222,66,106,130,88,111,240,103,77,211,38,126,198,14,108,233,3,214,74,155,93,247,1,19,48,122,43,68,138,194,119,166,232,195,187,102,39,72,232,152,101,168,216,29,76,133,186,192,98,42,229,9,208,92,254,137,112,9,72,176,220,23,189,88,12,24,101,152,115,184,146,188,171,56,177,102,46,200,203,168,42,70,54,169,251,128,105,162,70,18,15,83,199,172,9,115,183,23,31,45,136,80,71,89,1,204,136,211,133,160,24,189,47,20,149,5,75,0,109,240,190,14,181,137,56,211,77,160,90,120,219,168,65,207,2,151,1,40,178,254,105,132,91,180,66,84,209,54,105,
-119,100,156,148,144,135,43,232,112,96,121,93,27,241,54,4,75,133,3,50,211,208,222,183,11,83,213,194,79,2,56,174,29,161,207,25,196,115,226,3,198,43,54,51,105,221,54,182,32,228,157,208,206,12,87,105,54,24,144,161,60,25,160,204,28,16,208,178,40,221,29,161,133,175,69,145,35,81,153,110,21,91,144,187,78,117,96,247,34,136,12,148,185,196,12,110,49,132,200,252,132,135,108,19,140,44,196,17,196,96,111,4,120,124,17,61,88,179,112,32,17,34,195,222,76,205,199,176,211,5,218,119,24,235,210,123,36,133,18,175,226,21,237,118,249,232,135,16,98,177,148,146,156,220,158,30,185,75,25,124,171,169,199,200,89,237,156,48,161,226,230,15,9,177,104,83,232,32,216,131,125,3,37,183,71,223,193,239,92,102,42,154,161,182,0,37,130,35,249,1,108,88,152,82,157,115,127,50,91,246,225,18,68,123,10,38,164,179,170,132,41,17,36,3,211,23,219,61,137,62,18,1,129,35,217,3,75,192,32,102,0,106,123,69,22,144,16,38,110,131,90,48,140,43,243,51,112,33,151,165,166,222,41,0,215,56,137,161,208,135,93,247,123,79,71,136,65,245,218,151,130,180,152,62,61,68,25,10,85,
-96,77,153,86,223,221,230,104,25,94,94,198,221,246,64,196,19,116,88,229,173,146,73,130,233,12,218,180,123,61,86,156,11,144,251,22,189,229,204,2,231,153,136,76,145,123,197,213,194,149,65,93,244,8,173,154,155,101,52,8,53,154,172,75,188,186,92,240,45,175,112,82,188,87,88,163,96,214,173,102,145,154,93,168,90,109,47,229,82,108,169,24,187,98,63,119,123,218,134,193,103,200,225,14,173,227,4,237,115,103,49,249,64,166,58,174,195,102,181,92,117,55,34,229,226,233,162,74,29,206,236,247,56,131,22,65,250,86,177,32,60,243,201,247,211,201,117,227,105,29,67,138,216,154,146,93,20,140,207,184,175,153,185,88,22,8,23,154,58,2,200,122,145,97,0,182,143,180,136,230,131,88,70,228,21,209,238,59,155,184,5,29,160,0,84,128,46,104,13,62,130,35,165,60,21,102,113,6,196,121,185,128,154,75,70,233,158,37,121,156,100,114,149,11,89,188,198,136,224,174,184,221,211,232,3,155,206,151,45,46,90,209,90,82,233,195,111,175,116,163,244,165,29,10,81,90,235,169,64,208,215,112,164,35,28,219,168,28,201,32,157,113,230,15,12,179,11,102,136,216,26,18,93,
-167,42,159,69,100,107,20,162,175,254,85,219,125,106,28,252,209,128,254,152,132,2,52,181,116,244,97,89,211,143,196,187,89,238,49,249,108,155,218,8,39,28,218,72,199,108,13,124,204,106,87,253,81,245,53,59,75,182,197,143,181,171,187,202,225,138,68,217,51,5,136,159,26,60,164,193,204,155,243,13,70,181,54,7,183,42,127,70,37,252,86,203,70,211,171,202,239,213,23,245,232,31,148,253,169,169,90,101,229,175,218,70,179,233,119,185,126,83,133,182,54,45,63,147,45,248,6,111,180,167,118,222,175,166,50,134,149,63,159,19,63,214,110,72,99,169,60,168,246,250,169,161,135,181,155,207,33,252,70,144,201,220,168,252,45,163,125,181,235,173,210,174,219,30,86,154,17,170,98,117,182,62,53,248,121,80,251,253,122,102,38,254,236,247,81,118,83,251,125,230,65,120,203,159,232,108,82,249,87,125,135,23,203,7,179,239,84,31,204,60,153,89,194,57,42,248,61,253,152,250,166,103,173,15,67,87,254,210,105,167,59,220,226,199,174,158,116,151,60,249,240,177,242,0,47,191,147,13,153,57,30,43,107,251,33,173,245,135,72,147,178,197,236,106,85,199,30,85,115,
-200,241,122,109,108,97,169,63,154,73,255,246,17,248,177,54,234,204,80,72,181,107,30,213,70,213,149,155,167,125,188,209,94,77,245,12,42,127,142,101,126,172,141,39,75,123,230,81,109,150,0,231,240,41,2,52,97,87,246,108,228,101,177,215,218,100,150,54,171,48,127,170,10,130,201,34,210,224,71,6,231,63,101,215,97,153,253,9,97,221,202,95,101,212,187,116,102,145,28,185,252,88,195,69,174,44,78,192,58,63,246,245,164,202,34,142,245,248,164,42,51,28,107,60,25,213,238,250,213,206,66,111,208,66,222,224,73,237,211,44,51,205,76,93,143,254,241,169,223,155,211,61,53,126,170,204,200,117,212,130,102,179,252,62,183,32,81,188,214,84,137,172,242,87,5,64,50,161,198,45,59,133,78,136,7,17,255,244,32,1,182,187,219,0,197,171,155,184,78,104,213,111,56,234,45,149,98,254,73,208,254,215,132,46,44,111,169,104,236,25,207,210,233,108,41,178,5,142,95,24,95,202,255,252,72,130,140,243,218,105,58,64,218,152,117,88,26,235,165,13,142,174,198,60,150,237,97,33,218,53,44,74,238,150,69,159,118,123,10,239,15,200,194,27,19,157,9,71,234,215,67,218,130,
-71,206,165,25,111,127,59,82,32,85,177,69,235,254,149,130,39,108,194,245,187,102,226,231,181,75,210,28,45,190,166,49,16,120,37,16,30,243,226,100,60,211,246,92,144,153,199,85,24,99,20,191,30,90,152,157,228,24,52,79,14,4,6,28,218,14,151,33,9,30,246,12,32,153,181,214,25,246,236,44,4,193,103,81,131,96,7,210,155,60,126,51,189,251,137,165,0,121,58,29,75,246,238,236,226,178,78,14,167,149,33,176,0,169,188,35,89,148,218,112,182,125,137,153,142,78,174,45,117,65,89,112,66,113,72,27,21,166,71,228,134,254,40,131,31,187,57,102,36,173,173,229,252,108,110,192,58,73,72,15,172,170,73,138,61,60,36,151,6,207,26,99,202,55,18,113,175,194,157,206,51,168,243,66,7,150,201,121,167,235,154,195,228,158,96,223,18,28,195,180,35,15,71,29,96,5,105,85,202,227,36,22,255,134,220,250,134,85,121,235,50,230,216,38,26,89,178,132,219,253,68,34,247,247,126,114,251,253,74,1,10,96,32,52,33,42,82,135,218,62,146,45,175,188,23,219,142,32,139,194,107,32,120,100,205,96,192,83,35,21,142,40,46,241,58,123,19,255,133,211,28,50,81,25,147,100,84,174,87,6,
-134,11,223,204,80,180,123,22,6,192,42,183,85,128,134,182,239,201,23,197,198,109,103,93,130,221,97,103,66,83,33,48,171,181,113,79,68,63,96,249,13,72,28,35,148,236,137,44,66,129,253,30,151,208,176,112,66,94,230,39,109,205,107,139,198,120,162,178,61,230,201,59,129,124,180,136,193,91,1,248,224,46,124,228,162,101,203,233,210,238,10,118,44,117,27,24,26,252,116,39,135,181,90,29,122,252,157,253,95,72,24,222,22,0,214,163,54,75,253,1,46,150,146,229,161,142,60,169,179,89,30,127,135,50,16,253,202,101,226,77,54,163,54,107,245,0,5,121,107,227,164,222,207,111,202,62,35,121,95,13,59,247,52,180,33,202,167,230,105,93,119,179,158,37,74,64,23,158,249,59,7,184,86,199,3,89,182,175,19,55,222,102,40,71,217,8,209,144,175,142,25,87,193,6,102,133,96,8,1,14,156,138,209,134,37,50,55,145,33,102,208,165,45,36,147,32,3,142,99,48,123,156,43,222,98,209,199,41,244,12,219,68,161,21,135,227,81,4,13,84,207,46,160,157,83,96,33,99,210,49,98,203,98,176,66,123,124,191,112,6,236,56,134,29,20,40,59,89,64,58,189,225,240,131,173,106,112,46,213,215,
-156,112,178,99,89,4,157,156,221,68,32,80,146,237,242,141,186,80,169,230,111,42,79,92,32,146,47,200,144,7,74,51,82,197,146,0,158,112,55,33,134,33,66,82,176,128,94,115,24,79,137,63,114,146,73,34,231,84,138,222,207,217,95,162,107,235,50,224,119,17,84,145,232,44,149,72,125,136,104,21,146,178,23,235,223,253,143,6,91,180,140,223,104,252,80,145,68,26,32,250,120,194,191,131,0,76,240,29,72,215,99,4,221,104,8,211,39,214,7,223,42,221,88,104,195,60,236,138,179,232,84,225,147,34,155,129,45,226,160,90,213,157,227,164,68,210,124,66,41,109,135,65,196,71,122,152,65,155,182,240,176,16,52,41,243,74,125,37,76,44,153,200,134,161,219,69,88,35,96,237,42,66,161,72,133,177,152,173,126,25,108,245,210,53,22,90,213,57,153,27,18,117,92,135,122,239,238,178,58,24,134,77,20,5,196,172,52,233,78,38,79,245,186,27,179,179,162,223,185,144,112,152,155,97,192,34,133,32,216,236,130,128,101,143,205,65,198,151,214,183,54,184,181,215,19,233,123,150,118,242,195,90,147,195,97,200,188,15,166,142,180,246,70,218,104,74,229,141,69,14,160,238,7,48,198,
-111,74,169,91,196,10,197,250,25,71,214,90,155,10,110,115,66,114,182,47,15,118,91,172,7,176,194,185,129,14,199,11,45,225,202,168,246,78,228,118,71,226,185,239,115,197,48,140,21,167,25,196,100,216,92,217,82,85,176,102,121,123,141,48,1,27,183,83,132,201,150,39,24,24,84,235,181,157,77,82,239,99,39,138,250,163,17,194,204,88,43,41,61,208,11,241,115,174,74,211,230,75,156,55,31,67,236,1,50,17,93,131,147,69,28,100,234,223,30,126,222,252,65,92,123,208,203,115,157,200,9,13,71,128,148,64,20,179,97,140,78,242,65,151,24,12,52,167,36,65,225,20,155,89,65,116,116,194,140,110,95,171,154,64,100,203,120,209,10,179,170,208,161,197,134,123,88,17,41,29,151,206,112,26,160,66,126,8,124,144,0,77,122,244,42,237,109,126,119,53,254,161,230,255,177,246,110,226,124,15,61,97,34,144,107,58,28,124,63,135,131,118,143,152,228,247,117,29,254,170,243,106,167,251,145,128,177,253,68,78,47,177,214,185,31,101,19,232,167,138,92,169,125,215,75,209,26,179,175,53,236,55,83,81,116,30,117,228,15,23,174,19,191,219,178,199,244,211,29,140,136,55,205,
-140,216,32,69,16,117,42,109,251,125,169,93,187,157,74,63,174,199,190,175,3,201,103,70,7,133,154,65,227,227,40,237,68,72,212,107,253,135,183,252,119,117,24,236,157,196,0,240,143,166,69,191,100,116,215,219,63,28,155,77,30,170,203,172,14,71,208,250,6,72,248,252,197,144,4,46,169,255,112,138,208,19,247,252,175,193,85,62,250,246,59,44,87,157,31,186,239,129,251,107,76,252,134,204,183,195,131,189,127,251,182,254,195,218,27,133,236,225,38,120,119,143,77,44,69,15,33,42,118,132,214,191,219,210,139,63,148,115,17,157,64,153,218,240,168,16,83,195,200,7,151,228,19,7,49,111,38,183,223,171,27,155,79,132,39,145,125,249,125,157,96,228,29,27,80,223,215,239,179,60,146,66,108,194,40,177,119,150,127,198,216,134,26,42,4,220,54,219,149,8,197,152,184,127,61,206,10,98,144,165,223,152,12,71,135,73,147,61,88,102,54,75,134,228,197,76,16,24,139,95,183,253,12,94,228,172,17,9,13,132,13,191,135,184,65,75,36,201,228,66,46,66,196,42,93,111,1,145,200,20,142,169,104,209,90,248,189,248,71,236,250,131,85,195,193,17,35,207,99,98,57,133,170,
-80,4,235,246,193,33,251,194,248,26,38,21,46,10,175,131,48,108,225,230,77,110,49,140,198,67,162,107,184,59,153,210,252,186,57,73,202,56,26,139,122,155,42,120,203,185,47,173,167,122,70,168,148,221,242,10,27,140,36,41,154,212,180,163,2,242,125,180,218,178,49,12,136,170,230,153,17,107,216,70,183,242,52,49,145,43,16,121,2,70,60,137,193,216,31,25,152,84,39,204,124,114,192,37,210,116,128,42,252,32,195,210,0,244,70,21,79,211,144,237,91,78,96,147,243,133,163,104,112,145,102,197,185,119,79,245,84,119,133,34,48,104,229,46,218,88,216,155,185,78,165,73,109,160,147,140,152,75,251,176,234,7,27,139,129,1,59,89,99,222,136,154,155,185,68,182,4,31,131,165,231,153,127,151,210,61,58,8,88,120,200,127,221,11,143,27,3,230,43,152,183,206,229,200,140,31,6,7,37,229,161,35,135,206,225,101,3,201,115,188,146,11,184,181,246,78,198,144,188,157,224,228,185,238,179,23,204,27,99,81,209,156,97,187,192,34,3,165,119,93,58,207,151,232,75,239,128,137,105,227,138,25,195,21,169,14,119,200,226,245,254,194,235,97,19,16,243,222,68,155,155,53,168,
-187,116,100,186,155,230,57,167,193,161,10,55,115,67,207,44,211,9,192,129,52,209,217,253,19,148,26,249,121,246,133,228,104,145,29,179,224,76,157,251,182,51,158,171,121,149,22,180,56,85,124,163,154,255,102,8,51,236,241,41,204,26,90,81,103,166,235,29,155,2,196,30,18,215,48,179,33,156,17,74,99,95,134,36,51,129,141,6,28,49,114,235,252,108,122,153,235,193,44,94,201,165,9,219,44,164,118,88,180,128,205,27,152,75,116,166,132,30,144,23,107,99,146,231,185,217,191,215,195,77,206,187,213,131,81,106,52,232,208,134,201,220,89,158,1,238,117,189,210,186,140,38,200,100,169,218,240,114,196,68,138,184,146,97,98,228,127,77,123,16,56,21,26,141,143,205,34,168,175,201,114,51,237,186,254,31,149,142,161,164,247,74,64,155,76,7,150,159,239,158,146,3,36,1,98,101,24,45,36,19,86,82,116,62,155,120,72,152,230,33,118,56,225,9,160,37,182,162,179,24,207,40,68,115,17,60,197,204,52,168,236,58,45,142,53,153,224,1,81,58,182,109,43,69,203,171,140,140,236,16,110,153,3,209,79,60,184,224,242,216,150,56,136,19,7,61,195,65,216,12,183,48,143,23,159,
-148,74,199,150,26,43,247,57,164,226,11,226,208,48,178,7,132,200,6,170,143,85,73,212,179,211,146,221,9,100,33,19,185,48,219,193,35,237,11,226,227,48,46,161,1,60,127,68,17,89,104,209,249,241,117,166,103,241,170,101,94,98,40,226,139,89,115,102,25,204,94,86,102,249,230,104,58,98,131,24,175,17,74,3,84,75,225,117,179,179,92,27,6,78,129,14,7,3,12,190,207,51,172,108,103,4,72,142,0,10,118,185,118,158,187,138,21,70,136,0,31,65,219,136,95,213,144,232,19,142,169,178,127,37,177,101,122,43,154,50,184,225,173,96,222,74,104,231,218,137,36,194,19,126,210,6,247,11,16,1,17,179,92,38,107,17,156,222,195,12,184,22,88,250,128,155,24,251,18,208,172,154,10,122,164,236,36,66,106,182,167,135,22,233,153,62,20,85,12,108,87,211,146,28,141,38,196,210,208,160,200,92,129,5,2,89,216,43,22,207,81,206,128,109,124,179,111,217,147,30,147,37,12,141,136,51,64,154,38,84,36,135,152,167,18,76,0,186,13,27,118,160,238,72,249,139,76,55,4,76,176,31,34,45,91,124,64,169,57,108,163,91,238,139,7,120,3,31,155,32,161,167,88,26,64,39,167,3,213,123,244,195,
-232,71,107,168,9,160,120,169,73,33,248,252,33,34,75,75,167,24,95,62,181,244,52,121,73,196,19,136,106,115,36,178,86,251,133,197,209,182,63,63,104,125,174,134,55,56,15,91,10,44,177,201,166,220,93,109,253,134,149,164,75,162,109,230,169,137,67,116,36,39,174,177,172,22,148,169,186,21,24,209,73,85,248,34,230,0,185,147,38,193,69,177,213,194,141,54,182,132,250,84,92,2,24,37,243,44,188,33,134,24,144,106,41,160,140,202,196,16,33,223,22,248,57,244,41,224,164,71,3,158,196,136,134,230,128,189,120,128,35,89,243,51,143,174,218,205,253,207,6,22,39,17,155,69,249,193,40,142,1,80,130,41,81,36,200,224,84,101,159,44,205,203,36,46,225,145,67,199,81,179,181,179,201,183,154,33,44,124,57,76,74,137,232,197,111,57,61,6,29,41,52,195,178,215,231,122,50,151,80,24,90,52,149,4,65,107,33,28,159,158,231,131,205,136,114,177,120,220,248,79,237,92,156,162,165,224,111,49,162,205,244,168,87,193,13,227,91,98,10,107,231,3,5,125,34,25,22,23,115,30,238,228,135,25,20,240,181,156,182,236,100,133,150,197,86,74,48,144,167,57,195,170,243,157,97,169,
-171,61,44,238,140,237,43,94,157,40,43,114,9,52,74,107,39,190,128,229,64,114,64,23,3,165,32,19,44,69,40,33,16,146,71,17,3,166,163,149,50,206,236,109,250,134,128,45,68,25,184,67,67,151,0,155,15,93,197,80,117,65,217,165,254,12,29,132,90,199,129,22,89,26,108,90,29,119,18,129,58,65,66,97,145,216,204,142,128,35,21,107,196,96,136,148,106,212,91,124,51,19,83,241,102,29,28,116,226,117,203,89,75,227,103,143,36,93,174,169,131,139,37,41,141,228,170,200,210,217,25,53,100,185,89,80,164,194,34,42,92,44,195,156,77,8,51,106,176,107,73,213,8,200,43,7,23,111,104,160,240,102,117,61,130,93,32,203,66,103,78,124,237,255,41,91,100,185,117,177,96,213,205,184,48,206,182,113,34,18,188,211,10,174,255,9,151,209,115,25,52,140,102,75,160,139,98,175,172,4,30,244,59,130,130,128,52,203,141,56,71,36,68,158,23,196,166,137,198,45,53,113,143,116,78,242,25,133,169,61,180,176,149,230,209,179,168,171,98,198,58,157,203,178,65,216,131,212,23,136,63,56,82,186,110,130,10,242,99,88,197,215,96,146,106,147,202,86,36,54,179,52,77,255,85,38,243,236,
-203,254,187,105,233,248,68,89,123,254,25,75,162,146,81,233,78,165,35,65,81,145,178,81,161,70,3,51,49,233,147,162,250,213,91,188,71,14,39,21,37,152,89,31,144,103,243,130,24,131,253,6,73,146,80,165,45,69,201,55,3,138,249,250,78,87,17,178,66,182,133,186,0,178,7,156,136,99,94,160,91,5,240,95,148,242,1,27,252,206,201,8,109,110,250,217,142,41,99,251,182,138,194,155,74,34,28,81,124,24,56,72,8,193,220,87,168,59,42,60,52,220,109,216,168,209,1,240,44,121,117,249,46,26,68,114,188,138,112,41,62,114,88,153,11,9,204,45,43,7,133,247,51,201,106,150,217,35,138,52,198,49,150,66,230,24,80,145,185,227,201,26,219,22,242,110,137,87,235,157,122,165,215,88,89,24,172,188,2,85,81,34,85,57,137,71,248,153,216,25,38,45,148,105,108,201,80,38,16,9,28,203,11,150,187,128,66,54,153,85,193,175,200,201,234,119,207,40,117,237,154,225,144,7,17,142,81,228,145,136,210,223,126,41,46,179,41,251,196,194,230,33,139,32,115,128,13,60,151,158,193,51,173,251,142,177,189,64,24,197,168,114,45,216,45,178,89,20,185,4,147,47,237,108,161,119,187,16,147,
-17,137,194,144,1,142,240,145,188,15,103,18,195,202,68,20,86,186,171,160,240,50,190,27,67,0,74,178,180,42,23,149,158,66,8,23,74,101,4,100,163,50,9,117,2,0,57,76,12,0,55,79,35,106,203,148,21,149,57,129,81,7,145,68,155,209,164,178,34,98,102,166,41,38,161,215,233,44,68,51,64,191,237,22,25,45,216,60,138,189,162,48,21,204,121,50,149,192,38,218,20,8,140,34,102,113,72,66,158,1,48,131,70,211,204,208,102,196,192,185,31,44,215,58,173,229,236,243,133,101,164,199,112,156,220,122,182,229,16,238,250,50,67,13,40,5,109,180,195,79,94,21,189,249,234,84,199,231,112,246,151,12,34,247,27,88,56,41,225,28,32,251,48,74,61,183,75,148,34,161,252,241,120,246,84,105,120,74,129,36,29,18,81,40,65,161,194,71,222,73,56,217,167,198,38,62,50,219,111,242,232,50,8,12,44,44,220,185,64,144,120,209,52,125,241,248,2,56,46,110,176,11,100,181,73,34,23,66,210,209,40,109,24,176,102,130,82,189,25,190,194,84,194,67,25,40,34,172,10,28,136,109,55,72,28,151,206,144,204,67,85,7,80,48,108,20,33,121,80,185,97,33,125,79,229,71,202,26,224,182,104,19,228,
-189,239,143,191,146,72,215,238,195,27,172,212,196,191,237,110,38,129,182,253,251,222,102,162,44,250,23,33,45,190,182,191,153,156,71,239,230,13,7,209,114,227,174,216,55,172,171,193,169,159,72,165,60,243,134,80,240,114,218,29,171,194,144,102,89,102,154,27,142,48,128,84,150,140,121,174,180,244,211,17,59,223,32,115,193,66,186,126,1,31,146,194,72,186,234,68,125,199,185,58,57,204,64,167,244,144,163,92,109,93,11,95,170,164,225,192,130,103,245,29,210,60,35,141,205,2,255,220,50,8,184,34,161,224,139,53,109,62,56,29,230,48,184,188,75,144,98,174,165,186,53,199,207,201,66,126,92,146,170,58,78,65,21,106,225,164,97,52,198,225,113,81,173,202,98,245,172,60,90,225,219,58,132,165,40,165,68,93,238,125,115,68,196,211,202,13,248,252,182,123,61,161,44,140,216,33,252,156,178,103,125,23,116,152,241,41,79,175,134,36,125,204,206,236,140,196,219,98,82,122,217,129,158,197,180,20,181,7,223,220,251,76,174,149,82,76,72,198,162,173,24,117,78,127,54,54,71,65,97,66,27,209,161,239,100,202,237,21,67,33,3,201,251,197,115,71,97,90,178,3,98,
-206,79,170,121,7,70,50,38,237,176,190,112,237,101,188,88,202,12,202,182,170,165,34,75,120,144,116,80,144,197,155,33,217,7,157,76,183,59,104,56,59,23,38,24,20,233,192,79,131,207,137,52,26,134,92,193,129,9,55,29,158,72,78,224,95,231,108,79,161,200,110,240,227,45,98,88,226,195,168,111,185,136,124,40,13,85,212,195,101,97,133,25,127,86,201,44,86,90,182,185,116,179,85,18,177,19,133,142,42,176,230,110,39,152,50,12,138,205,254,157,34,136,86,183,65,48,72,251,23,74,200,133,49,220,104,111,27,201,89,62,151,170,114,160,114,215,16,129,66,159,80,249,201,126,194,15,173,154,17,50,166,160,90,47,247,216,134,121,44,113,37,116,54,55,247,114,22,145,90,192,222,209,2,19,34,46,142,231,100,248,18,21,98,208,250,230,197,227,224,77,45,205,155,86,67,11,79,5,171,160,168,111,178,17,78,69,70,255,205,179,152,241,60,140,185,24,252,67,12,152,218,69,7,238,146,128,5,59,36,201,130,96,250,8,55,49,239,156,208,168,103,215,224,20,213,191,217,36,211,142,216,166,135,253,109,132,89,20,151,174,144,130,2,184,90,172,83,221,94,10,200,40,81,205,48,247,
-190,150,174,150,91,152,136,248,139,192,135,166,84,204,209,37,149,155,201,5,191,71,249,101,27,164,121,134,205,41,211,202,19,46,72,72,30,18,6,1,206,111,85,52,231,56,56,134,210,76,47,194,26,159,50,53,148,3,225,131,111,56,174,244,141,165,169,125,107,255,124,251,77,250,205,31,155,36,39,214,190,209,53,72,252,72,122,47,63,166,87,124,84,222,242,55,155,188,193,231,201,167,9,255,37,143,52,110,235,84,5,108,196,158,168,44,100,87,137,40,75,218,48,250,52,196,205,28,12,149,225,133,172,48,191,180,160,192,106,199,122,207,81,161,147,189,118,115,78,202,28,205,44,14,212,12,173,86,73,217,216,216,101,149,241,102,181,183,138,156,102,93,126,177,64,32,92,2,16,4,133,177,224,128,29,38,204,136,105,177,16,24,159,88,188,145,78,173,218,168,220,103,87,228,46,198,49,202,84,17,69,242,203,69,156,68,147,201,93,163,103,173,39,202,156,9,178,39,84,171,25,36,146,63,130,235,65,3,172,169,62,167,53,20,201,98,203,171,32,90,194,184,236,24,40,252,84,40,137,130,228,195,28,204,6,45,77,189,57,254,92,46,155,170,230,91,209,167,77,228,115,82,171,98,36,
-212,172,168,130,68,17,174,182,103,5,40,225,193,34,209,235,22,78,144,229,35,45,87,241,2,3,208,226,51,201,21,76,14,80,46,21,31,108,5,137,186,78,150,99,10,211,242,69,48,33,171,177,77,24,50,31,10,227,94,129,201,66,154,134,210,250,5,225,223,66,8,121,152,166,50,176,27,82,179,228,103,169,125,102,241,153,78,176,19,157,212,143,82,122,142,91,17,124,66,115,132,19,126,178,190,195,97,62,211,72,151,4,193,165,183,180,158,225,56,161,72,193,4,116,192,135,165,202,89,3,75,249,177,172,99,156,113,83,235,81,32,234,245,78,247,166,107,62,65,48,234,214,222,189,253,209,147,164,229,214,200,99,11,108,125,72,52,224,195,111,223,117,251,84,40,27,183,191,175,23,87,186,213,49,191,38,223,215,43,203,83,247,29,88,160,172,142,228,133,213,192,11,193,30,29,100,224,31,88,160,10,179,11,138,202,16,246,138,222,216,36,203,124,249,56,76,195,104,33,162,194,205,55,250,167,108,158,233,19,219,72,237,88,205,35,105,24,229,121,144,119,22,163,220,138,127,59,171,75,251,235,8,171,182,236,141,30,195,241,77,165,98,186,209,0,75,129,22,188,189,57,19,53,134,180,
-138,93,29,235,39,72,242,38,151,190,152,250,136,225,6,73,105,113,11,15,182,201,224,35,189,162,207,250,122,44,134,103,1,241,50,223,36,190,139,71,28,50,62,108,82,29,80,135,110,120,232,113,81,117,108,158,37,97,5,114,14,93,54,19,77,35,23,139,187,145,204,203,138,77,182,184,148,75,65,50,19,3,158,124,169,125,44,11,175,198,54,235,135,74,187,109,103,235,107,33,20,29,31,232,229,117,21,20,58,195,149,137,192,90,16,146,211,106,160,89,185,83,0,126,169,197,152,237,178,140,80,122,152,11,65,167,136,186,11,24,118,249,224,68,197,48,205,93,47,123,22,231,153,207,217,230,224,25,43,196,200,175,66,185,48,29,166,148,78,100,163,35,234,81,222,11,215,8,105,114,115,0,88,207,229,225,231,8,188,11,93,181,159,155,106,17,42,151,202,103,169,2,75,217,221,104,169,110,54,35,12,135,220,16,66,52,99,138,1,197,240,214,220,90,186,232,212,14,50,222,15,90,209,21,47,107,30,145,42,23,146,110,52,119,45,234,2,216,21,242,44,150,213,212,173,81,142,173,145,125,226,29,67,131,106,91,52,236,231,134,156,183,82,85,199,193,203,49,69,122,91,150,28,96,67,3,152,
-217,23,168,22,150,54,154,49,62,21,5,186,204,153,0,89,149,90,52,17,133,82,95,58,141,232,11,143,205,10,7,153,129,231,135,123,139,244,104,175,41,93,188,5,23,33,102,103,228,128,185,111,172,241,165,118,8,84,63,245,129,79,199,94,118,236,64,155,193,86,8,53,136,110,115,171,217,91,24,120,161,106,163,113,21,127,7,172,32,189,96,53,137,47,188,247,73,211,140,144,67,114,77,39,35,74,148,232,39,13,174,93,228,45,219,38,247,51,135,178,54,202,230,149,161,209,26,159,127,181,28,180,85,12,218,10,131,74,142,124,178,207,69,77,235,240,205,183,22,37,172,227,200,254,206,236,200,203,222,215,106,150,61,104,67,196,215,175,130,129,157,2,152,157,5,192,44,152,18,101,103,85,101,6,28,133,125,13,172,29,104,4,130,27,91,7,17,78,239,110,57,156,43,118,61,55,133,72,127,204,96,105,24,250,29,249,20,236,176,116,106,174,174,141,127,172,32,56,252,230,187,147,197,89,97,81,168,88,12,60,153,221,231,138,39,186,216,197,137,226,194,22,244,11,222,10,35,208,184,204,120,212,20,150,14,176,62,124,167,110,35,84,159,97,20,12,185,137,0,183,164,104,29,3,119,197,
-158,149,93,111,65,152,37,36,129,217,198,34,175,156,103,127,58,220,139,225,0,48,253,56,109,236,63,142,248,179,196,2,176,154,35,73,12,24,114,43,131,94,1,93,239,2,250,230,76,151,234,4,92,28,84,173,32,201,40,171,170,103,54,11,35,200,57,133,39,236,144,55,88,94,90,107,198,174,178,168,134,222,112,142,217,173,181,122,54,161,3,229,168,32,141,12,197,113,105,188,192,59,105,255,242,109,132,202,14,145,98,132,146,159,166,153,45,247,34,32,212,135,43,254,74,73,9,213,239,224,32,46,125,163,19,67,177,208,64,88,150,49,176,229,135,125,94,16,40,200,37,39,116,27,230,217,79,181,214,246,126,242,78,87,252,97,44,128,108,5,66,107,45,110,104,81,113,71,217,211,107,74,78,90,175,181,184,90,253,236,167,248,109,103,123,215,138,185,157,14,169,6,129,247,94,219,217,62,72,46,139,61,248,243,160,231,249,249,105,242,46,218,233,69,200,171,182,203,208,58,102,127,238,10,141,239,222,221,43,165,164,240,109,71,97,116,175,171,82,219,229,18,166,119,36,18,196,82,218,201,43,59,124,207,239,59,17,94,110,193,24,250,149,5,181,221,214,51,251,118,42,229,21,
-186,207,107,187,59,205,248,37,121,109,37,183,137,211,89,74,108,249,166,242,11,241,232,112,41,58,228,17,107,192,27,178,226,80,9,1,1,123,220,242,44,152,127,196,55,36,172,84,219,3,202,11,175,137,164,188,227,143,64,165,96,50,191,31,144,170,84,41,149,126,225,117,10,121,240,140,14,98,249,2,75,144,196,238,244,18,67,181,189,189,93,213,37,28,228,30,28,13,147,12,99,155,83,40,162,3,43,108,128,162,56,46,60,69,202,148,227,75,236,249,155,65,113,166,189,176,206,68,196,90,248,173,38,247,252,105,86,150,205,3,121,84,30,52,147,91,4,6,219,127,120,214,11,78,126,185,197,136,22,227,148,13,25,116,112,128,222,253,241,248,114,35,121,125,124,244,210,122,213,1,41,18,232,116,62,74,42,242,130,6,5,8,188,169,59,51,52,184,54,114,68,98,138,203,233,88,17,17,102,201,76,76,123,226,86,208,224,122,8,154,169,172,187,228,250,77,48,87,205,251,212,22,176,249,138,26,94,117,2,26,169,34,61,212,58,33,244,236,181,181,152,133,138,18,66,189,138,142,196,146,8,0,244,159,93,18,149,24,88,57,21,162,231,34,170,169,31,234,177,11,116,122,128,218,14,154,196,
-179,105,114,85,165,11,149,20,93,132,11,98,60,220,230,21,195,228,136,58,229,133,4,12,16,47,204,147,99,92,17,67,154,214,7,8,100,156,40,19,86,113,123,199,108,153,181,18,181,190,172,230,10,98,96,171,117,219,125,139,207,101,130,90,49,136,72,1,178,245,87,75,31,164,103,219,102,34,81,80,47,149,185,109,15,115,5,189,26,128,153,247,175,143,223,156,217,68,143,95,243,129,211,11,209,136,237,193,7,202,253,41,114,245,66,56,210,237,33,124,106,4,67,40,84,9,6,61,18,20,211,156,194,118,94,64,86,177,185,31,58,115,149,44,219,193,207,192,11,39,164,168,176,246,141,107,149,187,210,105,109,158,170,224,41,11,106,27,49,156,254,2,165,163,222,244,166,65,114,157,41,192,34,84,4,204,83,34,244,12,246,26,128,129,159,213,192,166,195,59,181,68,38,86,30,248,172,182,55,91,142,20,46,5,197,55,183,88,238,49,68,37,206,177,116,158,200,13,228,45,74,56,219,174,163,72,155,68,90,50,2,233,95,44,26,69,136,92,133,144,108,143,13,72,171,219,172,55,122,200,164,184,56,118,58,136,61,211,16,8,100,214,146,65,94,12,78,244,30,126,8,81,148,24,39,75,49,68,125,46,
-110,226,219,157,166,182,49,67,78,95,154,91,105,106,34,0,34,224,0,175,221,219,161,131,54,212,7,26,195,129,84,118,21,67,160,110,16,43,232,12,38,105,78,162,94,137,21,91,163,198,197,25,144,74,90,247,195,145,132,116,116,214,5,15,42,148,196,50,101,166,80,4,38,137,82,134,166,131,46,158,74,97,15,224,5,121,45,20,66,31,98,65,141,96,252,27,4,138,50,180,198,152,166,193,240,178,211,139,82,186,100,249,153,192,177,68,41,75,46,82,36,79,26,46,222,21,128,105,142,21,238,61,26,132,140,57,224,128,129,16,174,132,104,61,67,36,140,21,33,66,87,49,74,129,78,91,160,112,193,9,43,4,58,109,167,101,173,209,248,78,174,230,15,20,222,82,112,40,210,164,208,214,163,250,124,27,103,1,81,228,167,176,228,9,168,158,62,96,232,48,180,130,252,179,184,212,250,169,250,177,6,11,59,187,72,192,34,8,173,199,118,195,130,81,158,217,174,87,94,225,150,91,62,141,96,226,215,45,125,51,61,160,176,31,120,247,64,111,116,69,44,108,207,40,238,130,5,71,253,201,220,92,43,58,3,163,40,222,134,170,142,129,251,114,24,246,191,148,225,10,125,219,150,56,66,205,237,148,160,
-23,61,144,71,225,87,22,38,70,3,10,185,92,119,144,217,14,50,252,112,91,46,52,197,153,211,195,64,192,194,193,111,206,36,111,8,55,242,172,118,122,114,73,24,211,63,83,208,125,116,111,119,95,163,14,184,205,231,57,117,73,255,80,200,58,27,195,172,200,211,90,77,150,132,159,48,150,15,6,21,101,236,139,17,190,160,13,251,7,94,250,142,130,121,152,153,210,30,16,151,140,0,41,6,9,144,43,85,192,20,61,200,119,139,53,243,233,166,200,45,16,205,84,240,18,227,82,101,120,1,149,165,5,171,95,4,241,85,135,68,24,164,163,172,183,16,113,136,143,76,91,201,74,67,3,90,73,30,100,24,217,190,3,221,200,36,24,132,52,61,54,97,233,35,168,107,155,190,201,35,219,112,18,156,36,39,202,198,210,191,153,77,203,54,124,243,91,18,76,228,0,116,161,81,230,138,248,192,242,21,78,77,72,109,65,172,184,180,61,205,84,186,51,40,253,8,93,80,62,208,173,16,106,101,248,84,35,70,147,161,8,26,7,1,0,37,182,21,166,175,73,187,38,167,211,5,13,228,155,83,46,134,17,117,150,85,239,168,185,123,240,154,90,97,168,17,233,178,72,137,231,25,104,46,190,186,82,13,68,155,133,110,
-200,222,226,242,113,85,195,35,46,23,3,118,164,140,35,140,113,65,175,126,138,211,145,222,185,146,188,50,147,66,90,13,252,62,152,38,60,127,249,250,56,185,56,123,117,249,243,209,249,49,37,180,147,119,231,103,255,121,242,242,248,101,82,63,186,224,59,187,14,63,159,92,190,62,123,127,153,208,226,252,232,237,229,47,201,217,171,228,232,237,47,201,79,39,111,95,110,80,122,250,221,249,241,197,69,114,118,158,156,156,190,123,115,114,204,111,39,111,95,188,121,255,242,132,16,226,115,222,123,123,6,9,159,64,200,116,122,121,150,104,192,208,213,201,49,239,189,74,78,143,207,95,188,166,231,163,231,39,111,78,46,127,217,72,94,157,92,190,85,159,175,232,244,40,121,119,116,126,121,242,226,253,155,163,243,228,221,251,115,140,169,99,134,127,73,183,111,79,222,190,58,103,148,227,211,227,183,151,155,140,202,111,201,241,127,242,37,185,120,125,244,230,141,13,117,244,30,232,207,13,190,23,103,239,126,57,63,249,241,245,101,242,250,236,205,203,99,126,124,126,12,100,71,207,223,28,251,80,76,234,197,155,163,147,211,141,228,229,209,233,209,143,
-130,238,60,57,3,224,115,107,22,160,251,249,245,177,253,196,120,71,252,255,197,229,201,217,91,77,227,197,217,219,203,115,190,82,62,251,236,252,178,120,245,231,147,139,227,141,228,232,252,228,66,8,121,117,126,70,247,66,39,111,8,103,111,245,222,219,99,239,69,168,54,168,139,21,161,137,16,246,158,73,23,176,188,60,62,122,67,95,44,207,219,153,198,210,175,255,15,10,175,186,66);
+:array[0..19931] of byte=(
+120,1,236,189,91,115,27,199,178,231,251,142,79,209,7,19,251,152,244,18,72,2,188,73,180,173,25,74,162,44,198,210,109,72,106,123,28,222,142,21,32,0,146,176,112,219,104,64,20,253,48,159,125,126,255,204,170,238,106,16,144,96,109,159,35,61,12,215,10,11,64,87,87,101,101,229,189,178,178,126,155,253,254,203,77,123,150,245,243,236,201,252,242,114,208,203,179,246,168,155,221,234,183,238,152,111,249,77,143,15,255,189,118,206,191,52,106,103,121,127,56,25,244,30,100,189,118,126,151,205,198,217,60,239,101,47,46,46,222,102,183,189,203,44,239,77,63,244,166,217,44,116,121,57,29,223,242,83,214,25,143,102,211,241,96,208,235,62,176,238,59,237,73,155,177,178,241,149,189,209,31,93,103,249,172,61,235,119,178,171,190,64,24,123,39,140,56,154,245,166,163,222,140,225,250,179,27,122,202,103,211,94,123,216,235,102,87,211,241,48,235,246,243,247,15,178,241,148,15,211,94,103,230,63,158,29,191,202,110,105,61,158,207,178,65,251,122,171,86,123,193,139,63,191,59,205,218,221,97,127,212,167,11,134,26,143,178,73,123,
+212,27,216,164,58,157,94,158,211,233,236,102,58,158,95,223,100,119,227,249,212,230,19,39,176,209,219,186,222,202,234,55,179,217,228,104,123,123,48,238,180,7,55,227,124,118,212,220,121,184,179,109,221,110,215,179,127,100,221,222,85,123,62,152,209,115,158,223,142,167,93,77,176,110,143,235,155,15,64,106,191,115,19,113,1,42,7,131,204,166,212,155,205,192,128,35,254,67,127,214,30,100,87,243,81,71,32,230,160,139,86,253,81,198,172,7,179,254,176,199,108,142,39,237,105,152,170,208,45,228,25,214,30,216,90,177,70,9,118,153,106,231,189,161,183,63,235,101,31,250,121,127,150,103,27,252,183,7,28,115,33,55,7,48,112,215,235,91,71,189,97,187,63,208,168,96,100,34,168,12,220,182,80,59,158,14,179,124,126,57,236,231,185,32,51,20,243,195,100,50,22,52,172,193,249,164,61,204,126,158,183,167,97,145,233,21,20,20,131,211,9,99,204,238,178,118,158,117,219,0,192,138,15,39,66,250,180,125,117,197,210,15,198,215,249,86,150,137,208,218,131,124,204,172,59,131,121,87,4,153,93,206,251,131,89,3,52,208,6,2,106,15,238,
+68,85,26,116,216,246,233,245,70,144,33,216,22,66,23,58,188,184,233,241,76,84,61,54,18,186,234,181,103,243,41,253,242,110,207,94,24,142,167,61,209,236,40,69,221,116,62,26,9,248,33,11,218,135,226,69,15,66,92,152,249,160,63,155,241,35,12,48,26,211,73,187,219,238,220,104,117,68,107,0,221,191,30,137,178,6,253,235,155,153,141,205,108,161,120,39,127,6,234,125,156,1,114,255,67,47,187,132,154,222,55,46,219,162,191,97,15,80,238,0,108,212,190,238,13,123,163,89,150,223,229,179,222,48,163,173,129,28,105,230,125,239,46,27,79,122,78,200,185,241,96,120,23,36,193,163,115,134,235,143,232,81,211,158,246,6,125,99,55,250,29,245,166,0,89,251,109,246,251,243,128,134,218,247,217,147,192,166,14,196,50,46,161,145,120,124,187,153,114,249,70,65,238,34,1,177,194,38,237,206,95,33,11,140,142,162,52,216,48,18,105,237,235,169,152,243,169,80,5,21,150,28,31,91,110,27,71,35,1,16,1,113,118,122,235,34,144,200,75,72,36,219,168,80,143,72,127,132,68,200,213,142,231,217,83,167,235,108,35,208,73,54,109,223,86,72,66,13,
+79,223,102,151,172,194,0,97,0,219,182,231,179,241,208,196,79,187,219,205,182,65,216,16,9,84,114,97,182,1,91,192,44,163,246,168,195,207,211,30,164,150,130,119,58,186,28,127,52,84,3,104,126,227,130,5,64,63,244,123,183,142,138,156,81,36,4,11,78,2,224,156,53,54,168,159,134,7,207,171,44,150,65,144,221,1,228,4,166,32,80,151,15,211,222,100,208,231,51,116,183,180,191,172,33,122,204,59,211,254,100,38,193,56,25,204,175,93,126,252,231,28,25,217,213,228,95,244,103,17,75,129,152,187,253,107,147,59,200,211,201,160,125,151,109,76,32,252,254,16,0,55,141,203,76,96,228,147,94,167,47,70,221,54,249,108,164,72,79,64,196,242,195,41,244,252,116,60,132,198,186,224,117,4,127,39,178,1,202,226,197,60,74,186,141,244,89,193,96,29,127,155,137,2,58,152,22,172,103,115,232,89,34,224,151,254,168,139,50,201,206,37,242,88,133,141,17,11,198,34,245,71,208,17,50,82,195,206,97,88,255,54,70,120,153,248,156,246,108,222,121,118,44,217,15,206,28,192,9,218,99,50,211,0,191,56,87,103,175,74,158,115,189,176,49,159,12,198,109,
+20,141,52,210,3,39,149,240,185,219,27,244,16,96,246,45,114,88,209,212,16,54,102,254,146,78,18,44,81,110,216,116,122,174,169,74,245,179,193,162,184,242,98,73,219,214,39,8,158,79,7,166,215,166,76,107,60,28,220,185,102,107,59,20,136,57,31,218,218,25,9,189,64,25,149,146,138,87,160,215,156,126,226,216,76,244,85,123,18,52,30,67,162,230,152,192,54,146,102,2,170,165,225,245,134,168,170,61,50,41,41,96,223,78,199,31,239,88,223,255,156,247,232,61,46,217,6,34,240,147,99,33,134,175,140,0,232,208,20,105,84,162,81,41,35,133,179,81,15,225,36,1,254,236,245,185,198,122,34,41,8,79,38,82,208,200,95,18,88,205,88,86,25,12,247,4,36,175,62,67,101,221,1,30,43,139,236,4,124,200,131,5,187,28,143,103,229,55,100,160,86,40,60,181,69,203,123,157,249,84,10,41,252,40,28,161,97,179,139,187,73,47,98,202,37,113,214,65,158,98,110,12,245,120,198,99,161,86,54,202,180,223,5,119,174,244,35,43,231,99,224,12,36,20,181,182,91,55,57,144,229,54,27,100,79,247,182,223,157,221,64,190,172,243,28,251,230,6,205,252,64,60,61,194,
+144,49,5,219,155,117,132,153,139,27,122,65,14,32,19,165,238,75,245,242,190,215,155,32,8,110,64,81,80,52,180,62,238,254,1,172,102,53,20,220,182,184,14,124,47,0,211,154,128,0,95,15,150,31,57,51,195,188,160,167,55,198,66,24,35,123,59,123,91,55,179,225,128,73,93,151,92,189,17,101,5,0,228,254,72,235,68,227,236,57,28,147,189,6,251,207,17,197,221,12,52,141,49,51,232,242,237,248,22,240,95,246,62,96,118,109,60,125,251,14,189,101,34,70,102,87,212,166,179,219,94,251,125,134,116,165,55,176,15,167,99,169,13,198,183,217,68,47,203,198,105,195,49,198,28,214,82,221,108,103,31,26,216,26,61,212,228,135,254,116,60,146,230,204,25,239,9,198,79,15,8,2,222,34,5,11,78,89,173,54,119,236,72,73,246,216,72,152,196,42,120,138,34,64,12,154,213,167,230,82,126,78,167,209,18,185,233,13,38,65,194,71,186,142,198,170,166,138,36,156,72,216,95,246,71,162,202,13,16,193,212,155,217,171,39,122,122,82,218,206,124,219,109,209,108,198,218,119,123,98,0,163,16,168,67,148,133,8,186,211,108,104,245,22,41,107,60,176,113,123,
+211,27,137,104,163,236,147,154,151,136,212,52,161,253,77,215,239,72,78,179,95,162,89,175,105,136,243,174,250,83,8,68,182,100,237,244,74,12,74,55,134,0,173,62,210,182,104,223,238,136,249,244,74,156,216,3,107,158,99,89,15,186,89,7,254,132,30,244,188,176,3,162,217,187,97,54,196,102,118,217,99,84,179,244,76,67,200,216,194,194,187,24,35,111,68,184,16,124,101,68,153,244,234,47,74,105,147,34,182,30,249,216,45,39,169,191,54,52,241,227,8,205,26,173,236,199,190,146,109,201,127,100,85,241,187,236,65,19,64,157,155,49,120,57,170,253,246,254,247,203,224,228,52,26,241,237,133,190,126,219,254,189,86,123,131,113,41,96,140,96,49,72,7,3,123,121,235,63,214,123,29,235,138,245,55,77,248,82,154,240,220,53,97,237,57,75,208,237,97,153,225,8,129,11,8,72,194,100,1,46,253,110,64,92,136,177,110,251,232,54,51,83,224,26,8,41,162,198,21,92,177,88,129,180,161,130,193,152,69,51,202,86,71,178,167,59,242,188,36,218,133,218,217,24,129,31,209,130,134,148,176,186,53,213,170,22,102,176,168,153,19,137,131,56,158,244,
+59,216,140,172,154,193,145,44,80,233,51,22,227,47,153,80,0,57,183,73,9,5,24,94,253,17,132,33,147,11,230,142,146,123,201,171,106,86,188,102,208,208,30,66,143,150,72,196,198,146,87,213,250,232,199,216,64,22,226,99,235,233,228,35,94,199,96,25,210,143,100,199,168,141,33,62,136,183,220,215,137,97,111,144,65,160,8,169,106,136,52,155,118,52,31,94,194,214,204,197,126,51,55,216,133,13,8,123,26,205,153,33,22,213,101,47,251,14,201,138,60,234,126,167,110,122,31,209,62,168,224,210,245,144,26,70,50,203,193,30,93,179,42,215,99,250,8,208,230,11,52,98,131,63,220,201,18,42,110,95,118,144,24,141,70,71,198,117,222,255,179,151,53,155,59,106,97,166,130,190,239,239,236,60,216,177,159,132,214,90,66,202,50,223,255,107,189,49,14,156,188,94,159,98,249,245,225,76,23,13,249,9,250,165,243,66,200,1,203,162,221,237,180,145,103,134,17,240,250,112,231,129,47,79,20,69,252,102,168,65,183,22,152,225,183,230,86,51,251,249,201,3,183,183,12,93,252,8,134,178,127,62,49,227,224,10,185,61,192,172,16,201,195,85,75,41,118,
+43,11,203,147,181,162,194,114,216,114,168,173,244,16,100,139,16,138,16,208,3,129,26,105,146,31,212,45,225,136,121,39,76,42,40,42,64,17,146,100,210,94,246,174,33,138,98,158,144,70,57,234,110,137,13,155,190,218,71,169,102,88,64,207,207,49,3,53,178,247,252,32,195,47,29,79,37,215,101,51,7,72,152,223,21,145,0,95,195,224,29,190,112,106,87,28,0,195,67,61,44,115,11,93,208,164,70,94,237,149,156,106,57,171,133,108,66,138,1,134,116,17,210,232,23,217,27,233,11,217,168,253,161,127,173,120,0,179,254,84,124,37,219,8,92,102,115,181,46,162,170,50,71,27,63,217,244,221,120,180,201,28,142,21,42,0,115,65,182,153,24,117,163,223,184,181,93,32,10,152,78,20,7,113,160,34,250,112,50,67,40,135,190,99,4,199,22,164,51,232,99,168,218,98,218,0,44,237,108,60,146,86,91,141,35,80,29,196,9,144,157,71,179,19,11,201,180,210,5,130,213,186,202,231,134,237,171,185,8,79,139,137,31,42,171,156,167,215,40,12,153,138,113,198,133,91,83,65,37,24,140,54,78,103,60,126,47,63,209,52,65,155,149,150,99,68,60,1,67,196,20,55,171,177,
+41,35,8,105,124,141,125,33,61,225,106,61,196,217,208,17,204,17,99,132,96,19,212,172,64,81,118,53,128,80,231,90,42,70,253,142,73,33,212,2,108,138,181,9,98,25,33,21,171,90,54,204,88,238,163,224,119,28,187,183,124,219,158,250,114,93,161,182,113,192,111,32,75,25,255,49,76,20,232,16,247,204,93,183,50,108,215,200,222,160,10,165,170,144,212,240,89,248,146,97,29,225,50,203,192,38,120,87,40,21,153,76,57,157,169,169,105,181,7,193,97,56,119,135,225,65,92,26,167,114,153,225,206,120,76,199,77,116,225,110,174,144,35,70,105,116,148,54,130,99,229,238,49,152,114,214,110,237,161,38,230,83,217,53,224,206,194,122,114,102,135,253,238,72,129,32,192,120,77,224,71,129,161,115,55,229,207,137,129,208,186,45,224,145,249,96,29,207,29,178,192,236,78,85,100,251,82,8,214,48,206,199,223,17,228,155,79,167,44,156,121,22,132,149,160,157,27,89,129,38,97,204,213,145,133,247,32,155,99,197,35,140,180,54,165,211,17,103,196,192,80,8,214,141,254,85,239,65,159,1,134,45,131,44,177,194,31,9,56,196,108,35,174,105,224,62,
+200,206,21,72,12,115,112,73,217,67,200,222,71,82,98,149,104,152,217,88,65,78,247,120,74,39,58,248,118,230,19,64,143,47,145,149,131,59,151,230,199,62,127,195,17,92,252,1,227,56,175,32,136,165,81,192,75,130,13,38,8,92,82,98,5,18,81,208,50,206,79,216,48,153,207,79,48,230,123,166,118,236,232,149,121,100,184,194,31,193,254,115,46,128,7,48,116,113,59,192,145,98,63,206,242,232,100,194,19,61,162,65,68,124,26,124,18,214,29,141,222,158,65,68,76,110,240,201,29,241,38,134,180,141,124,211,222,81,96,51,188,84,70,198,146,208,182,197,218,205,157,1,44,162,0,242,172,220,240,38,188,132,13,12,245,90,44,130,216,166,162,13,93,226,51,196,120,108,10,30,171,84,35,11,144,123,51,57,31,47,199,215,162,166,99,150,189,129,139,54,237,244,47,165,232,20,90,51,54,230,119,15,150,228,136,126,243,68,55,60,20,43,236,154,188,25,223,142,130,147,177,148,61,141,193,107,191,138,13,157,215,161,119,124,22,240,39,165,211,39,88,102,110,33,178,109,224,188,6,149,149,145,177,52,198,44,156,23,2,36,200,88,119,173,163,211,173,229,
+38,44,210,187,146,94,29,204,135,146,248,104,24,81,153,194,132,34,129,203,63,180,53,160,85,45,162,66,250,162,38,30,166,188,28,227,235,65,10,250,101,106,124,154,101,175,219,120,173,40,15,119,128,98,4,35,167,115,153,87,214,212,141,101,204,234,10,205,64,75,79,11,21,17,7,55,71,38,16,83,136,252,9,112,245,160,89,201,31,186,29,57,215,70,168,176,87,138,110,234,39,175,94,214,49,69,70,239,105,253,202,35,135,197,43,98,4,131,71,2,190,75,244,61,204,202,13,236,172,190,213,27,14,234,40,126,139,166,199,9,69,32,132,8,17,86,123,198,2,220,68,66,227,183,110,23,49,52,198,6,74,217,76,34,96,12,153,17,118,43,177,199,60,244,197,35,159,87,227,1,126,110,5,246,103,189,65,1,251,155,4,201,44,27,235,142,72,14,110,64,4,201,84,117,84,151,134,28,249,206,22,112,43,6,173,12,112,70,200,66,94,38,128,24,185,213,3,131,70,188,196,142,43,43,236,10,65,6,223,80,161,51,237,128,32,76,125,251,195,88,61,64,128,216,55,118,212,34,111,36,77,55,53,220,165,75,137,141,1,123,97,177,143,77,184,13,20,176,80,111,132,138,180,75,3,19,42,
+212,206,19,2,165,245,32,219,205,8,242,208,244,68,82,211,93,90,30,116,48,55,111,64,36,43,147,46,132,128,117,0,125,29,166,65,246,8,43,98,170,143,102,172,86,80,19,240,33,205,136,26,82,195,224,255,233,163,128,176,56,10,130,216,158,197,14,93,190,9,206,212,186,96,80,109,27,44,229,120,91,124,83,177,41,25,216,6,72,187,207,140,17,55,136,236,145,41,54,100,77,32,25,131,174,228,215,72,115,146,186,237,172,14,221,40,200,42,49,21,72,62,223,218,218,42,22,119,35,204,196,13,188,77,144,104,108,231,4,142,192,9,147,88,52,252,2,37,165,148,199,171,68,58,59,4,36,121,57,10,84,4,19,3,7,210,193,166,80,52,64,191,8,105,200,73,179,142,42,52,47,235,0,143,159,73,14,238,64,21,161,149,118,124,93,120,136,198,79,5,63,192,72,60,75,209,148,209,119,132,138,88,13,16,110,203,175,48,156,104,154,149,185,196,233,151,36,136,172,91,135,222,157,161,50,2,185,214,76,179,63,46,70,75,25,200,3,143,65,138,69,70,144,145,116,217,195,249,8,175,35,11,199,190,212,70,70,234,236,26,101,170,152,55,182,188,72,197,86,74,170,152,153,200,50,
+128,52,68,164,216,127,83,133,37,100,183,109,240,67,7,83,66,234,231,30,200,97,45,25,198,230,95,46,98,202,147,197,14,169,4,140,139,216,8,241,37,142,115,164,154,20,131,247,25,33,125,122,159,31,194,232,159,225,135,82,240,126,57,71,160,100,115,17,193,226,230,147,201,22,54,146,176,246,192,89,142,53,113,30,55,69,128,10,20,128,110,5,1,108,143,75,81,11,196,57,123,231,119,176,9,212,215,158,76,122,109,143,55,184,161,69,100,65,180,152,238,160,154,140,54,221,36,39,135,184,91,103,62,224,157,110,251,14,171,17,45,143,74,172,68,132,120,32,234,180,32,191,22,86,42,193,49,32,235,37,40,157,99,147,78,194,155,193,193,238,151,92,215,138,124,40,25,185,24,138,229,49,201,86,252,128,57,170,137,225,16,246,174,5,21,178,128,17,247,229,52,140,25,214,226,140,31,216,252,213,94,57,35,196,121,65,117,19,104,21,68,64,155,110,69,69,110,16,72,116,145,10,42,7,209,71,50,234,101,210,76,61,170,148,90,237,108,97,67,16,61,52,156,200,251,16,46,165,170,157,193,177,212,17,143,68,101,10,237,45,219,93,78,64,220,18,129,158,131,
+187,36,38,73,162,63,178,184,244,147,237,133,70,215,219,245,8,191,74,71,162,47,124,93,37,199,76,153,168,125,162,96,226,99,215,49,226,112,140,84,237,27,91,248,42,203,71,125,104,129,125,50,201,153,5,34,179,96,81,179,117,184,181,195,255,154,24,121,141,236,183,214,163,237,87,237,233,118,107,167,181,119,180,211,60,218,105,29,237,237,101,255,104,238,236,238,252,158,213,127,62,185,200,182,111,111,111,255,117,57,104,19,41,146,59,108,248,200,255,5,102,182,205,249,104,180,71,236,7,34,147,182,180,53,232,123,193,91,205,122,214,66,41,61,218,221,219,89,149,27,81,207,234,175,198,127,66,187,237,237,253,173,157,108,227,151,176,141,247,250,130,13,227,173,157,31,180,175,119,176,247,67,246,241,96,111,51,59,158,16,153,67,193,252,179,63,219,222,223,61,220,218,61,200,54,254,249,226,226,213,203,32,138,126,238,117,222,143,55,179,167,108,23,12,123,219,205,214,174,205,112,39,59,111,95,181,167,253,240,74,61,251,173,57,204,179,214,195,121,214,234,252,94,251,251,240,128,255,196,238,121,195,208,177,245,199,
+100,17,11,187,143,246,113,255,86,164,136,124,53,52,236,205,179,131,255,47,176,64,134,202,18,28,52,155,7,59,205,221,111,10,9,251,45,136,1,44,28,254,173,88,112,158,152,95,146,66,51,95,134,135,86,107,239,240,219,194,195,222,33,120,104,182,230,217,238,223,138,136,113,222,105,79,151,96,224,81,115,231,176,249,77,17,194,222,129,16,208,156,103,123,127,43,2,130,84,192,249,100,147,115,9,34,30,54,247,145,180,223,146,88,216,219,7,17,187,243,108,127,45,60,236,255,37,45,65,78,209,18,5,177,251,240,224,209,55,168,33,30,173,171,33,254,26,14,186,121,119,9,14,14,119,247,14,190,45,28,236,74,77,238,175,171,31,214,197,193,150,194,122,203,230,191,255,232,155,226,130,157,32,14,215,147,6,235,206,222,245,66,151,36,210,254,18,89,208,124,184,191,115,240,240,155,66,195,225,67,225,1,105,176,158,90,56,88,83,26,176,101,252,254,207,241,120,232,137,35,85,115,113,119,239,112,239,219,82,13,70,11,216,8,127,47,14,242,43,28,143,241,18,86,104,238,237,30,182,86,81,65,5,115,95,197,108,20,54,118,119,214,149,141,235,82,
+196,23,200,133,175,143,10,73,72,49,199,122,66,98,93,84,92,223,172,32,140,214,126,107,255,219,166,11,152,100,61,179,97,93,92,20,107,124,223,173,108,237,29,124,219,200,56,88,87,119,254,85,100,52,136,208,16,159,35,52,56,91,166,69,118,31,238,226,117,175,48,41,11,132,42,101,239,171,200,143,93,121,92,77,12,139,181,196,233,254,206,95,84,41,9,114,90,203,176,115,248,112,239,209,74,215,235,235,99,231,192,176,3,233,172,135,157,214,95,196,206,214,225,159,11,209,153,189,214,222,39,226,51,95,31,33,205,195,61,209,203,225,186,24,89,55,108,85,204,236,207,254,100,1,37,251,143,154,251,15,15,191,93,14,106,61,50,103,157,8,214,122,68,178,174,117,90,160,132,236,179,5,148,52,119,155,44,196,74,71,181,120,243,171,73,149,3,247,223,241,217,254,94,156,16,143,236,125,92,102,166,62,124,212,220,253,134,229,136,73,217,22,102,218,223,139,142,213,102,218,74,139,181,196,224,87,81,55,50,87,91,132,117,214,195,195,225,154,242,148,44,243,225,120,116,183,140,48,154,187,251,251,171,41,227,43,99,195,156,250,214,186,97,
+190,253,191,138,142,251,86,218,238,193,74,194,72,113,248,245,72,99,93,223,118,109,92,124,1,139,124,19,152,104,98,188,175,229,200,172,141,137,124,124,53,227,4,103,191,189,204,201,109,237,28,172,180,223,191,58,62,66,232,107,45,95,102,109,116,132,89,37,6,234,50,251,180,121,120,184,58,20,246,213,17,243,80,226,20,91,108,173,77,35,230,177,222,22,226,125,204,44,51,221,91,59,143,154,7,43,77,144,175,142,154,131,93,80,131,225,190,30,209,124,57,106,118,151,80,77,171,185,123,216,252,118,81,195,81,3,39,155,53,112,179,203,254,243,95,35,155,173,37,230,234,222,222,67,254,191,202,132,255,250,180,114,40,132,96,192,175,135,144,221,53,17,178,82,245,124,179,246,136,208,128,205,190,22,26,154,235,58,187,36,207,140,200,79,76,4,237,254,214,117,255,106,209,165,57,56,88,189,7,27,186,48,251,238,235,217,38,235,197,156,119,143,254,42,102,150,153,173,143,14,118,118,87,74,144,175,109,181,90,80,4,103,230,239,165,147,47,96,151,175,78,23,178,76,118,113,103,214,200,93,249,2,186,184,111,191,239,53,87,134,156,191,
+58,46,36,60,90,235,5,18,255,58,46,18,233,177,68,225,146,201,114,248,112,165,253,250,213,49,83,196,88,215,48,232,255,2,106,100,208,239,46,51,205,154,135,143,86,42,219,175,142,12,145,137,18,59,254,94,225,17,166,149,144,201,82,196,28,28,30,172,182,89,191,58,106,14,31,129,27,204,144,53,204,121,200,100,221,208,234,125,212,44,179,89,161,153,71,7,43,163,172,95,29,53,102,206,99,154,172,135,154,117,183,112,226,180,238,7,157,201,140,195,32,89,101,177,198,247,190,90,124,181,101,158,95,19,29,188,30,66,214,141,28,173,212,193,171,131,205,95,217,24,137,226,100,61,60,172,235,231,113,94,47,39,67,172,113,71,142,252,248,118,153,129,182,187,251,112,127,165,144,253,22,112,66,84,241,239,197,201,23,208,198,18,52,126,53,243,93,217,148,235,233,156,47,36,146,251,214,90,179,201,126,233,138,157,223,111,9,53,187,160,102,61,11,246,203,80,243,25,173,252,104,255,112,245,30,240,183,130,39,15,213,175,183,19,140,114,254,47,35,106,137,149,219,58,60,32,178,244,173,19,148,71,151,148,135,179,150,248,105,173,27,94,
+250,2,241,243,45,136,97,130,6,235,225,97,221,168,82,100,136,137,14,152,90,165,167,197,132,189,221,157,149,155,60,223,2,70,214,75,98,221,61,106,125,17,70,150,72,225,221,207,51,77,129,204,175,166,158,118,97,152,181,100,240,218,104,249,2,134,185,71,91,95,13,29,173,245,50,76,254,2,149,80,91,97,172,131,219,75,4,235,254,33,33,187,207,232,233,175,79,33,18,169,107,25,48,107,83,72,186,220,159,209,209,205,125,50,226,63,171,123,190,46,146,204,125,110,162,162,9,179,88,33,34,43,43,19,143,230,45,158,13,228,24,31,197,111,252,228,106,56,125,63,190,82,149,8,170,141,114,184,153,19,140,170,2,241,76,5,84,172,0,129,74,176,81,115,176,71,237,147,174,138,7,123,13,198,127,112,106,147,10,6,255,176,98,15,58,1,202,71,59,90,72,225,139,217,152,115,38,89,168,102,193,187,103,148,67,83,77,176,46,71,135,173,86,157,142,227,109,188,249,167,14,161,91,41,190,141,106,45,62,149,127,120,114,167,3,152,58,76,169,19,181,156,244,212,167,13,209,177,215,86,86,27,202,90,80,181,143,147,142,212,161,228,235,59,213,137,57,86,157,
+24,149,221,84,109,163,43,149,36,82,105,231,7,217,155,115,29,98,215,91,167,105,81,47,175,98,152,213,127,227,208,246,239,117,63,64,109,101,26,24,212,138,44,28,89,13,58,67,25,39,61,199,84,91,29,80,222,98,80,28,174,228,120,233,144,239,28,203,212,217,80,142,132,150,197,73,84,210,196,209,204,163,80,47,49,187,229,84,51,5,109,188,126,171,125,240,242,125,93,138,60,114,100,241,159,84,75,228,48,185,74,134,134,227,155,170,124,172,117,200,7,148,210,251,111,154,83,217,219,39,206,186,63,105,143,236,164,59,255,170,192,238,75,149,144,141,53,41,84,218,205,1,43,151,28,72,225,10,213,106,97,169,236,180,16,165,88,238,98,141,18,206,117,94,112,240,51,239,127,100,116,213,175,40,14,151,115,178,149,98,31,20,188,243,147,175,113,165,146,178,48,129,180,142,157,180,56,229,89,14,106,179,177,165,101,93,222,82,225,32,231,113,137,192,80,231,96,91,51,94,94,121,67,244,193,171,79,168,153,249,82,197,137,170,239,95,121,9,59,210,152,245,100,216,238,138,144,207,188,80,104,181,101,196,181,53,10,5,21,205,196,240,234,3,
+86,99,150,250,88,94,37,177,168,130,33,130,18,146,116,38,214,41,212,96,137,21,121,26,156,35,118,98,181,5,44,105,119,73,141,27,94,188,80,5,156,134,147,27,197,213,40,31,24,203,40,121,153,59,10,103,120,121,66,206,27,151,231,236,195,184,181,95,252,64,118,96,20,63,129,205,34,121,37,139,176,158,170,125,35,96,41,164,97,21,75,70,84,97,177,26,218,170,157,69,129,18,200,90,167,128,85,152,148,202,14,84,170,74,73,32,176,110,168,40,164,210,162,149,85,217,14,245,60,252,24,177,21,140,8,37,70,226,25,232,250,187,17,112,168,82,66,113,176,190,67,73,10,42,54,9,127,9,136,78,239,64,163,66,186,2,202,39,101,213,9,218,58,242,191,165,18,137,217,146,63,40,43,146,25,213,18,140,158,82,218,208,169,108,59,64,158,251,187,79,224,43,47,158,228,223,181,2,181,37,221,82,114,44,254,241,212,62,134,127,194,231,162,129,191,28,27,55,66,95,250,190,180,95,158,235,240,51,255,11,45,227,191,250,90,124,110,98,198,249,223,222,214,110,243,33,197,57,195,215,108,167,57,92,213,175,154,28,29,53,67,203,162,47,190,23,159,155,173,135,
+225,241,222,86,171,181,147,246,187,51,172,213,40,247,233,178,35,40,5,136,130,154,85,163,238,150,169,152,149,69,54,158,34,235,106,18,55,80,159,206,223,151,210,202,171,232,80,241,110,220,233,163,93,116,144,222,245,15,231,249,57,131,207,154,234,93,100,28,194,70,197,109,173,182,82,246,10,181,33,48,223,168,51,227,17,190,156,82,105,182,248,130,220,247,66,209,60,56,235,117,238,160,170,174,222,240,247,75,154,168,249,186,240,64,31,146,21,84,91,127,102,191,127,226,75,108,165,55,202,87,252,87,95,137,22,15,76,15,90,147,91,202,100,25,244,246,45,107,62,12,148,167,175,59,173,228,75,150,197,181,200,178,150,250,136,127,197,193,112,239,94,148,176,186,251,253,164,199,230,94,242,37,203,30,197,14,201,66,44,62,234,67,32,64,239,126,143,31,202,238,17,235,8,214,226,175,210,227,206,78,165,123,193,229,127,159,234,126,159,38,101,247,139,200,121,148,244,88,69,78,179,4,25,58,45,255,22,144,115,248,133,221,83,24,49,254,85,160,95,232,94,43,180,26,250,213,75,155,66,95,78,36,227,152,115,168,125,224,184,215,10,
+173,236,190,213,92,137,156,148,114,86,35,167,169,71,255,213,238,87,67,111,115,92,217,253,122,116,79,236,168,252,171,34,7,55,229,83,208,31,36,200,169,140,149,210,125,83,228,81,253,67,64,26,238,77,192,126,9,244,133,100,102,53,69,220,241,111,1,250,42,91,45,210,253,39,40,167,36,204,132,136,22,41,199,70,94,13,253,106,161,208,58,136,240,102,89,242,145,31,83,161,208,212,163,149,221,183,14,19,220,87,185,54,33,76,138,167,148,127,11,200,249,52,215,174,134,62,237,254,19,208,127,154,107,83,33,89,145,111,25,85,175,138,63,173,95,249,87,65,206,39,185,182,210,99,229,11,82,190,236,48,69,78,21,247,38,237,190,4,247,108,146,22,127,201,68,22,100,142,73,187,149,221,87,0,174,124,169,64,159,140,196,144,17,57,53,184,249,158,254,119,251,193,74,153,114,153,128,76,242,41,149,134,85,162,135,98,233,252,211,165,164,36,250,146,66,239,212,223,105,235,119,28,68,202,114,125,222,228,80,133,232,218,51,191,23,2,59,3,171,35,185,226,193,202,12,201,113,138,69,43,139,186,242,85,11,68,46,206,149,93,118,98,213,82,85,86,
+200,140,224,164,40,153,60,177,80,79,141,14,101,184,90,145,52,217,211,86,56,167,234,59,154,187,81,150,94,244,79,122,41,84,249,225,57,114,29,55,22,100,168,58,227,49,55,124,108,129,11,255,30,26,97,196,227,11,168,160,143,251,152,188,4,83,172,122,201,235,111,199,90,69,242,228,119,209,212,101,235,248,201,219,237,238,132,78,213,16,15,106,121,197,197,21,245,22,203,90,125,86,215,8,215,252,19,254,104,172,31,69,97,217,80,131,213,175,0,160,116,164,42,198,227,179,7,207,33,20,36,85,49,212,223,110,126,55,226,44,234,10,91,253,100,220,90,85,42,115,183,193,11,42,131,81,252,146,216,131,173,154,60,212,145,21,209,85,181,48,85,114,220,112,55,98,51,181,72,221,213,72,251,170,148,104,194,63,119,207,200,235,11,187,63,70,145,166,232,4,57,140,175,218,31,183,168,142,168,98,161,50,96,195,197,8,230,125,15,219,31,251,195,249,48,241,105,83,115,216,238,159,10,21,202,196,43,240,0,110,88,244,250,160,58,213,60,84,248,70,145,132,224,130,167,239,139,234,252,162,129,172,205,49,144,107,188,187,210,93,2,76,209,189,188,
+47,155,211,18,152,85,203,211,202,77,91,153,81,3,152,18,240,16,218,160,63,164,164,27,4,30,138,157,2,21,69,212,44,90,161,120,71,239,186,125,105,225,25,204,119,74,183,121,165,102,220,83,138,120,89,56,72,142,2,165,188,40,89,106,247,65,120,117,102,224,135,63,211,95,178,246,135,113,159,178,162,164,193,118,173,181,238,193,98,69,88,101,138,36,207,250,224,83,172,70,22,37,5,149,172,203,27,202,94,102,31,20,128,0,39,161,154,216,54,140,39,175,206,2,23,193,143,7,145,86,176,117,139,106,84,16,145,45,144,21,37,181,114,170,76,193,193,103,90,161,126,221,200,110,252,49,92,212,206,189,108,187,249,192,183,128,52,85,85,85,235,47,86,147,43,58,216,104,170,84,185,149,43,255,223,84,253,142,136,41,110,20,0,137,208,86,239,163,221,16,21,75,52,66,172,5,226,65,202,249,80,107,102,224,154,91,126,169,162,91,6,73,151,167,47,109,248,107,74,79,11,100,143,182,33,223,88,120,107,103,226,6,58,23,174,157,24,253,154,145,210,179,253,159,115,8,51,219,216,249,105,4,33,61,160,154,85,227,117,246,234,114,83,108,232,28,20,73,
+20,10,162,76,144,197,204,10,183,152,203,101,66,0,67,113,191,34,244,134,220,131,56,3,225,66,144,94,119,88,210,26,90,13,197,133,37,176,250,99,77,33,226,211,228,124,68,17,117,97,45,18,104,8,4,160,236,39,240,247,51,245,31,97,212,18,169,225,247,139,75,21,22,179,8,135,132,231,127,218,148,64,44,98,156,50,167,186,199,11,12,70,122,0,12,117,34,153,5,1,7,102,250,78,235,0,146,172,160,93,90,101,84,111,134,80,71,100,16,74,83,38,225,38,194,30,170,0,235,130,194,11,206,90,24,13,128,142,25,70,23,121,185,224,242,85,9,165,87,25,255,234,138,5,57,46,171,42,115,19,157,170,103,218,77,91,11,179,64,228,149,151,59,1,145,151,213,78,187,46,186,181,18,131,86,200,155,5,180,155,207,202,190,20,194,201,168,75,199,221,18,204,156,8,235,159,92,160,179,25,167,237,171,237,184,3,107,30,65,10,151,140,249,236,88,49,216,158,240,228,200,248,31,38,34,0,80,169,46,109,119,173,56,157,37,151,164,56,45,169,10,232,132,224,47,2,79,58,188,184,55,133,170,183,186,72,69,18,33,44,6,168,187,96,25,197,204,96,79,240,91,19,175,161,108,
+55,13,232,101,243,227,237,98,63,36,153,131,166,152,1,147,68,14,165,145,216,16,242,42,66,120,219,48,53,148,193,181,123,216,16,140,245,74,21,42,213,227,176,215,70,43,92,81,4,85,195,206,167,92,121,34,197,96,69,56,99,225,209,142,202,172,130,189,0,92,184,215,76,29,230,210,72,148,74,140,226,89,244,23,238,46,129,1,139,251,16,252,162,23,187,230,165,184,239,197,123,41,138,38,154,20,179,123,98,2,110,196,73,138,238,17,244,245,187,223,98,199,69,52,110,155,202,130,212,254,228,246,63,11,188,230,115,93,69,103,33,241,18,85,80,170,221,56,97,4,20,194,201,220,248,246,65,69,147,41,249,76,177,194,88,114,152,82,231,57,213,148,21,182,205,117,15,32,243,85,121,114,241,2,81,102,93,126,195,131,9,124,109,102,135,197,104,236,134,155,105,118,113,241,252,73,182,33,117,100,43,96,119,180,72,48,121,45,251,116,78,244,185,255,111,90,42,167,59,175,61,91,202,24,129,109,188,190,179,243,111,70,2,86,83,144,95,157,186,170,87,226,212,46,188,152,61,40,15,23,138,4,42,136,107,65,76,157,219,247,42,215,232,176,240,239,236,
+50,27,171,6,10,71,123,165,96,202,74,66,111,86,29,146,146,96,170,14,233,198,129,174,198,179,226,241,144,169,40,210,137,10,202,75,130,213,38,86,120,40,244,64,177,178,89,170,246,227,155,17,172,107,212,41,11,37,128,106,37,34,35,160,252,124,217,227,42,36,194,174,8,44,174,64,146,166,170,94,237,99,220,129,120,213,181,51,146,167,33,132,107,151,53,216,141,142,212,184,156,113,107,227,123,85,67,215,100,212,144,123,8,77,38,11,58,253,34,19,58,94,135,195,136,220,86,68,240,76,144,107,14,154,223,178,65,121,237,182,77,41,243,27,33,146,176,44,248,241,235,123,224,23,54,90,194,77,68,122,123,78,1,217,206,244,110,34,240,35,52,220,35,244,94,58,197,182,108,76,76,105,44,136,135,93,162,8,129,222,5,246,40,49,89,107,191,193,200,214,111,1,36,205,66,21,47,177,42,68,170,70,188,1,141,65,92,197,10,235,241,138,79,196,232,220,207,208,159,155,74,240,194,216,18,60,86,237,95,155,79,5,212,241,198,136,194,220,250,110,81,13,24,170,164,9,176,44,192,48,32,198,18,244,136,118,116,27,118,85,184,70,64,62,192,236,6,212,137,
+39,132,100,217,162,203,238,161,144,0,137,165,116,209,89,44,26,86,21,40,150,88,147,70,141,108,31,169,101,9,89,35,68,238,56,229,110,60,46,137,103,110,148,208,10,164,209,242,244,77,140,21,56,207,54,12,207,54,59,173,146,21,245,12,55,56,200,6,133,232,184,101,195,45,103,100,130,132,7,51,117,101,110,178,71,204,175,139,3,174,177,218,204,188,131,211,5,128,121,108,151,61,139,246,115,31,92,142,42,97,98,80,243,41,197,206,253,74,81,221,26,165,166,245,243,27,43,181,204,178,166,96,111,180,134,155,245,200,54,67,221,15,38,163,83,229,152,229,36,106,29,133,92,112,172,43,197,236,115,250,182,57,155,133,136,91,32,38,151,42,148,22,125,143,169,139,118,10,235,170,85,53,83,203,54,177,232,57,108,23,98,157,180,110,54,125,79,197,135,151,205,128,22,40,174,64,137,165,214,35,52,242,56,39,94,229,150,9,6,83,130,119,172,182,190,179,173,13,36,204,117,231,197,149,85,126,197,64,185,227,85,40,49,109,86,105,170,21,82,64,180,48,255,105,219,106,25,75,228,133,113,124,118,231,179,105,159,10,242,113,106,70,243,186,55,110,
+50,166,46,243,93,237,20,113,62,13,54,31,245,207,145,243,90,170,162,149,11,192,80,208,182,196,56,115,86,167,225,166,70,147,128,94,168,62,94,123,119,196,5,66,198,35,141,243,112,165,70,227,173,13,120,20,94,106,228,211,78,246,157,172,207,239,126,200,198,246,114,229,167,75,168,162,193,230,103,209,38,144,117,35,200,199,134,110,77,202,27,90,254,239,28,12,250,49,179,62,226,166,139,125,118,239,102,61,93,141,162,109,84,5,22,192,163,149,140,150,213,43,125,143,220,55,163,46,242,171,213,141,118,9,211,46,236,215,120,53,7,228,45,55,44,160,122,155,183,227,13,177,13,187,27,34,112,82,48,148,18,45,91,169,170,95,143,192,54,170,247,122,212,125,237,226,83,55,207,16,9,182,7,183,116,10,191,104,75,65,139,159,116,233,70,190,223,212,82,215,172,204,227,11,211,98,99,80,206,126,96,82,161,170,52,235,22,77,105,83,62,38,147,0,0,235,4,122,161,171,236,253,136,123,118,76,145,81,216,183,163,29,98,27,192,223,214,142,118,176,196,171,147,65,75,98,120,72,192,249,108,116,213,225,246,180,23,254,177,103,13,93,12,113,111,
+149,78,243,156,187,28,153,162,154,138,99,236,146,68,8,128,26,194,105,159,129,90,97,184,194,161,146,214,8,241,19,22,158,189,217,50,20,132,72,240,123,219,86,137,103,21,42,23,84,108,184,51,86,92,18,58,180,157,87,186,219,166,235,248,217,122,163,118,58,70,189,238,78,51,8,245,92,31,2,22,43,191,5,52,44,195,169,225,50,118,132,106,253,136,3,138,232,4,203,222,93,8,133,172,22,154,92,229,48,150,161,21,141,25,119,72,42,178,213,175,78,146,238,229,126,81,110,244,50,81,30,227,108,136,148,81,142,78,3,110,152,185,80,35,29,245,202,253,170,84,247,214,126,29,240,112,120,209,116,141,103,99,216,115,45,19,34,39,188,36,51,90,46,4,108,6,45,40,13,5,25,195,18,135,2,224,201,240,66,43,229,145,165,77,180,98,126,237,171,9,249,96,130,150,157,198,107,57,202,161,101,151,157,191,5,249,119,197,253,18,128,225,174,122,231,102,62,122,47,147,214,20,146,196,6,239,81,21,31,99,4,35,20,19,59,46,236,109,155,187,35,164,197,221,66,13,110,4,195,242,171,200,15,54,42,118,250,35,237,244,185,43,228,252,45,153,0,126,99,96,16,215,
+166,243,160,66,150,14,249,107,227,35,249,5,110,209,129,60,136,246,16,156,196,224,85,98,171,35,232,130,125,115,9,187,36,243,118,59,39,116,197,253,97,230,215,177,22,131,6,118,142,187,85,229,0,19,110,6,8,148,242,220,174,183,96,101,132,254,92,87,52,158,252,175,147,218,19,144,21,110,139,218,128,39,9,42,73,175,66,236,17,33,186,197,73,215,211,104,73,253,134,140,164,7,169,94,122,9,89,0,245,75,191,160,80,103,158,255,165,24,10,247,13,212,33,159,243,249,165,191,73,31,24,140,212,7,179,141,94,169,101,166,161,197,40,37,211,3,175,178,255,64,113,71,154,179,62,138,98,152,126,70,255,198,110,236,102,49,187,49,199,116,123,93,245,191,235,114,55,12,145,193,198,14,119,61,198,24,149,181,236,112,91,19,27,203,102,185,197,187,164,116,81,129,87,168,199,132,211,109,43,120,60,6,80,144,238,216,121,166,40,176,178,236,134,100,35,26,46,107,22,81,200,12,52,198,182,171,215,181,184,82,235,118,201,128,232,208,175,187,33,253,7,15,78,244,0,125,67,247,92,13,65,40,128,128,26,110,165,204,121,120,168,242,38,50,21,52,121,
+176,219,164,104,8,18,105,96,109,19,201,18,131,14,195,93,58,12,127,44,31,45,150,226,199,42,203,137,80,223,183,198,24,220,49,3,163,40,46,167,27,191,127,155,255,30,239,129,107,216,181,167,23,174,229,139,43,196,184,151,167,183,137,58,63,250,143,64,16,241,26,201,116,145,255,195,240,243,185,70,134,189,207,53,34,45,39,255,92,27,173,246,58,109,150,85,132,95,152,178,79,183,50,191,123,115,185,7,247,34,140,139,240,172,170,70,111,246,9,185,8,92,178,178,88,246,62,175,69,13,62,194,184,181,154,254,242,235,185,183,139,170,246,172,182,100,200,66,165,124,19,69,226,141,32,205,32,24,221,146,0,180,118,35,125,52,72,32,15,187,199,0,160,69,126,46,114,232,88,130,76,111,211,251,136,124,155,6,76,201,93,241,178,226,93,86,161,37,253,67,8,26,136,66,59,186,31,204,228,141,137,177,246,157,104,79,44,170,125,153,132,50,45,170,202,96,169,150,112,223,202,188,182,15,125,252,92,186,51,22,247,184,153,5,81,244,91,208,82,188,108,126,198,229,60,199,247,68,138,3,189,49,148,199,21,201,161,226,14,54,140,54,36,58,146,149,
+244,68,255,92,4,18,75,158,100,40,247,141,172,15,227,115,36,130,249,40,184,87,66,237,98,236,186,136,218,228,22,132,45,205,233,139,128,90,33,92,66,34,202,135,232,36,130,178,40,53,129,159,107,121,116,155,142,2,156,224,218,230,166,244,67,205,68,248,113,49,110,240,72,144,216,42,51,255,144,72,25,51,21,205,3,140,16,176,146,126,239,212,108,76,80,15,17,65,95,92,174,135,226,145,227,132,39,162,196,140,224,120,217,22,73,204,186,100,44,181,246,125,171,194,27,178,11,30,98,19,201,130,155,223,95,147,223,24,211,39,21,197,96,57,136,103,152,141,39,157,114,61,109,235,158,25,223,212,210,125,135,166,15,245,65,142,68,226,8,21,129,146,232,17,153,106,177,238,128,80,177,88,153,49,101,158,166,15,129,116,15,14,8,11,78,62,191,143,99,162,216,125,245,108,195,6,61,218,222,222,140,200,23,29,203,114,255,72,56,194,111,124,74,155,166,45,141,36,68,148,0,29,40,130,168,11,23,56,234,174,47,91,82,247,123,10,71,205,81,242,82,91,127,18,151,218,57,105,43,99,148,229,74,174,158,45,247,23,35,7,177,20,116,23,110,134,138,122,
+58,220,120,247,52,236,64,190,197,236,228,146,251,109,153,86,73,103,17,198,24,37,82,78,169,80,103,145,157,197,152,81,12,12,88,64,64,124,131,65,109,138,45,222,83,17,66,219,82,249,131,236,231,119,167,98,120,228,9,12,133,233,239,66,197,84,38,84,231,15,44,122,223,30,16,180,80,68,202,118,138,160,223,104,230,100,245,0,44,206,68,251,82,74,13,150,68,25,17,218,80,156,66,154,162,66,255,33,14,170,204,60,136,107,197,237,75,47,181,169,148,219,254,95,113,51,174,5,154,225,109,5,80,11,74,114,249,161,203,85,250,68,204,177,57,217,64,193,184,17,249,27,19,133,168,101,196,183,25,163,178,8,139,244,101,102,36,218,13,233,107,113,193,237,82,20,182,36,140,111,16,127,192,26,121,216,156,89,153,124,176,165,222,210,219,82,193,115,101,44,218,55,120,45,24,136,229,48,188,128,141,65,58,52,150,20,120,7,217,26,138,107,139,114,2,27,108,74,33,62,209,208,102,34,56,129,157,43,226,168,54,128,30,204,240,194,30,212,208,30,101,137,240,201,22,137,205,74,35,13,212,201,133,101,187,175,31,54,222,108,95,161,64,94,9,30,20,70,
+184,90,252,231,219,121,112,67,68,164,249,186,134,63,126,212,238,195,226,200,64,3,213,0,210,146,126,125,17,32,154,176,123,15,81,6,76,11,101,34,192,123,193,53,67,166,44,200,64,187,216,119,81,162,66,161,190,191,98,162,17,155,76,12,101,169,218,197,56,169,110,225,122,46,37,173,154,100,107,147,59,190,155,29,251,222,236,243,241,244,178,223,229,177,95,228,238,8,127,114,31,223,111,20,201,78,136,173,196,151,196,197,189,41,217,221,71,148,75,255,208,195,80,198,122,244,72,89,49,99,45,166,208,20,8,90,202,22,202,138,232,44,215,15,112,142,71,241,30,222,163,218,18,66,208,6,216,131,61,110,168,217,104,74,189,111,214,238,195,174,38,108,54,114,5,50,109,136,232,190,231,118,195,83,45,147,22,177,175,43,79,205,222,141,68,109,188,18,232,196,150,101,25,1,107,2,62,110,32,72,87,86,48,157,145,7,204,110,19,186,210,237,170,70,75,161,19,167,36,24,32,16,151,150,30,48,156,16,108,167,35,220,5,5,157,132,53,91,131,42,4,13,230,5,183,202,73,52,247,180,165,105,102,62,61,255,161,120,160,137,127,187,89,8,226,126,130,165,
+237,219,93,22,170,150,24,19,41,163,37,236,86,122,219,8,147,197,254,171,46,43,179,187,224,45,226,175,49,40,201,100,23,160,18,230,123,240,16,124,134,185,251,141,148,204,33,40,137,59,221,98,181,65,181,235,7,7,28,88,136,141,0,234,23,177,71,196,51,192,149,97,129,24,2,128,18,68,239,234,75,202,88,184,161,81,15,91,221,156,178,64,192,240,102,228,25,242,231,165,159,114,60,4,71,98,34,207,236,102,88,37,67,64,128,198,203,142,21,174,209,68,175,134,91,223,68,133,40,237,9,50,147,125,115,11,114,234,194,60,38,174,123,146,132,7,128,198,52,80,187,244,129,183,144,154,32,214,27,252,89,211,180,153,159,177,3,91,250,128,181,210,97,215,125,196,4,140,222,10,145,162,240,157,41,250,240,174,217,9,18,58,102,25,42,118,7,83,161,46,176,152,74,121,2,52,23,159,17,46,1,9,150,251,162,23,139,1,163,12,115,14,87,146,119,138,19,107,230,130,188,140,170,98,100,147,186,15,152,38,106,36,241,48,117,204,154,48,119,123,249,209,130,8,117,148,21,192,140,56,93,10,138,209,251,82,81,89,176,4,208,6,239,235,72,155,136,149,110,2,213,
+194,219,70,13,122,22,184,12,64,145,245,15,35,220,162,21,162,138,182,73,187,43,227,164,132,60,92,65,135,3,203,235,218,136,183,33,88,42,28,144,74,67,123,223,46,76,85,11,63,9,224,184,118,132,62,97,16,207,137,15,24,79,108,102,210,186,109,108,65,200,59,161,157,25,174,210,108,48,32,67,121,50,64,153,57,32,160,101,81,186,59,66,11,95,139,34,71,34,153,110,138,45,200,93,167,58,176,123,17,68,6,202,66,98,6,183,24,66,100,126,194,67,182,9,70,22,226,8,98,176,55,2,60,190,136,30,172,89,58,144,8,145,97,175,231,230,99,216,233,2,237,59,76,117,233,61,146,66,137,87,241,138,118,187,124,244,125,8,177,88,74,73,78,110,207,128,220,165,30,124,171,169,199,200,89,237,140,48,161,226,230,247,9,177,104,83,232,32,216,131,125,3,37,183,71,223,193,239,92,102,42,154,161,182,0,37,130,35,249,1,108,88,152,82,157,115,127,50,91,246,225,18,68,123,10,38,164,179,82,194,148,8,146,129,233,139,237,158,196,16,137,128,192,145,236,129,37,96,16,51,0,181,189,34,11,72,8,19,183,65,45,24,198,201,252,12,92,200,101,165,169,247,10,128,
+107,156,196,80,232,195,174,251,189,163,35,196,160,122,29,74,65,90,76,159,30,162,12,133,42,176,166,76,171,239,237,112,180,12,47,175,199,221,246,64,196,19,116,88,242,86,201,36,193,116,6,109,218,189,158,42,206,5,200,67,139,222,114,102,129,243,76,68,166,200,189,226,106,225,100,80,23,61,66,171,230,102,25,13,66,141,38,235,18,175,46,23,124,219,43,156,20,239,21,214,40,152,117,171,89,164,102,23,170,166,237,165,92,138,45,21,99,87,236,231,254,64,219,48,248,12,57,220,161,117,156,161,125,110,45,38,31,200,84,199,117,216,172,150,171,238,70,164,92,60,93,84,169,195,153,195,1,103,208,34,72,63,40,22,132,103,62,251,105,62,187,106,60,172,99,72,17,91,83,178,139,130,241,61,238,107,102,46,150,5,194,133,166,142,0,178,94,100,24,128,237,99,45,162,249,32,150,17,121,73,180,251,214,38,110,65,7,40,0,21,160,11,90,131,143,224,72,41,79,133,89,156,1,113,94,46,160,230,210,163,116,207,138,60,78,50,185,202,133,44,94,99,68,112,87,220,238,105,244,129,77,231,203,22,23,173,104,45,169,244,254,247,231,186,81,250,194,14,
+133,40,173,245,149,64,208,215,112,164,35,28,219,72,142,100,144,206,88,249,3,195,236,130,25,34,182,199,68,215,169,202,103,17,217,26,133,232,211,191,180,221,199,198,225,159,13,232,143,73,40,64,83,107,79,222,175,106,250,129,120,55,203,61,37,159,109,75,27,225,132,67,27,237,41,91,3,31,122,181,203,225,36,125,205,206,146,109,243,99,237,242,54,57,92,145,41,123,166,0,241,99,131,135,52,168,188,185,216,96,82,235,112,112,43,249,51,42,225,183,90,111,50,191,76,126,79,95,212,163,127,80,246,167,166,106,149,201,95,218,70,179,25,246,185,126,83,133,182,182,44,63,147,45,248,6,111,116,230,118,222,175,166,50,134,201,159,207,137,31,107,215,164,177,36,15,210,94,63,54,244,176,118,253,41,132,95,11,50,153,27,201,223,42,218,87,187,193,58,237,250,157,113,210,140,80,21,171,179,253,177,193,207,163,218,31,87,149,153,248,179,63,38,189,235,218,31,149,7,225,45,127,162,179,73,229,95,250,14,47,150,15,170,239,164,15,42,79,42,75,184,64,5,127,180,63,180,125,211,179,54,132,161,147,191,246,188,219,31,111,243,99,95,79,
+250,43,158,188,255,144,60,192,203,239,246,198,204,28,143,149,181,125,223,174,13,199,72,147,178,69,117,181,210,177,39,105,14,57,94,175,141,45,44,13,39,149,244,111,31,129,31,107,147,110,133,66,210,174,121,84,155,164,43,183,72,251,120,163,131,154,234,25,36,127,142,101,126,172,77,103,43,123,230,81,173,74,128,11,248,20,1,154,176,43,123,54,242,178,216,107,109,86,165,205,20,230,143,169,32,152,45,35,13,126,100,112,254,83,118,29,150,217,159,16,214,77,254,146,81,111,219,149,69,114,228,242,99,13,23,57,89,156,128,117,126,28,234,73,202,34,142,245,248,36,149,25,142,53,158,76,106,183,195,180,179,208,27,180,144,55,120,82,251,88,101,166,202,212,245,232,31,31,135,131,5,221,83,227,167,100,70,174,163,150,52,171,242,251,194,130,68,241,90,83,37,178,228,47,5,64,50,161,198,45,59,133,78,136,7,17,63,123,144,0,219,221,109,128,226,213,45,92,39,180,234,247,28,245,150,74,49,255,36,104,255,43,66,23,150,183,84,52,246,140,103,233,116,182,20,217,2,199,47,140,47,229,159,63,146,32,227,188,246,170,61,66,218,152,
+117,88,26,235,165,13,142,189,206,23,113,56,198,179,236,133,57,246,115,252,30,61,170,210,226,177,56,238,6,102,39,23,208,162,116,251,3,237,1,140,72,213,155,18,194,9,231,238,55,67,110,131,135,215,165,62,111,126,63,86,180,85,1,72,131,225,185,34,44,231,242,35,204,15,200,107,23,228,66,90,16,78,70,16,82,177,132,212,3,99,28,159,7,55,158,48,82,121,156,76,196,66,166,122,191,30,90,152,49,229,104,54,119,15,44,7,68,219,54,152,97,18,70,247,52,33,217,190,214,25,70,111,21,130,224,216,168,65,48,22,233,77,97,1,179,207,135,153,229,9,121,206,29,99,191,125,115,126,81,39,209,211,106,21,88,20,85,46,148,204,78,237,74,219,230,69,165,163,211,43,203,111,80,170,28,200,231,81,236,233,124,66,2,233,207,242,10,48,174,99,218,210,198,70,206,207,230,43,108,146,169,116,207,244,154,181,49,154,199,36,220,224,126,99,113,249,110,35,62,88,184,248,185,130,58,175,134,96,233,158,183,186,211,57,76,238,59,140,96,34,104,216,127,36,235,168,3,76,37,97,181,60,115,98,65,114,104,114,104,88,149,75,47,139,143,189,164,137,101,84,
+184,115,64,184,242,96,255,159,110,228,95,42,138,1,12,196,47,152,162,108,47,147,128,50,248,149,28,99,123,22,164,90,120,161,4,15,191,25,12,80,36,249,114,132,122,9,234,217,155,56,57,28,249,144,29,203,152,100,172,114,7,51,48,156,251,142,135,66,226,85,24,0,171,220,123,1,26,218,190,35,169,20,67,184,211,235,19,17,15,219,23,154,10,209,91,173,141,187,43,250,1,243,112,68,118,25,241,102,207,118,17,10,236,247,184,132,134,133,83,146,55,63,106,255,94,251,56,198,19,201,30,154,103,248,4,242,209,34,6,151,6,224,131,79,241,129,219,152,45,241,75,91,48,24,187,20,119,96,104,240,211,159,29,213,106,117,232,241,15,54,137,33,97,4,128,0,176,30,181,163,234,15,240,195,148,81,15,117,228,89,157,29,245,248,59,148,129,126,80,194,19,111,178,99,181,85,171,7,40,72,110,155,102,245,97,126,93,246,25,201,251,114,220,189,163,161,13,81,62,53,119,236,170,223,27,88,54,5,116,225,233,193,11,128,107,117,60,218,101,155,63,113,119,174,66,57,74,89,136,214,126,58,102,92,5,27,152,21,130,33,4,56,112,42,144,27,150,200,124,73,134,
+168,160,75,251,76,38,65,70,156,217,96,246,120,96,188,197,162,79,219,208,51,108,227,68,67,35,172,103,100,160,30,69,208,64,117,117,1,237,48,3,11,25,51,147,17,91,22,168,21,218,227,251,133,199,96,103,54,236,52,65,217,201,18,210,25,140,199,239,109,85,131,7,170,190,22,132,147,157,221,34,50,229,236,38,2,129,146,108,43,112,210,135,74,53,127,211,139,226,2,145,124,65,134,60,80,46,146,202,154,4,240,132,187,25,129,14,17,146,34,10,244,154,195,120,202,14,146,39,77,166,57,71,87,244,126,206,38,20,93,91,151,1,191,203,160,138,68,103,249,70,234,67,68,171,184,149,189,88,255,241,255,105,176,143,203,248,141,198,227,68,18,105,128,232,8,10,255,14,2,48,193,119,32,93,143,17,116,147,49,76,159,89,31,124,75,186,177,248,135,185,225,137,71,233,84,225,147,34,229,129,125,228,160,127,213,157,227,164,68,210,98,214,41,109,199,65,196,71,122,168,160,77,251,124,152,17,154,148,185,174,190,18,38,150,76,100,195,208,157,34,246,17,176,118,25,161,80,56,195,88,204,86,191,140,200,122,125,27,139,191,234,48,205,53,217,60,18,
+145,34,25,137,85,247,107,29,12,195,38,138,2,98,86,46,117,183,39,119,246,170,31,83,184,162,115,186,148,112,152,155,97,192,194,137,32,216,140,135,128,101,15,224,65,198,23,214,183,118,193,181,33,20,233,187,74,59,249,81,173,201,9,50,100,222,123,83,71,90,123,35,109,52,165,146,203,34,7,80,28,4,24,227,55,229,221,45,99,133,98,253,140,35,107,173,45,69,192,57,70,89,237,203,35,226,22,16,2,172,112,184,160,203,25,68,203,202,50,170,189,21,185,221,146,157,238,155,97,49,86,99,21,108,70,49,99,54,87,74,85,10,86,149,183,55,136,37,176,187,59,71,152,108,123,22,130,65,181,89,219,221,34,63,63,118,162,173,1,52,66,152,25,107,37,165,7,122,33,126,4,135,166,205,151,56,111,62,134,0,5,100,34,186,6,39,203,56,200,212,191,61,252,180,249,131,184,246,200,152,39,68,145,56,26,206,9,41,203,40,166,204,24,157,228,163,62,129,26,104,78,153,132,194,41,134,181,34,237,232,132,138,110,223,72,77,32,82,106,188,178,133,89,85,232,208,98,87,62,172,136,148,142,75,103,56,13,80,33,63,4,62,72,128,38,61,196,213,30,108,253,120,57,125,
+92,243,255,88,123,55,113,126,130,158,48,17,72,72,29,143,126,90,192,65,103,64,224,242,167,186,78,136,213,121,181,219,255,64,84,217,126,34,241,151,128,236,194,143,178,9,244,83,34,87,106,63,14,218,104,141,234,107,13,251,205,84,20,157,71,29,249,248,220,117,226,143,219,246,152,126,250,163,9,65,169,202,136,13,242,8,81,167,210,182,63,149,218,181,223,77,250,113,61,246,83,29,72,62,49,58,40,212,12,26,31,38,237,110,132,68,189,214,31,191,230,191,235,195,96,239,100,6,128,127,52,45,250,37,163,187,222,126,124,98,54,121,40,65,179,62,28,65,235,27,32,225,243,23,67,18,184,164,254,248,85,80,187,255,239,232,50,159,252,240,35,150,171,14,25,221,13,192,253,21,38,126,67,230,219,209,225,254,191,253,80,127,188,241,82,113,125,184,9,222,221,103,167,75,33,70,136,138,109,163,205,31,183,245,226,227,114,46,162,19,40,83,187,34,9,49,53,140,124,112,73,62,114,90,243,122,118,243,147,186,177,249,68,120,50,217,151,63,213,137,88,222,178,75,245,83,253,174,151,71,82,136,77,24,37,246,206,242,87,140,109,168,33,33,224,142,
+217,174,132,49,166,108,14,212,227,172,32,6,89,250,141,217,120,114,148,53,217,168,101,102,85,50,36,121,102,134,192,88,254,186,109,122,240,34,7,146,200,122,32,182,248,19,196,13,90,34,73,102,231,114,17,34,86,233,122,27,136,68,166,112,76,162,69,107,225,247,226,31,177,235,99,43,153,83,56,98,48,139,187,124,219,239,18,119,239,44,212,38,170,186,99,70,15,165,147,184,157,58,136,247,189,51,140,81,54,4,89,70,96,15,67,164,47,68,217,28,132,150,247,173,253,73,36,143,41,137,240,160,120,219,44,98,55,57,204,209,34,18,170,48,123,48,133,196,196,62,74,226,236,185,225,103,234,43,244,150,66,96,194,203,132,233,178,254,146,150,73,143,0,119,113,195,230,169,29,29,170,39,15,92,70,198,100,18,12,86,172,49,207,139,128,150,147,20,45,6,53,45,81,128,27,221,11,4,188,77,91,80,161,96,180,197,92,56,123,171,93,73,233,20,33,26,177,239,24,132,240,20,34,22,222,131,146,44,173,223,106,11,27,66,27,213,228,110,184,145,163,206,42,150,117,182,232,4,36,155,178,188,89,168,106,55,203,192,51,171,177,218,123,213,82,41,55,13,4,224,
+152,250,62,79,22,183,185,228,205,138,82,98,32,64,72,194,145,20,166,165,83,43,28,152,24,153,209,192,252,140,187,91,98,187,88,116,95,201,74,144,195,158,153,217,44,91,68,115,229,72,211,118,132,225,188,112,195,51,63,68,233,179,54,123,64,195,203,44,80,20,3,19,197,148,178,145,221,61,178,244,34,110,133,253,178,182,131,93,99,195,51,236,170,85,244,123,193,119,160,233,83,254,183,236,7,29,250,13,7,140,197,14,182,239,145,115,202,94,33,27,209,165,188,173,18,83,129,23,35,168,149,244,162,44,111,147,243,131,111,101,102,39,139,164,198,4,144,44,205,88,24,232,143,208,26,68,137,43,36,215,163,5,178,112,252,65,45,216,176,178,96,136,153,226,248,105,88,151,215,74,179,2,46,104,193,114,202,144,113,132,102,144,253,122,36,47,160,75,96,65,59,39,242,28,216,212,36,23,1,79,135,124,45,132,173,231,155,160,87,162,153,130,23,239,71,113,34,73,25,140,182,74,100,61,42,243,17,162,215,224,149,83,31,182,104,150,139,43,195,143,104,182,31,146,142,246,155,99,56,120,165,118,60,56,37,217,36,103,85,228,173,20,138,120,132,71,
+144,94,224,152,6,51,83,54,164,195,231,224,226,52,144,1,237,164,126,30,83,170,31,71,14,46,167,18,162,115,144,231,202,67,57,117,84,38,39,170,137,70,176,228,199,37,114,8,137,132,77,202,250,146,17,202,101,95,210,55,161,49,227,6,57,48,176,174,161,103,179,110,171,173,243,50,10,197,160,127,250,221,185,178,61,162,24,54,220,38,66,52,246,96,162,41,65,51,66,65,241,26,219,87,54,17,24,210,1,57,145,24,178,116,44,169,44,200,111,179,222,203,49,44,159,5,233,58,34,161,242,154,29,53,232,4,0,77,98,120,180,211,146,6,13,148,156,12,120,140,83,181,64,160,116,81,30,146,122,234,214,37,1,22,9,187,76,152,188,74,16,136,189,176,127,106,209,51,157,72,211,171,245,243,98,122,47,161,248,186,245,140,127,21,215,238,37,71,118,98,69,65,186,141,188,99,49,172,224,40,216,240,54,13,3,62,122,162,101,134,136,177,76,225,78,201,66,183,92,198,11,160,214,185,78,172,0,229,101,194,74,150,143,66,144,160,0,9,22,94,130,112,145,188,197,185,62,84,53,145,208,112,57,135,191,26,44,65,140,113,5,39,211,216,218,227,13,22,151,216,40,6,49,
+149,167,152,76,50,146,253,102,213,39,211,224,69,213,183,78,157,241,191,22,71,136,34,62,98,170,8,26,220,143,66,36,182,207,125,29,33,89,161,108,23,208,81,120,237,165,199,238,134,69,132,18,36,211,44,191,37,244,15,210,36,122,36,31,137,76,70,124,85,38,23,123,94,25,19,208,154,43,173,180,242,150,70,72,66,12,129,110,13,221,230,150,49,90,18,49,80,57,3,228,183,211,42,98,81,89,199,214,150,94,172,119,243,252,83,183,63,152,5,33,152,138,48,120,87,38,102,172,84,33,9,53,5,146,192,178,168,128,237,134,78,68,4,221,190,40,245,14,39,242,44,244,89,245,80,13,115,5,1,185,25,7,201,137,254,150,170,71,115,82,75,70,3,49,242,111,131,0,32,131,130,148,86,203,255,109,72,240,123,112,194,213,76,104,41,190,58,90,199,73,45,96,10,118,220,231,220,84,132,52,206,138,112,108,62,97,226,5,200,87,144,199,209,48,203,189,241,104,127,193,163,69,23,94,143,26,110,236,7,155,127,209,193,173,120,21,125,11,144,52,156,78,253,229,232,60,175,244,131,83,79,20,194,82,180,230,126,7,194,190,28,113,57,135,245,199,191,10,177,39,127,205,
+81,12,93,51,90,119,118,211,56,220,137,158,147,119,233,142,86,248,92,58,142,159,247,125,66,183,43,220,157,66,196,225,235,40,250,80,65,150,76,71,219,8,33,78,44,52,59,166,42,22,99,112,60,163,155,148,172,156,252,207,195,157,202,155,96,197,116,80,34,225,100,12,144,1,101,249,167,168,155,31,11,151,19,44,191,111,88,233,142,198,53,94,101,61,35,180,118,245,83,61,121,213,105,235,177,41,9,169,16,153,105,63,110,183,31,111,21,78,91,132,234,51,206,155,185,120,63,110,203,72,125,92,51,39,110,45,206,211,201,158,130,208,171,204,151,60,8,28,32,137,98,236,247,46,125,39,134,152,150,177,160,217,115,189,148,11,139,136,212,218,124,120,31,142,245,56,17,5,254,127,25,241,255,87,70,76,201,98,125,86,92,224,190,47,166,119,130,22,111,217,89,182,211,146,170,189,140,57,58,36,240,35,127,97,8,26,72,193,46,125,52,18,204,138,189,233,217,13,187,57,211,49,121,67,236,209,246,116,128,177,159,115,252,90,78,232,146,222,160,70,21,13,176,32,148,122,70,229,150,221,202,111,149,166,117,3,73,42,22,193,133,135,162,184,39,204,
+109,64,152,113,27,2,170,21,69,139,34,92,224,196,160,232,151,66,234,71,78,164,37,109,24,115,215,129,204,210,31,41,142,174,163,239,128,134,133,207,70,232,216,126,8,102,153,218,116,83,152,173,206,180,54,129,129,157,36,81,153,29,72,179,244,112,130,71,165,77,108,155,125,142,115,95,152,140,178,187,170,49,2,115,0,60,239,91,165,139,138,237,250,191,158,18,16,83,25,153,161,54,220,240,67,91,251,90,152,48,56,162,171,44,147,226,208,97,112,64,6,164,188,6,189,117,78,232,176,246,86,59,51,24,38,33,29,53,4,226,237,5,168,224,79,197,16,16,224,33,193,209,210,20,202,173,254,96,163,7,195,170,200,103,85,170,173,76,63,48,37,227,95,219,111,222,95,120,61,164,45,227,210,153,250,244,61,22,98,239,237,137,109,36,208,60,120,214,209,227,176,158,25,229,20,203,7,164,201,252,185,251,14,119,131,19,133,246,133,227,220,90,103,102,65,21,32,223,104,175,108,163,219,22,119,152,60,201,22,233,137,61,67,152,97,143,79,97,214,152,194,234,204,28,87,199,166,0,177,135,36,89,216,30,134,66,76,44,116,59,246,101,72,178,253,56,163,
+1,71,140,246,152,189,154,94,121,58,133,89,60,135,150,197,128,74,12,229,48,138,165,46,184,141,38,179,86,71,144,64,94,188,205,131,147,169,91,195,59,115,181,168,208,131,227,104,6,171,177,137,67,27,38,115,107,39,35,0,169,158,180,46,83,27,196,10,169,51,192,32,192,224,53,147,124,98,120,70,243,1,161,99,238,148,48,243,82,186,146,216,145,182,145,44,212,191,249,63,146,142,205,34,166,197,108,62,178,138,2,190,109,235,0,73,48,216,197,17,176,177,202,121,88,140,68,116,142,231,232,119,78,40,72,175,179,53,247,177,67,77,42,0,45,177,21,119,174,99,85,133,232,20,130,167,120,150,14,42,187,106,23,133,88,76,160,128,40,21,154,179,149,162,229,101,143,51,228,33,24,182,0,162,215,104,112,129,4,1,225,144,155,247,202,165,121,134,3,167,76,219,192,76,65,183,58,254,218,137,7,3,142,172,208,48,178,7,132,72,202,183,143,149,28,45,36,73,136,8,192,12,178,80,140,172,216,67,164,23,19,41,198,12,37,20,94,43,142,81,188,234,147,3,64,207,226,85,59,43,202,174,21,27,195,6,52,179,12,123,112,172,204,234,116,238,246,132,148,118,
+44,46,130,64,128,106,135,142,221,226,40,215,6,46,104,3,29,150,22,24,124,151,247,240,182,157,17,32,57,60,93,36,168,114,229,251,74,92,138,16,185,104,110,196,175,106,72,42,12,187,228,58,175,44,97,107,22,32,194,100,116,205,91,97,175,77,242,54,87,238,52,190,88,248,73,41,249,79,145,173,16,49,203,101,187,24,88,41,222,67,5,92,203,114,121,143,87,24,251,18,208,100,195,168,4,105,155,220,103,72,13,15,95,135,28,185,31,67,122,78,84,49,178,60,108,59,150,105,52,33,150,134,6,69,230,202,114,32,171,134,205,19,139,64,42,136,17,66,42,199,138,160,89,182,49,52,34,206,0,105,154,80,113,156,197,182,77,195,126,4,221,134,20,99,80,119,172,19,151,76,215,182,64,65,247,120,18,105,217,60,79,217,119,132,157,153,255,157,85,101,161,244,163,243,134,9,18,122,138,197,12,165,153,3,213,123,48,218,232,71,107,168,9,160,148,168,162,25,227,119,156,167,187,33,101,74,122,149,82,63,115,59,80,167,104,9,225,116,115,198,193,239,175,44,142,14,42,240,131,214,231,114,124,77,156,109,91,89,46,164,5,3,19,42,163,88,88,198,35,245,199,
+182,141,197,33,42,34,18,215,24,9,73,146,144,117,43,48,162,235,44,47,93,113,44,5,34,125,199,88,31,185,30,102,20,231,96,108,9,58,84,14,19,24,213,176,8,26,143,56,28,42,160,140,202,164,99,195,9,97,224,167,76,149,128,83,212,41,224,73,50,196,208,236,9,125,182,61,237,227,122,149,38,175,59,97,185,8,189,145,37,109,136,205,162,252,96,20,199,0,40,193,10,40,142,244,176,195,27,252,112,245,181,69,148,228,200,113,212,108,237,234,91,205,16,22,190,28,101,165,68,244,235,122,168,119,3,29,41,74,198,178,215,23,122,178,253,105,97,104,217,84,50,4,173,229,147,248,244,252,4,91,69,148,139,197,227,81,133,118,160,25,159,112,49,247,20,209,112,49,74,36,5,55,140,111,71,105,88,59,31,40,232,19,73,93,209,136,128,95,132,59,123,92,65,1,95,203,105,107,211,78,97,120,139,170,105,57,36,56,83,201,178,216,25,219,134,106,15,139,59,99,251,138,167,19,101,69,46,128,198,55,59,100,57,120,180,186,36,19,63,193,28,8,201,83,154,138,216,137,75,143,105,207,222,166,111,8,216,242,165,156,117,108,232,18,96,115,214,82,12,165,11,74,94,
+189,197,99,150,211,129,47,119,164,69,150,6,91,85,59,106,34,80,39,72,40,44,18,155,217,17,112,164,18,159,48,24,98,113,20,163,222,226,155,197,204,148,252,166,82,71,78,188,110,17,107,105,188,90,138,164,203,21,55,247,96,129,42,11,210,180,168,31,192,103,84,60,107,181,180,224,104,194,34,186,106,73,6,55,25,145,102,212,168,160,101,238,202,81,75,16,234,180,200,181,181,215,195,155,233,122,4,187,64,150,133,170,100,248,218,255,75,182,200,106,235,98,201,170,155,113,97,156,45,48,203,145,173,211,4,215,255,130,203,232,185,204,96,138,102,75,160,139,34,187,183,236,2,244,59,130,130,128,52,203,77,138,57,16,34,207,11,98,211,68,99,18,176,150,86,58,39,251,132,194,84,214,111,72,254,117,63,61,234,42,223,167,178,136,168,44,27,132,61,235,249,20,241,135,68,83,26,227,12,21,228,133,99,138,175,193,36,85,198,172,173,72,108,102,177,108,255,85,38,115,245,101,255,221,180,116,124,162,115,134,254,25,75,34,57,3,234,59,220,142,4,165,104,148,141,10,53,26,183,126,56,112,92,212,235,126,141,31,71,57,149,226,210,40,214,
+39,110,213,148,246,155,81,8,71,245,218,236,212,123,53,12,219,63,10,182,107,212,195,97,219,15,179,119,126,73,165,183,129,204,232,32,97,220,42,128,245,163,148,15,216,224,119,106,57,40,29,219,171,81,204,25,219,115,60,149,107,165,99,143,19,174,75,194,142,228,8,11,230,62,205,10,133,135,134,187,9,89,163,42,89,215,203,158,95,188,141,6,145,164,159,27,101,44,48,78,79,88,153,115,41,156,109,43,96,157,233,115,205,206,34,21,140,99,44,133,204,49,160,2,47,96,59,248,174,136,229,168,122,183,113,203,34,233,53,217,185,120,14,141,69,137,148,114,146,49,188,236,12,147,22,58,27,109,199,183,76,42,17,38,150,7,39,119,1,133,108,50,139,230,196,220,13,20,145,147,221,56,86,81,234,74,225,37,219,35,32,88,1,118,75,139,40,253,232,103,226,111,155,178,79,44,100,50,179,8,50,7,200,38,118,233,25,227,201,190,235,99,47,144,211,97,84,185,17,236,22,217,44,74,163,2,147,207,172,26,146,119,187,20,147,17,137,194,170,1,14,254,36,239,67,21,165,176,50,17,133,73,119,9,10,47,226,187,113,163,93,199,66,173,46,103,210,83,200,39,131,
+189,25,65,155,134,80,183,246,189,144,195,236,81,226,230,105,68,185,238,172,168,204,9,140,58,136,36,210,170,73,101,69,89,205,76,83,172,65,175,211,89,136,82,128,126,75,93,45,23,160,72,92,13,83,193,156,247,93,47,180,105,160,145,122,21,135,113,11,172,130,70,211,204,208,102,196,192,153,151,194,211,58,109,228,36,29,135,101,164,71,196,61,210,218,211,77,109,57,132,187,161,204,80,3,74,193,24,157,73,224,36,24,189,249,234,164,227,83,78,238,75,6,145,251,13,44,212,118,112,14,144,125,24,165,158,219,37,80,143,212,20,46,78,4,193,140,10,32,174,236,238,90,39,97,95,87,141,77,124,244,44,249,213,83,221,64,96,96,97,209,138,11,4,137,23,77,211,23,143,47,128,99,50,144,249,93,200,106,147,68,46,132,164,163,81,218,48,96,205,4,165,122,51,124,133,169,132,135,182,143,204,163,4,14,196,182,27,36,62,17,103,72,230,161,58,137,40,24,178,86,145,60,168,220,176,144,158,224,249,51,133,24,113,91,148,145,249,206,147,245,159,75,164,43,21,242,37,86,106,230,223,246,182,178,64,219,254,125,127,43,123,129,76,126,26,14,242,215,
+14,182,178,179,232,221,188,36,18,158,27,119,197,190,97,93,13,206,141,15,212,246,55,111,8,5,47,167,221,151,70,24,210,44,203,157,79,195,17,193,3,21,82,151,38,90,103,233,231,19,210,240,65,230,146,133,116,253,82,30,6,73,39,234,233,239,233,228,48,3,241,138,96,181,112,170,58,109,93,11,95,82,210,112,96,193,179,230,16,14,166,70,26,171,2,255,196,142,51,112,169,99,193,23,27,218,162,112,58,244,109,105,35,6,115,45,213,173,57,126,78,22,182,25,221,214,190,111,65,21,106,225,164,97,52,70,185,59,115,56,168,96,206,238,199,13,174,98,244,109,29,194,82,148,82,84,63,247,190,41,106,225,7,225,13,248,252,166,127,53,163,144,173,216,33,252,220,38,129,254,54,232,48,227,83,158,94,142,57,129,82,157,217,27,142,10,23,147,210,203,14,116,61,197,157,170,138,158,122,240,205,189,207,236,74,135,160,9,201,88,20,21,163,206,233,207,198,166,120,21,41,93,54,162,67,223,237,233,52,178,24,10,25,200,73,101,102,135,194,180,147,23,136,57,175,173,227,29,24,201,152,180,195,250,194,181,151,241,98,231,119,80,182,169,150,138,44,
+225,161,215,81,22,129,125,57,230,40,68,183,71,98,136,101,162,88,210,129,96,80,164,3,63,13,62,87,32,81,80,186,130,3,19,174,218,190,147,66,199,191,206,201,149,69,145,93,227,199,91,196,176,196,135,40,164,190,90,68,222,151,134,42,67,234,178,48,97,198,95,84,228,27,122,179,2,168,232,102,171,125,106,53,144,28,85,96,205,221,78,48,101,24,20,155,253,119,174,109,176,74,147,130,65,218,191,80,66,46,140,225,70,123,219,72,206,78,160,169,142,40,42,119,3,3,64,232,19,42,63,218,79,248,161,169,25,33,43,20,14,243,11,42,58,48,143,157,162,9,157,45,204,189,156,69,164,22,176,119,188,196,132,136,139,227,7,68,66,116,220,32,45,68,168,29,180,83,238,15,64,45,189,177,39,220,143,161,240,84,176,10,138,138,172,15,20,78,129,126,162,255,230,231,174,241,60,140,185,24,252,189,199,137,66,154,155,187,36,218,235,83,121,123,22,228,216,113,19,79,202,99,35,250,81,31,156,162,250,247,91,156,13,36,182,153,140,80,69,113,233,10,41,40,128,171,197,58,213,237,165,128,140,18,213,12,115,231,107,233,106,185,133,137,168,52,168,156,
+67,36,22,115,116,73,229,102,114,193,239,81,126,89,182,118,222,195,230,148,105,229,167,63,56,66,61,38,12,2,156,63,136,33,79,130,99,40,205,244,52,172,241,43,150,29,229,64,248,224,123,10,172,124,111,59,130,63,216,63,63,124,223,254,254,207,45,142,83,214,190,215,197,205,252,200,129,100,126,108,95,242,81,39,173,191,223,226,13,62,207,62,206,248,47,39,95,99,142,105,42,96,35,246,68,101,225,168,151,136,178,164,13,163,79,91,154,106,174,25,230,18,232,55,191,180,160,192,180,99,189,231,168,80,45,50,187,235,183,205,28,205,44,14,212,12,173,166,164,108,108,236,178,202,120,51,237,45,145,211,172,203,175,22,8,132,75,0,130,160,48,22,28,176,195,132,61,98,90,196,168,48,62,177,120,35,157,218,253,40,114,159,93,145,187,24,199,40,83,13,87,201,47,23,113,18,77,38,119,157,109,89,79,148,57,19,100,59,167,86,51,72,36,238,4,215,189,6,88,83,100,207,201,243,82,25,217,130,104,9,227,178,99,32,130,47,148,68,65,242,97,14,190,123,84,152,122,11,252,185,90,54,165,230,91,209,167,77,228,83,82,43,49,18,60,235,80,162,8,87,
+219,143,40,232,244,133,5,10,55,45,156,32,203,71,41,87,137,23,24,128,22,159,73,174,96,114,128,114,169,248,96,43,72,212,121,6,23,45,159,6,19,50,141,109,194,144,249,88,24,247,154,209,22,210,52,148,214,207,9,255,22,66,200,195,52,201,192,46,25,170,228,103,231,12,205,226,51,157,96,57,0,84,188,214,89,33,183,34,248,132,230,8,53,137,100,125,23,226,3,232,46,200,127,150,222,210,122,134,2,72,34,5,19,208,1,31,229,169,78,59,127,100,231,164,113,198,77,173,71,129,168,215,187,253,235,190,249,4,193,168,219,120,251,250,103,63,214,45,183,70,30,91,96,235,35,162,1,239,127,255,177,63,164,166,250,180,243,19,105,202,224,120,139,243,234,228,171,13,102,63,213,147,229,169,123,58,56,80,166,35,121,41,120,189,133,47,194,241,124,254,129,5,82,152,93,80,36,67,216,43,159,31,135,105,24,45,68,84,184,249,70,255,20,250,55,125,114,35,134,234,90,149,102,105,24,165,44,114,8,46,70,185,125,187,73,212,43,237,175,162,91,202,223,48,122,12,5,167,44,25,209,140,6,23,217,120,123,11,38,106,12,105,21,187,58,214,79,144,228,77,174,
+169,21,219,177,134,30,111,145,148,214,120,60,216,225,56,33,103,61,134,233,179,128,120,153,154,18,223,197,35,202,162,29,53,185,207,64,101,66,120,232,113,81,117,108,158,101,26,241,34,154,70,154,23,249,92,230,230,197,38,219,92,35,30,213,23,120,208,73,80,237,99,89,120,53,182,217,60,210,25,224,78,111,115,35,132,162,227,3,189,188,169,18,200,111,136,234,196,137,88,16,146,250,58,160,89,169,65,18,144,90,140,106,151,101,132,210,195,92,8,58,69,212,93,192,176,203,7,39,42,212,109,238,122,217,179,56,207,124,206,14,165,114,8,190,51,242,115,229,140,64,180,42,255,36,157,104,233,111,174,71,121,47,92,124,44,162,94,0,192,122,46,203,181,69,224,93,232,170,253,194,84,179,141,16,42,215,154,177,84,129,165,236,54,247,182,238,98,39,12,135,220,16,66,52,99,202,23,199,240,214,194,90,186,232,212,14,50,222,15,90,209,21,47,107,30,145,42,23,146,110,52,119,45,234,18,216,21,242,228,92,171,228,191,110,152,71,221,26,229,216,26,217,39,195,135,25,85,195,118,195,126,110,200,121,43,85,117,28,188,28,83,164,183,109,251,
+250,54,52,128,153,125,129,106,97,105,163,25,227,83,81,160,203,114,92,1,32,201,68,142,40,148,250,82,253,36,95,120,108,86,56,200,96,241,114,100,197,89,109,191,5,171,120,11,46,34,226,80,145,3,230,190,73,180,105,135,64,55,190,220,243,233,216,203,142,29,104,51,216,174,110,9,162,219,146,166,217,91,24,249,213,90,70,227,186,174,14,176,130,244,130,213,36,190,240,222,103,77,51,66,142,72,68,157,77,40,170,170,159,52,248,22,145,219,109,219,38,183,231,153,172,141,178,121,50,52,90,227,211,175,150,131,182,138,65,91,97,80,146,154,123,31,237,115,113,11,87,248,230,91,139,18,214,113,100,127,167,58,242,170,247,181,154,101,15,218,16,241,245,75,48,176,91,0,179,187,4,152,37,83,226,162,28,213,197,5,71,97,95,3,107,7,26,129,224,166,214,65,132,211,187,91,13,231,154,93,47,76,33,210,31,51,88,25,134,126,75,62,5,59,44,221,154,171,107,227,31,187,194,12,126,243,221,201,162,186,153,40,84,44,6,158,204,238,115,197,19,93,236,162,6,90,97,11,250,149,244,133,17,104,92,102,60,106,10,75,37,183,238,191,83,183,17,210,103,
+24,5,164,204,203,45,41,90,199,192,93,177,103,101,23,114,18,102,9,39,210,108,99,145,87,206,122,159,29,238,233,120,4,152,94,0,44,246,31,71,252,69,210,17,88,205,145,36,6,12,185,149,145,143,128,174,183,1,125,11,166,75,58,1,23,7,169,21,36,25,101,247,0,152,205,194,8,114,78,225,9,43,75,7,150,87,86,199,181,203,55,211,208,27,206,49,187,181,158,76,239,29,40,71,5,105,100,40,142,75,227,87,210,145,202,35,223,70,168,236,18,41,70,40,121,105,143,106,129,90,1,161,62,92,241,39,69,48,113,238,239,40,29,70,223,232,68,2,50,31,40,88,22,8,203,50,6,182,51,75,51,122,74,160,32,151,156,104,113,186,239,205,63,107,173,157,131,236,45,81,118,221,212,8,178,21,8,173,181,184,83,86,215,81,200,158,222,208,91,155,181,214,190,90,199,111,187,59,123,86,126,254,213,152,250,149,120,239,181,221,157,195,236,162,216,131,63,11,54,0,63,63,204,222,70,59,189,8,121,213,246,24,90,133,1,207,92,161,241,221,187,123,174,82,11,124,219,85,154,140,87,130,173,237,113,109,244,91,18,9,226,229,95,217,115,2,13,140,184,215,220,141,240,98,43,
+142,253,146,197,218,94,235,145,125,123,37,229,21,186,207,107,123,187,205,248,37,123,65,82,18,170,252,185,159,207,45,223,212,97,71,60,58,92,138,46,135,154,53,224,53,217,110,168,132,128,128,253,157,150,193,252,51,190,33,97,165,218,62,80,158,123,21,103,29,130,254,0,84,10,38,243,251,33,169,74,201,229,110,231,126,179,2,15,30,209,65,44,184,104,167,53,177,59,189,40,114,109,127,127,79,55,41,140,114,15,142,134,73,134,177,205,41,20,209,129,21,12,26,20,199,121,56,124,36,96,159,113,34,227,122,84,84,225,43,172,51,17,177,22,126,187,185,69,154,46,13,45,155,7,242,72,30,52,179,27,4,6,219,127,74,195,70,156,44,148,161,113,231,16,45,70,201,15,14,51,67,192,122,247,231,147,139,7,217,139,147,227,103,214,171,142,216,145,28,168,98,45,82,145,231,52,40,64,224,77,221,242,169,193,181,145,35,18,83,92,78,53,78,136,48,75,102,162,238,137,91,65,131,155,33,104,166,139,232,36,215,175,21,133,226,61,243,62,21,180,48,95,81,195,171,178,97,131,132,101,178,81,20,46,2,122,217,187,204,66,215,40,64,189,188,82,20,104,4,160,
+127,239,147,168,196,192,202,169,16,61,199,106,246,117,253,64,218,177,119,129,78,15,80,91,213,139,88,40,71,174,170,116,161,78,104,23,225,130,24,15,55,248,98,152,28,81,167,188,144,128,1,226,133,121,118,130,43,98,72,211,250,0,129,140,147,24,52,247,201,149,89,43,81,235,203,106,78,16,3,91,109,218,244,226,115,153,160,86,190,50,82,128,230,190,94,250,32,61,199,68,65,189,84,230,182,221,207,21,244,250,133,102,222,191,56,121,249,198,38,122,242,130,15,156,114,137,70,236,0,62,80,90,166,101,120,9,177,33,28,233,246,16,62,53,130,33,92,173,1,6,131,5,235,89,81,113,59,47,32,171,200,1,9,157,185,74,150,237,224,85,251,132,19,82,84,88,251,198,149,10,116,171,190,28,79,117,69,11,227,218,70,12,165,104,224,138,201,96,126,221,32,185,206,20,96,17,42,2,230,57,17,122,6,123,1,192,192,207,106,96,211,225,157,90,34,19,43,15,124,118,27,25,91,142,92,181,2,138,137,6,43,108,105,142,137,113,142,165,243,68,110,80,74,17,194,217,118,29,245,148,4,89,50,2,233,95,44,26,69,136,92,133,112,110,12,27,144,86,55,189,193,228,62,
+147,226,226,88,169,18,165,183,122,32,144,89,75,6,121,249,122,209,123,248,33,68,81,98,156,172,141,33,234,115,113,19,191,195,177,192,169,109,204,112,118,176,157,219,9,62,58,20,1,7,120,237,166,81,85,253,160,162,49,71,98,186,220,69,35,134,64,221,60,231,167,50,39,81,175,196,59,102,162,198,197,25,144,74,218,132,9,224,4,66,58,58,217,130,7,21,138,120,155,50,83,40,2,147,68,41,67,243,81,31,79,165,176,7,240,130,60,91,142,208,135,40,69,35,24,255,6,129,130,65,194,109,0,170,171,108,134,151,149,82,146,210,37,203,207,4,142,37,74,89,114,145,34,121,210,112,241,118,67,76,115,172,112,239,209,32,100,204,17,213,14,132,112,37,58,235,25,34,97,42,69,136,174,98,148,2,157,182,64,225,74,86,86,8,116,218,78,203,70,163,241,163,92,205,199,148,10,87,112,40,210,164,208,54,224,190,188,14,206,2,162,200,75,194,200,19,208,13,128,128,161,242,109,10,242,87,113,169,245,211,125,77,26,44,236,236,34,1,181,65,108,65,104,61,182,59,33,141,242,204,118,189,244,59,121,178,70,195,8,38,126,221,214,55,211,3,10,251,129,119,15,244,
+70,87,196,194,246,140,226,46,88,112,212,191,91,152,107,162,51,48,138,198,29,221,7,229,116,9,220,23,227,176,255,165,12,87,232,219,114,73,16,106,110,167,4,189,232,129,60,206,162,178,48,49,26,80,200,229,186,131,204,118,144,225,103,171,246,27,52,69,165,150,163,64,192,194,193,239,206,36,175,78,47,8,95,114,170,39,239,113,243,220,228,110,106,251,47,173,157,214,65,246,132,11,84,254,204,78,68,17,240,168,196,232,70,116,69,148,13,187,120,71,140,242,178,50,74,168,203,200,240,74,104,114,207,32,176,30,174,36,145,13,250,97,107,193,235,248,83,253,31,11,84,138,5,186,147,125,32,157,33,217,114,169,67,173,34,21,185,117,241,2,64,186,137,114,202,200,41,65,89,12,89,149,145,7,160,212,90,214,207,67,162,66,29,234,97,144,174,18,226,66,44,61,62,50,69,38,3,14,229,104,245,133,17,111,36,2,143,116,189,180,96,16,62,245,216,228,168,143,160,174,13,69,38,170,108,47,74,112,146,183,40,243,75,255,246,108,90,182,23,156,223,144,123,34,223,160,15,249,106,247,197,54,136,133,106,147,95,219,208,49,222,238,64,51,149,90,13,
+246,64,132,46,232,37,72,90,8,181,59,5,84,240,86,147,161,162,187,69,38,40,22,22,178,49,64,209,21,25,217,164,123,186,12,130,178,115,106,223,50,162,106,110,233,29,65,238,206,189,166,86,216,112,4,193,44,136,226,41,8,154,139,83,128,180,6,129,104,113,175,37,215,24,16,158,48,30,30,113,83,58,176,35,128,28,97,140,11,122,245,83,156,142,84,210,165,210,171,205,218,144,194,3,191,247,166,137,56,184,120,113,146,157,191,121,126,241,203,241,217,9,247,129,101,111,207,222,252,251,233,179,147,103,89,253,248,156,239,108,72,252,114,122,241,226,205,187,139,140,22,103,199,175,47,126,205,222,60,207,142,95,255,154,253,243,244,245,179,7,220,163,245,246,236,228,252,60,123,115,150,157,190,122,251,242,244,132,223,78,95,63,125,249,238,217,41,209,197,39,188,247,250,13,84,126,10,173,211,233,197,155,76,3,134,174,78,79,120,239,121,246,234,228,236,233,11,122,62,126,114,250,242,244,226,215,7,217,243,211,139,215,234,243,57,157,30,103,111,143,207,46,78,159,190,123,121,124,150,189,125,119,134,157,117,194,240,207,232,
+246,245,233,235,231,103,140,114,242,234,228,245,197,22,163,242,91,118,242,239,124,201,206,95,28,191,124,105,67,29,191,3,250,51,131,239,233,155,183,191,158,157,254,252,226,34,123,241,230,229,179,19,126,124,114,2,100,199,79,94,158,248,80,76,234,233,203,227,211,87,15,178,103,199,175,142,127,22,116,103,217,27,0,62,179,102,1,186,95,94,156,216,79,140,119,204,255,159,94,156,190,121,173,105,60,125,243,250,226,140,175,220,5,246,230,236,162,120,245,151,211,243,147,7,217,241,217,233,185,16,242,252,236,13,221,11,157,188,33,156,189,214,123,175,79,188,23,161,218,160,46,86,132,38,66,216,59,38,93,192,242,236,228,248,37,125,177,60,175,43,141,183,106,255,71,0,0,0,0,255,255,3,0,175,39,168,48);
 
 label
    redo,skipend;
@@ -10699,7 +12294,7 @@ var
    else
       begin
       a.value[p]:=stripwhitespace_lt(a.value[p]);
-      xempty:=(low__len(a.value[p])<=0);
+      xempty:=(low__len32(a.value[p])<=0);
       if (not xempty) or (not lempty) then str__sadd(@s,a.value[p]+#10);
       lempty:=xempty;
       end;
@@ -10709,7 +12304,7 @@ var
       str1:=a.value[p];
       if (str1<>'') then
          begin
-         for p2:=1 to low__len(str1) do if (str1[p2-1+stroffset]='[') and (strcopy1(str1,p2,3)='[/]') then
+         for p2:=1 to low__len32(str1) do if (str1[p2-1+stroffset]='[') and (strcopy1(str1,p2,3)='[/]') then
             begin
             xcon:=false;
             break;
@@ -10769,7 +12364,7 @@ if xhelp then str__settextb(@s,net__encodeforhtmlstr(str__text(@s)));
 
 //encode line beginnings ([t]=help topic, [h]=subheading, [u]=underline, [k]=console view
 str__sadd(@s,#10);//enforce a trailing return code
-slen:=str__len(@s);
+slen:=str__len32(@s);
 lv:=10;
 lx:=0;
 p:=1;
@@ -10839,7 +12434,7 @@ else if (v=ssLSquarebracket) and strmatch(str__str1(@s,p,8),'[insert:') then
       //get
       n:=strlow(str__str1(@s,p+8,p2-p-8));
       //set
-      if (n='commandline') then xaddstr(xconsoleWRAP+net__encodeforhtmlstr(xcmdline__output('--help'))+xstop);
+      if (n='commandline') then xaddstr(xconsoleWRAP+net__encodeforhtmlstr(cmdline__output('--help'))+xstop);
       //stop
       p:=p2;
       break;
@@ -10983,7 +12578,7 @@ if not io__fileexists(slogfilename) then
 //search first 10K of log report for meta tag "makeref"
 if io__fromfile64(dreportfilename,@d,e) then
    begin
-   dlen:=str__len(@d);
+   dlen:=str__len32(@d);
    for p:=1 to frcmax32(dlen,10000) do if (str__bytes1(@d,p)=sslessthan) and strmatch(str__str1(@d,p,32),'<meta name="generator" content="') then
       begin
       lv:=p+32;
@@ -11016,41 +12611,98 @@ end;
 function log__buildreport(var a:pnetwork;d:tobject;dmakeref,slogfilename:string):boolean;
 label
    makereport,redo;
+
 const
-   xread_chunk_size=5000000;//read the log file in 5Mb chunks
+   xread_chunk_size             =5000000;//read the log file in 5Mb chunks
+
 var
-   s:tobject;
-   xstarttime,spos:comp;
-   xcount,li,i,lp,p,slen:longint;
-   xonce:boolean;
-   c:byte;
-   xlarge_limit_label,xnav,vip,vdatetime,vmethod,vfilename,vext,vprotocol,vreferrer,vuseragent,vsite:string;
-   vcode:longint;
-   vtotal_requests,vtotal_hits,vtotal_bandwidth,vtotal_time,vbandwidth,vms:comp;
-   vadmin:boolean;
-   ivisitors,ireferrers:tdynamicvars;
-   chits,cbytes,ctime:tcmplist;//codes
-   mhits,mbytes,mtime:tcmplist;mnames:tdynamicvars;//methods
-   phits,pbytes,ptime:tcmplist;pnames:tdynamicvars;//protocols
-   ehits,ebytes,etime:tcmplist;enames:tdynamicvars;//extensions
-   dhits,dbytes,dtime,dhits2,dbytes2,dtime2,dsize:tcmplist;dnames:tdynamicvars;//downloads
-   rhits,rbytes,rtime:tcmplist;rnames:tdynamicvars;//referrers
-   vhits,vbytes,vtime:tcmplist;vnames:tdynamicvars;//visitors (IP addresses)
-   shits,sbytes,stime,s200,s206,s307,s403,s404,sOTH:tcmplist;snames:tdynamicvars;//sites
-   isortcmp:tdynamiccomp;
-   isorter:tobject;//ptr only
+   s                            :tobject;
+   xstarttime                   :longint64;
+   spos                         :longint64;
+   xcount                       :longint32;
+   li                           :longint32;
+   i                            :longint32;
+   lp                           :longint32;
+   p                            :longint32;
+   slen                         :longint32;
+   xonce                        :boolean;
+   c                            :byte;
+   xlarge_limit_label           :string;
+   xnav                         :string;
+   vip                          :string;
+   vdatetime                    :string;
+   vmethod                      :string;
+   vfilename                    :string;
+   vext                         :string;
+   vprotocol                    :string;
+   vreferrer                    :string;
+   vuseragent                   :string;
+   vsite                        :string;
+   vcode                        :longint32;
+   vtotal_requests              :longint64;
+   vtotal_hits                  :longint64;
+   vtotal_bandwidth             :longint64;
+   vtotal_time                  :longint64;
+   vbandwidth                   :longint64;
+   vms                          :longint64;
+   vadmin                       :boolean;
+   ivisitors                    :tdynamicvars;
+   ireferrers                   :tdynamicvars;
+   chits                        :tintlist64;
+   cbytes                       :tintlist64;
+   ctime                        :tintlist64;//codes
+   mhits                        :tintlist64;
+   mbytes                       :tintlist64;
+   mtime                        :tintlist64;
+   mnames                       :tdynamicvars;//methods
+   phits                        :tintlist64;
+   pbytes                       :tintlist64;
+   ptime                        :tintlist64;
+   pnames                       :tdynamicvars;//protocols
+   ehits                        :tintlist64;
+   ebytes                       :tintlist64;
+   etime                        :tintlist64;
+   enames                       :tdynamicvars;//extensions
+   dhits                        :tintlist64;
+   dbytes                       :tintlist64;
+   dtime                        :tintlist64;
+   dhits2                       :tintlist64;
+   dbytes2                      :tintlist64;
+   dtime2                       :tintlist64;
+   dsize                        :tintlist64;
+   dnames                       :tdynamicvars;//downloads
+   rhits                        :tintlist64;
+   rbytes                       :tintlist64;
+   rtime                        :tintlist64;
+   rnames                       :tdynamicvars;//referrers
+   vhits                        :tintlist64;
+   vbytes                       :tintlist64;
+   vtime                        :tintlist64;
+   vnames                       :tdynamicvars;//visitors (IP addresses)
+   shits                        :tintlist64;
+   sbytes                       :tintlist64;
+   stime                        :tintlist64;
+   s200                         :tintlist64;
+   s206                         :tintlist64;
+   s307                         :tintlist64;
+   s403                         :tintlist64;
+   s404                         :tintlist64;
+   sOTH                         :tintlist64;
+   snames                       :tdynamicvars;//sites
+   isortcmp                     :tdynamiccomp;
+   isorter                      :tobject;//ptr only
 
    function nv:tdynamicvars;
    begin
    result:=tdynamicvars.create;
    end;
 
-   function n8:tcmplist;
+   function n8:tintlist64;
    begin
-   result:=tcmplist.create;
+   result:=tintlist64.create;
    end;
 
-   procedure cinc(s:tcmplist;sindex:longint);
+   procedure cinc(s:tintlist64;sindex:longint);
    begin
    if (s<>nil) and (sindex>=0) then s.value[sindex]:=add64(s.value[sindex],1);
    end;
@@ -11070,7 +12722,7 @@ var
    result:=low__uptime(time__decode(xtotaltime),false,false,true,true,false,' ');
    end;
 
-   procedure xadd__cmppair8(a,b:tcmplist;xindex:longint;xhits,xbytes:comp);
+   procedure xadd__cmppair8(a,b:tintlist64;xindex:longint;xhits,xbytes:comp);
    begin
    if (xindex>=0) and (a<>nil) and (b<>nil) then
       begin
@@ -11079,7 +12731,7 @@ var
       end;
    end;
 
-   procedure xadd__named__cmppair82(n:tdynamicvars;a,b:tcmplist;xname:string;xhits,xbytes:comp;var xindex:longint);
+   procedure xadd__named__cmppair82(n:tdynamicvars;a,b:tintlist64;xname:string;xhits,xbytes:comp;var xindex:longint);
    begin
    //defaults
    xindex:=0;
@@ -11106,7 +12758,7 @@ var
       end;
    end;
 
-   procedure xadd__named__cmppair8(n:tdynamicvars;a,b:tcmplist;xname:string;xhits,xbytes:comp);
+   procedure xadd__named__cmppair8(n:tdynamicvars;a,b:tintlist64;xname:string;xhits,xbytes:comp);
    var
       int1:longint;
    begin
@@ -11247,7 +12899,7 @@ var
    if io__fromfile64d(slogfilename,@s,false,e,xfilesize,spos,xread_chunk_size,xdate) then//5 mb chunks
       begin
       //round to end of last full line -> ready for next chunk read
-      slen:=str__len(@s);
+      slen:=str__len32(@s);
       if (slen>=1) then
          begin
 
@@ -11283,7 +12935,7 @@ var
    begin
    //init
    v:=ival;
-   vlen:=low__len(v);
+   vlen:=low__len32(v);
    if (vlen<3) then exit;
    v1:=1;
 
@@ -11301,14 +12953,14 @@ var
       //filename
       vfilename:=strcopy1(v,v1,p-v1);
       vext:=io__readfileext_low(vfilename);
-      vsite:=strcopy1(vfilename,2,low__len(vfilename))+'/';
+      vsite:=strcopy1(vfilename,2,low__len32(vfilename))+'/';
       //done
       break;
       end;//p
    //site
    if (vsite<>'') then
       begin
-      tlen:=low__len(vsite);
+      tlen:=low__len32(vsite);
       for p:=1 to tlen do if (vsite[p-1+stroffset]='/') then
          begin
          //vadmin
@@ -11475,7 +13127,7 @@ var
    result:=(v='exe') or (v='zip') or (v='7z') or (v='apk');
    end;
 
-   procedure xsortcmp(x:tcmplist);
+   procedure xsortcmp(x:tintlist64);
    var
       p:longint;
    begin
@@ -11598,7 +13250,7 @@ if (str__bytes0(@s,p)=10) then
    3:if (c=ssdoublequote)     then inext;
    4:if (c=ssdoublequote)     then imethod_filename_protocol;
    5:if (c=ssspace)           then inext;
-   6:if (c=ssspace)           then vcode:=strint(ival);
+   6:if (c=ssspace)           then vcode:=strint32(ival);
    7:if (c=ssspace)           then vbandwidth:=strint64(ival);
    8:if (c=ssdoublequote)     then inext;
    9:if (c=ssdoublequote)     then vreferrer:=ival;
@@ -11827,5 +13479,129 @@ insstr('<input type="hidden" name="'+xname+'" value="'+insstr('on',xchecked)+'">
 insstr('</div>'+#10,xdiv);
 end;
 
+function utf8__toplaintext7bitb(const x:string):string;//08oct2026
+begin
+
+result:=utf8__to7bitTextb( x ,false ,true );
+
+end;
+
+function date__str(const x:tdatetime;const xtime,xmsec:boolean):string;//08oct2026
+var
+   y                  :word;
+   m                  :word;
+   d                  :word;
+   hr                 :word;
+   min                :word;
+   sec                :word;
+   msec               :word;
+
+begin
+
+low__decodedate2( x ,y ,m ,d );
+low__decodetime2( x ,hr ,min ,sec ,msec );
+
+result                :=low__digpad11(y,4)+'y-'+low__digpad11(m,2)+'m-'+low__digpad11(d,2)+'d';
+
+if xtime then
+   begin
+
+   result             :=result+'--'+low__digpad11(hr,2)+'h-'+low__digpad11(min,2)+'min-'+low__digpad11(sec,2)+'s' + insstr( '-'+low__digpad11(msec,3)+'ms' ,xmsec);
+
+   end;
+
+end;
+
+function email__valid(const xemailAddress:string):boolean;
+begin
+
+result                :=( email__filteraddress( xemailAddress ) <> '');
+
+end;
+
+function email__filteraddress(const xemailAddress:string):string;
+var
+   p                            :longint32;
+   count_at                     :longint32;
+   pos_at                       :longint32;
+   pos_dot                      :longint32;
+
+begin
+
+//defaults
+result                          :='';
+count_at                        :=0;
+pos_at                          :=0;
+pos_dot                         :=0;
+
+//length check
+if (xemailaddress='') then exit;
+
+//char scan
+for p:=1 to low__len32( xemailaddress ) do
+begin
+
+case byte( xemailaddress[ p - 1 + stroffset ] ) of
+
+0..31                 :exit;
+sscolon               :exit;
+sssemicolon           :exit;
+ssmorethan            :exit;
+sslessthan            :exit;
+ssat                  :begin
+
+                       if (pos_at <1) then pos_at :=p;//first instance
+
+                       inc(count_at);
+
+                       if (count_at>=2) then exit;//should only ever be one "@" in address
+
+                       end;
+
+ssdot                 :if (pos_dot<1) then pos_dot:=p;//first instance
+
+end;//case
+
+end;//p
+
+//char positions must align as: "pos_at < pos_dot"
+if (pos_at<1) or (pos_dot<1) or (pos_at>pos_dot) then exit;
+
+//remove leading and trailing whitespace
+result                          :=stripwhitespace_lt( xemailAddress );
+
+end;
+
+function domain__fromDiskSite(const xdisksite:string):string;
+var
+   p                  :longint32;
+   
+begin
+
+//defaults
+result                :=xdisksite;
+
+//get
+if strmatch( strcopy1(result,1,low__len32(idefaultdisksite)) ,idefaultdisksite) then
+   begin
+
+   result             :=strcopy1( result ,low__len32(idefaultdisksite) + 1 ,low__len32(result) );
+
+   end;
+
+//underscores -> dots
+for p:=1 to low__len32(result) do
+begin
+
+if (result[p-1+stroffset]='_') then
+   begin
+
+   result[p-1+stroffset]:='.';
+
+   end;
+
+end;//p
+
+end;
 
 end.
