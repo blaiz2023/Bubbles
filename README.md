@@ -51,7 +51,6 @@ Her design is light and stable, and an extensive block-based memory management s
 # Codebase Changes
 * Memory speed efficiencies
 * Automatic MSIX handling (MS Store app/MSIX bundle) with seamless adaptive settings and temp file storage and management for restrictive access compliance
-* Source code supports both 32bit and 64bit
 * 32bit compilation in Borland Delphi 3 (stable)
 * 32bit compilation in Lazarus 2.2 (stable)
 
