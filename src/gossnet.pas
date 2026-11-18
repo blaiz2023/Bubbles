@@ -9,7 +9,7 @@ interface
 {$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
 {$ifdef WIN64}{$define 64bit}{$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gosswin2, gossroot, gossio, gosswin;
+uses gosswin2, gossroot, gossio, gosswin, gossfast;
 {$align on}{$iochecks on}{$O+}{$W-}{$U+}{$V+}{$B-}{$X+}{$T-}{$P+}{$H+}{$J-} { set critical compiler conditionals for proper compilation - 10aug2025 }
 //## ==========================================================================================================================================================================================================================
 //##
@@ -31,21 +31,25 @@ uses gosswin2, gossroot, gossio, gosswin;
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. network (gossnet.pas)
-//## Version.................. 4.00.956 (+12)
+//## Version.................. 4.00.958 (+13)
 //## Items.................... 6
-//## Last Updated ............ 01jul2026, 09aug2025, 19jun2025, 07apr2025, 15mar2025, 20feb2025, 18dec2024, 15nov2024, 18aug2024, 04may2024, 23apr2024
+//## Last Updated ............ 31oct2026, 20oct2026, 01jul2026, 09aug2025, 19jun2025, 07apr2025, 15mar2025, 20feb2025, 18dec2024, 15nov2024, 18aug2024, 04may2024, 23apr2024
 //## Lines of Code............ 2,800+
 //## Origin .................. Human generated and maintained
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -61,7 +65,7 @@ uses gosswin2, gossroot, gossio, gosswin;
 //## | tnetmore               | tobject           | 1.00.003  | 24jun2024   | Helper object for app level net task/data management, 23dec2023: created
 //## | tnetbasic              | tnetmore          | 1.00.081  | 18aug2024   | Helper object for server connection servicing, 13apr2024: added vmustlog, 23dec2023: created
 //## | dns__*                 | family of procs   | 1.00.070  | 05apr2025   | DNS message handlers
-//## | net__*                 | family of procs   | 1.00.420  | 05apr2025   | Create and maintain tcp server and inbound client connections, 15mar2025, 09aug2024, 01par2024: added ssPert support in net__encodeurl(), 06mar2024: queue size fo servers, 30jan2024: Created
+//## | net__*                 | family of procs   | 1.00.421  | 31oct2026   | Create and maintain tcp server and inbound client connections, 05apr2025, 15mar2025, 09aug2024, 01par2024: added ssPert support in net__encodeurl(), 06mar2024: queue size fo servers, 30jan2024: Created
 //## | ipsec__*               | family of procs   | 1.00.284  | 09aug2025   | Track client IP hits, errors and current ban status, 19jun2025, 07apr2025: notthislink(BadBot) tracking, 20feb2025: added ipsec->post2 support, 18aug2024, 03may2024: fixed scanfor/banfor range oversight in ipsec__update(), 07jan2024: created
 //## | log__*                 | family of procs   | 1.00.086  | 18jun2025   | Web traffic log for server traffic, 09aug2024, 03apr2024: using filterstr, 01apr2024: optional "__" in "date__logname" only when logname present, 07mar2024: fixed alternative folder, 07jan2024: created
 //## ==========================================================================================================================================================================================================================
@@ -74,269 +78,308 @@ uses gosswin2, gossroot, gossio, gosswin;
 //## ==========================================================================================================================================================================================================================
 
 type
-   tnetmore        =class;
-   tnetbasic       =class;
+   tnetmore                     =class;
+   tnetbasic                    =class;
+
 
    //.tnetwork
-   pnetwork=^tnetwork;
-   tnetwork=record
-    init:boolean;//true=record has been initiated and is valid
-    slot:longint;//read only -> links to system list
-    port:longint;
-    sock_ip4:tint4;//direct access to all 4 bytes of address e.g. "sock_ip4.ints[0]" returns first byte which would be 127 for ip=127.0.0.1
-    sock:tsocket;
-    ownk:tsocket;//owner of this record's "sock" e.g a server that spawns this client socket process
+   pnetwork                     =^tnetwork;
+   tnetwork                     =record
+
+    init                        :boolean;//true=record has been initiated and is valid
+    slot                        :longint32;//read only -> links to system list
+    port                        :longint32;
+    sock_ip4                    :tint4;//direct access to all 4 bytes of address e.g. "sock_ip4.ints[0]" returns first byte which would be 127 for ip=127.0.0.1
+    sock                        :tsocket;
+    ownk                        :tsocket;//owner of this record's "sock" e.g a server that spawns this client socket process
+
     //.can -> tied to fd_read and fd_write
-    canread:boolean;
-    canwrite:boolean;
+    canread                     :boolean;
+    canwrite                    :boolean;
+
     //.time + used
-    time_created:comp;//time this record was created - 06apr2024
-    time_idle:comp;//used for idle timeout detection
-    used:comp;//number of times this record is reused during a connection -> e.g. keep-alive sends multiple requests down the same connection -> this var "used" increments for each request - 06jan2024
-    recycle:comp;//tracks number of times the record is recycled for life of program -> never resets
+    time_created                :longint64;//time this record was created - 06apr2024
+    time_idle                   :longint64;//used for idle timeout detection
+    used                        :longint64;//number of times this record is reused during a connection -> e.g. keep-alive sends multiple requests down the same connection -> this var "used" increments for each request - 06jan2024
+    recycle                     :longint64;//tracks number of times the record is recycled for life of program -> never resets
+
     //.type
-    server:boolean;
-    client:boolean;
+    server                      :boolean;
+    client                      :boolean;
+
     //.application level helpers / actions
-    more:tnetmore;
-    mustclose:boolean;//true=tells application to close the record
-    connected:boolean;
-    infotag:byte;
-    infolastip:string;//purely optional
-    infolastmode:byte;//0=none, 1=reading, 2=writing
+    more                        :tnetmore;
+    mustclose                   :boolean;//true=tells application to close the record
+    connected                   :boolean;
+    infotag                     :byte;
+    infolastip                  :string;//purely optional
+    infolastmode                :byte;//0=none, 1=reading, 2=writing
+
     end;
 
-   tnet__closeevent=procedure(x:pnetwork);
+   tnet__closeevent             =procedure(x:pnetwork);
+
 
    //.tipsecurity - record is considered "inuse" when "alen>=1"
-   pipsecurity=^tipsecurity;
-   tipsecurity=record
+   pipsecurity                  =^tipsecurity;
+   tipsecurity                  =record
+
     //.ip address as byte array
-    alen:byte;//0=record not in use, 1..N=record in use
-    aref:longint;
-    aref2:longint;
-    addr:array[0..40] of byte;//a fully qualified IPv6 address with [..] square brackets uses 41 bytes
+    alen                        :byte;//0=record not in use, 1..N=record in use
+    aref                        :longint32;
+    aref2                       :longint32;
+    addr                        :array[0..40] of byte;//a fully qualified IPv6 address with [..] square brackets uses 41 bytes
+
     //.counters
-    hits:longint;
-    bad:longint;//e.g. number of failed login attempts
-    post:longint;//e.g. number of post request, e.g. to the contact form "contact.html"
-    post2:longint;//e.g. number of "tools-*" post requests, e.g. to "tools-iconmaker.html" - 20feb2025
-    conn:longint;//number of simultaneous connections
-    notthislink:longint;//number of times a Bad Bot attempted to access secret "notthislink" file
-    banbymask:longint;//09aug2025
-    badrequest:longint;//number of times a bad request is made, e.g. a 502 (Bad Gateway) or 400 (Bad Request) - 18jun2025
-    badmail:longint;//19jun2025
+    hits                        :longint32;
+    bad                         :longint32;//e.g. number of failed login attempts
+    post                        :longint32;//e.g. number of post request, e.g. to the contact form "contact.html"
+    post2                       :longint32;//e.g. number of "tools-*" post requests, e.g. to "tools-iconmaker.html" - 20feb2025
+    conn                        :longint32;//number of simultaneous connections
+    notthislink                 :longint32;//number of times a Bad Bot attempted to access secret "notthislink" file
+    banbymask                   :longint32;//09aug2025
+    badrequest                  :longint32;//number of times a bad request is made, e.g. a 502 (Bad Gateway) or 400 (Bad Request) - 18jun2025
+    badmail                     :longint32;//19jun2025
+
     //.bandwidth in bytes consumed both for in and out data transfers
-    bytes:comp;
+    bytes                       :longint64;
+
     //.reference
-    age32:longint;//time since the record was first created in minutes
-    ban:boolean;//true=this ip is banned
+    age32                       :longint32;//time since the record was first created in minutes
+    ban                         :boolean;//true=this ip is banned
+
     end;
 
+
 {tnetmore}
-   tnetmore=class(tobject)//used by "net__*" procs as an app level helper object
+   tnetmore                     =class(tobject)//used by "net__*" procs as an app level helper object
    private
 
    public
-    constructor create; virtual;
-    destructor destroy; override;
-    procedure clear; virtual;
+
+    //create
+    constructor create;         virtual;
+    destructor  destroy;        override;
+
+    //workers
+    procedure   clear;          virtual;
+
    end;
+
 
 {tnetbasic}
-   tnetbasic=class(tnetmore)
+   tnetbasic                    =class(tnetmore)
    private
 
    public
+
     //vars
+
     //.info
-    vonce:boolean;
-    vstarttime:comp;//start time -> e.g. when request FIRST starts streaming in
-    vmustlog:boolean;
+    vonce                       :boolean;
+    vstarttime                  :longint64;//start time -> e.g. when request FIRST starts streaming in
+    vmustlog                    :boolean;
+
     //.login session info
-    vsessname:string;
-    vsessvalid:boolean;
-    vsessindex:longint;
+    vsessname                   :string;
+    vsessvalid                  :boolean;
+    vsessindex                  :longint32;
+
     //.read
-    r10:boolean;
-    r13:boolean;
-    htoobig:boolean;
-    hread:comp;//bytes received by server
-    hlenscan:longint;
-    hlen:longint;
-    clen:comp;
-    htempfile:longint;//0..N=a large upload was received and was stored on disk as a temp file using the "network.slot" as the id (buffer will be empty), -1=not used
-    hmethod:longint;//hmUNKNOWN..hmMAX
-    hver:longint;//hvUnknown..hvMax
-    hconn:longint;
-    hwantdata:boolean;//true=should include data, false=should EXCLUDE data
-    hport:longint;
-    hhost:string;
-    hdesthost:string;//host after mapping
-    hdiskhost:string;//e.g. "www_"
-    hka:boolean;
-    hcookie_k:string;//admin session cookie - 11mar2024
-    hua:string;
-    hcontenttype:string;//08feb2024
-    hreferer:string;
-    hrange:string;
-    hif_match:string;
-    hif_range:string;
-    hip:string;
-    hpath:string;
-    hname:string;
-    hnameext:string;//lowercase extension
-    hgetdat:string;//data after the question mark e.g. "/index.html?some-data-here"
-    hslot:longint;//slot returned from "ipsec__slot()" for tracking the ip address -> sought AFTER the head has been read/partly read
+    r10                         :boolean;
+    r13                         :boolean;
+    htoobig                     :boolean;
+    hread                       :longint64;//bytes received by server
+    hlenscan                    :longint32;
+    hlen                        :longint32;
+    clen                        :longint64;
+    htempfile                   :longint32;//0..N=a large upload was received and was stored on disk as a temp file using the "network.slot" as the id (buffer will be empty), -1=not used
+    hmethod                     :longint32;//hmUNKNOWN..hmMAX
+    hver                        :longint32;//hvUnknown..hvMax
+    hconn                       :longint32;
+    hwantdata                   :boolean;//true=should include data, false=should EXCLUDE data
+    hport                       :longint32;
+    hhost                       :string;
+    hdesthost                   :string;//host after mapping
+    hdiskhost                   :string;//e.g. "www_"
+    hka                         :boolean;
+    hcookie_k                   :string;//admin session cookie - 11mar2024
+    hua                         :string;
+    hcontenttype                :string;//08feb2024
+    hreferer                    :string;
+    hrange                      :string;
+    hif_match                   :string;
+    hif_range                   :string;
+    hip                         :string;
+    hpath                       :string;
+    hname                       :string;
+    hnameext                    :string;//lowercase extension
+    hgetdat                     :string;//data after the question mark e.g. "/index.html?some-data-here"
+    hslot                       :longint32;//slot returned from "ipsec__slot()" for tracking the ip address -> sought AFTER the head has been read/partly read
+
     //.module support - 17aug2024
-    hmodule_index:longint;//-1=no module used by default
-    hmodule_uploadlimit:longint;//0
-    hmodule_multipart:boolean;//false
-    hmodule_canmakeraw:boolean;//false
-    hmodule_readpost:boolean;//false
+    hmodule_index               :longint32;//-1=no module used by default
+    hmodule_uploadlimit         :longint32;//0
+    hmodule_multipart           :boolean;//false
+    hmodule_canmakeraw          :boolean;//false
+    hmodule_readpost            :boolean;//false
+
     //.write
-    writing:boolean;
-    wheadlen:comp;
-    wlen:comp;
-    wsent:comp;//bytes transmitted to client
-    wfrom:comp;
-    wto:comp;
-    wmode:longint;//0=buffer, 1=ram, 2=disk
-    wramindex:longint;//for wmode=1 -> for direct access to RAM stored file
-    wcode:longint;//used for logs
-    wfilename:string;//for wmode 1/2
-    wfilesize:comp;//size of file/data (not the amount being streamed)
-    wfiledate:tdatetime;//date of file
-    wbufsent:longint;
+    writing                     :boolean;
+    wheadlen                    :longint64;
+    wlen                        :longint64;
+    wsent                       :longint64;//bytes transmitted to client
+    wfrom                       :longint64;
+    wto                         :longint64;
+    wmode                       :longint32;//0=buffer, 1=ram, 2=disk
+    wramindex                   :longint32;//for wmode=1 -> for direct access to RAM stored file
+    wcode                       :longint32;//used for logs
+    wfilename                   :string;//for wmode 1/2
+    wfilesize                   :longint64;//size of file/data (not the amount being streamed)
+    wfiledate                   :tdatetime;//date of file
+    wbufsent                    :longint32;
+
     //.common
-    buf:tobject;//can be a tstr8 or tstr9
-    splicemem:pdlbyte;
-    splicelen:longint;
+    buf                         :tobject;//can be a tstr8 or tstr9
+    splicemem                   :pdlbyte;
+    splicelen                   :longint32;
+
     //.mail specific vars
-    mdata:boolean;//true=within the receiving "data" block command and waiting for the "." on a single line
+    mdata                       :boolean;//true=within the receiving "data" block command and waiting for the "." on a single line
+
     //create
-    constructor create; override;
-    destructor destroy; override;
+    constructor create;         override;
+    destructor  destroy;        override;
+
     //workers
-    procedure clear; override;
+    procedure   clear;          override;
+
    end;
+
 
 var
    //.network
-   system_net_session  :boolean=false;
-   system_net_sesinfo  :TWSAData;
-   system_net_slot     :array[0..system_net_limit-1] of tnetwork;//272 Kb
-   system_net_count    :longint=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 23dec2023
-   system_net_sock     :tdynamicinteger=nil;
-   system_net_in       :comp=0;//in bytes
-   system_net_out      :comp=0;//out bytes
+   system_net_session           :boolean=false;
+   system_net_sesinfo           :TWSAData;
+   system_net_slot              :array[0..system_net_limit-1] of tnetwork;//272 Kb
+   system_net_count             :longint32=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 23dec2023
+   system_net_sock              :tdynamicinteger=nil;
+   system_net_in                :longint64=0;//in bytes
+   system_net_out               :longint64=0;//out bytes
+
    //.log - 05jan2024
-   system_log_folder   :string='';//optional - 07mar2024
-   system_log_name     :string='';
-   system_log_datename :string='';
-   system_log_safename :string='';
-   system_log_cache    :tstr8=nil;
-   system_log_cachetime:comp=0;
-   system_log_varstime1:comp=0;
-   system_log_varstime2:comp=0;
-   system_log_gmtoffset:string='';
-   system_log_gmtnowstr:string='';//to nearest second
+   system_log_folder            :string='';//optional - 07mar2024
+   system_log_name              :string='';
+   system_log_datename          :string='';
+   system_log_safename          :string='';
+   system_log_cache             :tstr8=nil;
+   system_log_cachetime         :longint64=0;
+   system_log_varstime1         :longint64=0;
+   system_log_varstime2         :longint64=0;
+   system_log_gmtoffset         :string='';
+   system_log_gmtnowstr         :string='';//to nearest second
+
    //.ip security
-   system_ipsec_slot        :array[-1..system_ipsec_limit-1] of tipsecurity;//840 Kb -> Note: the "-1" entry is there ONLY as a catch for when the ipsec procs return "slot=-1" and an app may pass this on to the global system var "system_ipsec_slot[]" instead of using the safe "ipsec__*" procs which handle this value properly without fault - 07jan2024
-   system_ipsec_count       :longint=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 07jan2024
-   system_ipsec_scanfor     :longint=24*60;//1 day in minutes
-   system_ipsec_banfor      :longint=7*24*60;//1 week in minutes
-   system_ipsec_connlimit   :longint=0;//no limit -> sim. connections
-   system_ipsec_postlimit   :longint=0;//no limit -> hits
-   system_ipsec_postlimit2  :longint=0;//no limit -> hits
-   system_ipsec_badlimit    :longint=0;//no limit -> hits
-   system_ipsec_hitlimit    :longint=0;//no limit -> hits
-   system_ipsec_badreqlimit :longint=0;//no limit -> hits
-   system_ipsec_badmaillimit:longint=0;//no limit -> hits
-   system_ipsec_datalimit   :comp=0;//no limit -> in bytes (counts for both upload and download bandwidth)
+   system_ipsec_slot            :array[-1..system_ipsec_limit-1] of tipsecurity;//840 Kb -> Note: the "-1" entry is there ONLY as a catch for when the ipsec procs return "slot=-1" and an app may pass this on to the global system var "system_ipsec_slot[]" instead of using the safe "ipsec__*" procs which handle this value properly without fault - 07jan2024
+   system_ipsec_count           :longint32=0;//marks the highest slot used -> if this slot is subsequently closed, the count value may linger for stability/speed - 07jan2024
+   system_ipsec_scanfor         :longint32=24*60;//1 day in minutes
+   system_ipsec_banfor          :longint32=7*24*60;//1 week in minutes
+   system_ipsec_connlimit       :longint32=0;//no limit -> sim. connections
+   system_ipsec_postlimit       :longint32=0;//no limit -> hits
+   system_ipsec_postlimit2      :longint32=0;//no limit -> hits
+   system_ipsec_badlimit        :longint32=0;//no limit -> hits
+   system_ipsec_hitlimit        :longint32=0;//no limit -> hits
+   system_ipsec_badreqlimit     :longint32=0;//no limit -> hits
+   system_ipsec_badmaillimit    :longint32=0;//no limit -> hits
+   system_ipsec_datalimit       :longint64=0;//no limit -> in bytes (counts for both upload and download bandwidth)
+
 
 //start-stop procs -------------------------------------------------------------
 procedure gossnet__start;
 procedure gossnet__stop;
 
 //info procs -------------------------------------------------------------------
-function app__info(xname:string):string;
-function app__bol(xname:string):boolean;
-function info__net(xname:string):string;//information specific to this unit of code
+function  app__info(xname:string):string;
+function  app__bol(xname:string):boolean;
+function  info__net(xname:string):string;//information specific to this unit of code
 
 
 //dns support procs ------------------------------------------------------------
-function dns__pushquery_A(s:tstr8;xmsgid:word;xdomain:string):boolean;
-function dns__pushquery_MX(s:tstr8;xmsgid:word;xdomain:string):boolean;
-function dns__pushquery_XXX(s:tstr8;qtype:longint;xmsgid:word;xdomain:string):boolean;
+function  dns__pushquery_A(s:tstr8;xmsgid:word;xdomain:string):boolean;
+function  dns__pushquery_MX(s:tstr8;xmsgid:word;xdomain:string):boolean;
+function  dns__pushquery_XXX(s:tstr8;qtype:longint;xmsgid:word;xdomain:string):boolean;
 
-function dns__pullquery_A(s:tstr8;sdelete:boolean;var xlist:string):boolean;
-function dns__pullquery_MX(s:tstr8;sdelete:boolean;var xlist:string):boolean;
-function dns__pullquery_XXX(s:tstr8;sQtype:longint;sdelete:boolean;var xlist:string):boolean;
+function  dns__pullquery_A(s:tstr8;sdelete:boolean;var xlist:string):boolean;
+function  dns__pullquery_MX(s:tstr8;sdelete:boolean;var xlist:string):boolean;
+function  dns__pullquery_XXX(s:tstr8;sQtype:longint;sdelete:boolean;var xlist:string):boolean;
 
 
 //network support procs --------------------------------------------------------
-function net__mimefind(xext:string):string;
-function net__mimelist(xindex:longint;var xext,xtype:string):boolean;
-function net__IP4str(x:longint):string;
-function net__IP4strR(x:longint):string;//reversed
-function net__strIP4(x:string;var xip4:longint):boolean;
-function net__strIP4b(x:string):longint;
-function net__strIP4R(x:string;var xip4:longint):boolean;//reversed
-function net__strIP4Rb(x:string):longint;
-function net__cleanlistIP4(const x:string):string;//one IP4 address per line - 05apr2025
+function  net__mimefind(xext:string):string;//31oct2026
+function  net__mimelist(xindex:longint;var xext,xtype:string):boolean;//16nov2026
+function  net__IP4str(x:longint):string;
+function  net__IP4strR(x:longint):string;//reversed
+function  net__strIP4(x:string;var xip4:longint):boolean;
+function  net__strIP4b(x:string):longint;
+function  net__strIP4R(x:string;var xip4:longint):boolean;//reversed
+function  net__strIP4Rb(x:string):longint;
+function  net__cleanlistIP4(const x:string):string;//one IP4 address per line - 05apr2025
 
 
 //network procs ----------------------------------------------------------------
 //* provides server and inbound client network support
 //.sockets
-function net__makesession:boolean;
+function  net__makesession:boolean;
 procedure net__closesession;
+
 //.information
 procedure net__inccounters(xin,xout:comp);
-function net__in:comp;//bytes in
-function net__out:comp;//bytes out
-function net__total:comp;//total bytes (both ways)
+function  net__in:comp;//bytes in
+function  net__out:comp;//bytes out
+function  net__total:comp;//total bytes (both ways)
+
 //.tnetwork records
-function net__limit:longint;//maximum number of records for system
-function net__count:longint;//number of records in use, does not shrink automatically
-function net__findcount:longint;//find new "net__count" and update it
+function  net__limit:longint;//maximum number of records for system
+function  net__count:longint;//number of records in use, does not shrink automatically
+function  net__findcount:longint;//find new "net__count" and update it
 procedure net__initrec(x:pnetwork);//used internally by system
-function net__sockip4(xsock:tsocket;var xip4:longint):boolean;//lookup client IP address from Windows socket
-function net__findbysock(var x:pnetwork;xsock:tsocket):boolean;//09apr2024: fixed + updated
-function net__tempfile(xslot:longint;var xfilename:string):boolean;
-function net__tempfile_appendto(var a:pnetwork;xfirst:boolean):boolean;
-function net__recinfo(var a:pnetwork;var m:tnetbasic;var buf:pobject):boolean;
-function net__haverec(var x:pnetwork;xindex:longint):boolean;//we have a network record for that index (index is a slot in the system list of network records)
-function net__makerec(var x:pnetwork):boolean;//make a new network record -> at this stage it is neither a client or a server just a basic record
-function net__makerec2(var x:pnetwork;xlimit:longint;const xclosetag_list:array of byte;xclose_oldest_event:tnet__closeevent):boolean;
-function net__makeclient(var x:pnetwork;xlimit:longint;xsock:tsocket):boolean;//binds socket to network record and marks the record as a client e.g. "record.client=true"
-function net__makeclient2(var x:pnetwork;xlimit:longint;xsock,xowner:tsocket;const xclosetag_list:array of byte;xclose_oldest_event:tnet__closeevent):boolean;//06apr2024: recycle support
-function net__makeserver(var x:pnetwork;xport,xqueuesize:longint):boolean;//creates a server socket and binds it to the network record.  If the current record is a client, it is closed and a server is started in it's place. To change server port, set the record.port and call this function
-function net__makeserver2(var x:pnetwork;xport,xqueuesize:longint;xclosechildren:boolean):boolean;//the xclosechildren option when set to TRUE, forcibly closes all inbound client connections associated with the server socket BEFORE making any modifications to the server
-function net__closerec(x:pnetwork):boolean;//close the socket bound to the network record and releases the record back to the system
-function net__closerec2(x:pnetwork;xclosesock:boolean):boolean;//optionally the socket can be left intact whilst release the network record
-function net__closerec3(x:pnetwork;xclosesock:boolean;xclose_event:tnet__closeevent):boolean;
+function  net__sockip4(xsock:tsocket;var xip4:longint):boolean;//lookup client IP address from Windows socket
+function  net__findbysock(var x:pnetwork;xsock:tsocket):boolean;//09apr2024: fixed + updated
+function  net__tempfile(xslot:longint;var xfilename:string):boolean;
+function  net__tempfile_appendto(var a:pnetwork;xfirst:boolean):boolean;
+function  net__recinfo(var a:pnetwork;var m:tnetbasic;var buf:pobject):boolean;
+function  net__haverec(var x:pnetwork;xindex:longint):boolean;//we have a network record for that index (index is a slot in the system list of network records)
+function  net__makerec(var x:pnetwork):boolean;//make a new network record -> at this stage it is neither a client or a server just a basic record
+function  net__makerec2(var x:pnetwork;xlimit:longint;const xclosetag_list:array of byte;xclose_oldest_event:tnet__closeevent):boolean;
+function  net__makeclient(var x:pnetwork;xlimit:longint;xsock:tsocket):boolean;//binds socket to network record and marks the record as a client e.g. "record.client=true"
+function  net__makeclient2(var x:pnetwork;xlimit:longint;xsock,xowner:tsocket;const xclosetag_list:array of byte;xclose_oldest_event:tnet__closeevent):boolean;//06apr2024: recycle support
+function  net__makeserver(var x:pnetwork;xport,xqueuesize:longint):boolean;//creates a server socket and binds it to the network record.  If the current record is a client, it is closed and a server is started in it's place. To change server port, set the record.port and call this function
+function  net__makeserver2(var x:pnetwork;xport,xqueuesize:longint;xclosechildren:boolean):boolean;//the xclosechildren option when set to TRUE, forcibly closes all inbound client connections associated with the server socket BEFORE making any modifications to the server
+function  net__closerec(x:pnetwork):boolean;//close the socket bound to the network record and releases the record back to the system
+function  net__closerec2(x:pnetwork;xclosesock:boolean):boolean;//optionally the socket can be left intact whilst release the network record
+function  net__closerec3(x:pnetwork;xclosesock:boolean;xclose_event:tnet__closeevent):boolean;
 procedure net__closeonlysocket(var x:pnetwork);//closes the socket bound to the network record but leaves the record otherwise intact
 procedure net__closeonlysocket2(var x:pnetwork;xclosechildren:boolean);//meant for a server with children sockets, the children are closed first then the server socket
 procedure net__closeonlysocketsBYownk(var x:pnetwork);//use a server record to close all it's children socket connections only, records remain intact
 procedure net__closerecBYownk(var x:pnetwork);//use a server record to close all it's children socket connections AND their network records too
 procedure net__closerecBYownk2(var x:pnetwork;xclose_event:tnet__closeevent);
-function net__socketgood(var x:pnetwork):boolean;//tests a network record's socket and returns TRUE if socket is valid and FALSE if the socket is an "invalid_socket"
-function net__connected(var x:pnetwork):boolean;
+function  net__socketgood(var x:pnetwork):boolean;//tests a network record's socket and returns TRUE if socket is valid and FALSE if the socket is an "invalid_socket"
+function  net__connected(var x:pnetwork):boolean;
 //function net__closesocket(x:pnetwork):boolean;
+
 procedure net__closeall;//closes the entire network system, including helper objects, and is reserved for use internally within "app__run" during shutdown - don't use directly
-function net__accept(s:tsocket):tsocket;//accepts an inbound client connection to the server socket, uses Windows message FD_CONNECT
+function  net__accept(s:tsocket):tsocket;//accepts an inbound client connection to the server socket, uses Windows message FD_CONNECT
+
 //.support procs
 procedure net__decodestr(var x:string);//decode post data from a html upload stream - 12jun2006
-function net__decodestrb(x:string):string;
-function net__encodeforhtml(s,d:tstr8):boolean;//encode html data for use in web forms, such as retaining user supplied html code via a <textarea>..</textare> element of a <form>...</form>
-function net__encodeforhtml2(s,d:tstr8;xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):boolean;//full web support + BWD1 style support - 15apr2024: includelist, 13jun2016, 05mar2016, 12-JUN-2006
-function net__encodeforhtmlstr(x:string):string;//same as net__encodeforhtml() but uses strings
-function net__encodeforhtmlstr2(x:string;xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):string;
-function net__encodeurl(s,d:tstr8;xleaveslash:boolean):boolean;//01apr2024: added ssPert (previously missing), 15jan2024, 29dec2023
-function net__encodeurlstr(x:string;xleaveslash:boolean):string;
-function net__ismultipart(xcontenttype:string;var boundary:string):boolean;
+function  net__decodestrb(x:string):string;
+function  net__encodeforhtml(s,d:tstr8):boolean;//encode html data for use in web forms, such as retaining user supplied html code via a <textarea>..</textare> element of a <form>...</form>
+function  net__encodeforhtml2(s,d:tstr8;xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):boolean;//full web support + BWD1 style support - 15apr2024: includelist, 13jun2016, 05mar2016, 12-JUN-2006
+function  net__encodeforhtmlstr(const x:string):string;//same as net__encodeforhtml() but uses strings
+function  net__encodeforhtmlstr2(const x:string;const xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):string;
+function  net__encodeurl(const s,d:tstr8;const xleaveslash:boolean):boolean;//22oct2026, 01apr2024: added ssPert (previously missing), 15jan2024, 29dec2023
+function  net__encodeurlstr(const x:string;const xleaveslash:boolean):string;//22oct2026
+function  net__ismultipart(xcontenttype:string;var boundary:string):boolean;
 
 //ipsec procs ----------------------------------------------------------------
 //* provides IP tracking for server security and autonomous banning control (automatic engage and disengage)
@@ -450,8 +493,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossnet.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.956'
-else if (xname='date')       then result:='01jul2026'
+if      (xname='ver')        then result:='4.00.958'
+else if (xname='date')       then result:='31oct2026'
 else if (xname='name')       then result:='Network'
 else
    begin
@@ -722,7 +765,7 @@ end;
 
 
 //network support procs --------------------------------------------------------
-function net__mimefind(xext:string):string;
+function net__mimefind(xext:string):string;//31oct2026
 var
    p:longint;
    n,v:string;
@@ -747,15 +790,18 @@ end;//p
 
 end;
 
-function net__mimelist(xindex:longint;var xext,xtype:string):boolean;
+function net__mimelist(xindex:longint;var xext,xtype:string):boolean;//16nov2026
+
    procedure xadd(sext,stype:string);
    begin
    result:=true;
    xext  :=strlow(sext);
    xtype :=strlow(stype);
    end;
+
 begin
 case xindex of
+
 0:xadd('epub' ,'application/epub+zip');
 1:xadd('html','text/html');
 2:xadd('htm' ,'text/html');
@@ -804,8 +850,13 @@ case xindex of
 45:xadd('midi' ,'audio/midi');//was audio/x-midi
 46:xadd('bwd'  ,'application/x-bwd');
 47:xadd('bwp'  ,'application/x-bwp');
-48:xadd('*'    ,'application/octet-stream');//.absolute fallback
+48:xadd('jsonld' ,'ld+json');//30oct2026
+49:xadd('svg'  ,'image/svg+xml');//16nov2026
+
+50:xadd('*'    ,'application/octet-stream');//.absolute fallback
+
 else result:=false;
+
 end;//case
 end;
 
@@ -1572,7 +1623,7 @@ v:=byte(x[p-1+stroffset]);
 //decide
 if (v=sspercentage) then
    begin
-   x[p-1+stroffset+xp]:=char(low__hexint2(strcopy1(x,p+1,2)));
+   x[p-1+stroffset+xp]:=char(hex2__int1(strcopy1(x,p+1,2)));
    xp:=xp-2;
    p:=p+2;
    end
@@ -1835,79 +1886,102 @@ str__uaf(@d);
 
 end;
 
-function net__encodeforhtmlstr(x:string):string;
+function net__encodeforhtmlstr(const x:string):string;
 begin
-result:=net__encodeforhtmlstr2(x,false,false,[0],[0]);
+
+result      :=net__encodeforhtmlstr2(x,false,false,[0],[0]);
+
 end;
 
-function net__encodeforhtmlstr2(x:string;xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):string;
+function net__encodeforhtmlstr2(const x:string;const xuseincludelist,xuseskiplist:boolean;const xincludelist,xskiplist:array of byte):string;
 var
-   s,d:tstr8;
+   s        :tstr8;
+   d        :tstr8;
 begin
+
 //defaults
-result:='';
+result      :='';
+s           :=nil;
+d           :=nil;
 
 try
-s:=nil;
-d:=nil;
+
 //init
-s:=str__new8;
-d:=str__new8;
-s.text:=x;
+s           :=faststr__new8;
+d           :=faststr__new8;
+s.text      :=x;
+
 //get
-if net__encodeforhtml2(s,d,xuseincludelist,xuseskiplist,xincludelist,xskiplist) then result:=d.text;
+if net__encodeforhtml2(s,d,xuseincludelist,xuseskiplist,xincludelist,xskiplist) then
+   begin
+
+   result   :=d.text;
+
+   end;
+
 except;end;
-try
-str__free(@s);
-str__free(@d);
-except;end;
+
+//free
+faststr__free(@s);
+faststr__free(@d);
+
 end;
 
-function net__encodeurl(s,d:tstr8;xleaveslash:boolean):boolean;//01apr2024: added ssPert (previously missing), 15jan2024, 29dec2023
+function net__encodeurl(const s,d:tstr8;const xleaveslash:boolean):boolean;//22oct2026, 01apr2024: added ssPert (previously missing), 15jan2024, 29dec2023
 label
    skipend;
+
 var
-   slen:longint64;
-   p:longint32;
-   v:byte;
+   slen     :longint32;
+   p        :longint32;
+   v        :byte;
+
 begin
 
 //defaults
-result:=false;
+result      :=false;
 
 try
+
 //check
 if not low__true2(str__lock(@s),str__lock(@d)) then goto skipend;
 
 //init
 d.clear;
-slen:=s.len;
+slen        :=s.len32;
 
 //check
-if (slen<=0) then exit;
+if (slen<=0) then goto skipend;
 
 //get
-p:=0;
+p           :=0;
 
 repeat
 
-v:=s.pbytes[p];
+v           :=s.pbytes[p];
 
 if (v<=32) or (v>=127) or (v=35) or (v=sspert) or (v=43) then
    begin
 
-   //hash and "+" must be encoded (special cases) - fixed 15jan2024
-   if (v<>ssSlash) or xleaveslash then d.sadd('%'+low__hex(v)) else d.addbyt1(v);
+   //hash and "+" must be encoded (special cases) - updated with "int1__hex2()" - 20oct2026, fixed 15jan2024
+   if (v<>ssSlash) or xleaveslash then d.sadd('%'+int1__hex2(v)) else d.addbyt1(v);
 
    end
-else d.addbyt1(v);
+
+else begin
+
+   d.addbyt1(v);
+
+   end;
 
 //inc
 inc(p);
+
 until (p>=slen);
 
 //successful
-result:=true;
+result      :=true;
+
 skipend:
 except;end;
 
@@ -1917,29 +1991,40 @@ str__uaf(@d);
 
 end;
 
-function net__encodeurlstr(x:string;xleaveslash:boolean):string;
+function net__encodeurlstr(const x:string;const xleaveslash:boolean):string;//22oct2026
 var
-   s,d:tstr8;
+   s        :tstr8;
+   d        :tstr8;
+
 begin
+
 //defaults
-result:='';
+result      :='';
+s           :=nil;
+d           :=nil;
 
 try
-s:=nil;
-d:=nil;
+
 //init
-s:=str__new8;
-d:=str__new8;
-s.text:=x;
+s           :=faststr__new8;
+d           :=faststr__new8;
+s.text      :=x;
+
 //get
-if net__encodeurl(s,d,xleaveslash) then result:=d.text;
+if net__encodeurl( s ,d ,xleaveslash ) then
+   begin
+
+   result   :=d.text;
+
+   end;
+
 except;end;
-try
-str__free(@s);
-str__free(@d);
-except;end;
+
+//free
+faststr__free(@s);
+faststr__free(@d);
+
 end;
-//xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx//net
 
 function net__ismultipart(xcontenttype:string;var boundary:string):boolean;
 label

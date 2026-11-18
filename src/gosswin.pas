@@ -39,13 +39,17 @@ interface
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -92,7 +96,6 @@ resourcestring
    SInvalidStreamFormat = 'Invalid stream format';
    SInvalidLicense = 'License information for %s is invalid';
    SNotLicensed = 'License information for %s not found. You cannot use this control in design mode';
-
 
 type
 
@@ -702,9 +705,12 @@ type
 
    PPoint        = ^TPoint;
    TPoint        = record
-                   x: Longint;
-                   y: Longint;
+                   x: Longint32;
+                   y: Longint32;
                    end;
+
+   ppoint32      = ppoint;
+   tpoint32      = tpoint;
 
    PCoord        = ^TCoord;
    TCoord        = packed record
@@ -2955,6 +2961,18 @@ var
 
 const win____emergencyfallback_engaged=true;
 
+
+function win____SetMetaFileBitsEx(bufferLen:longint32;const buffer:pauto):hauto; stdcall; external gdi32 name 'SetMetaFileBitsEx';
+function win____SetMapMode(DC:hauto;p2:longint32):longint32; stdcall; external gdi32 name 'SetMapMode';
+function win____PlayMetaFile(DC:hauto;MF:hauto):bool; stdcall; external gdi32 name 'PlayMetaFile';
+function win____DeleteMetaFile(p1:hauto): BOOL; stdcall; external gdi32 name 'DeleteMetaFile';
+function win____SetViewportExtEx(DC: hauto; XExt, YExt: longint32; Size:pauto): BOOL; stdcall; external gdi32 name 'SetViewportExtEx';
+
+function win____SetEnhMetaFileBits(bufferLen:longint32;const buffer:pauto):hauto; stdcall; external gdi32 name 'SetEnhMetaFileBits';
+function win____GetEnhMetaFileHeader(MF: hauto; p2: longint32; headerInfo: pauto): longint32; stdcall; external gdi32 name 'GetEnhMetaFileHeader';
+function win____PlayEnhMetaFile(DC: hauto; MF:hauto; const p3: twinrect): BOOL; stdcall; external gdi32 name 'PlayEnhMetaFile';
+function win____DeleteEnhMetaFile(p1:hauto): BOOL; stdcall; external gdi32 name 'DeleteEnhMetaFile';
+
 function win____ExpandEnvironmentStrings(lpSrc: PAnsiChar; lpDst: PAnsiChar; nSize: DWORD32): DWORD32; stdcall; external kernel32 name 'ExpandEnvironmentStringsA';
 function win____ChooseColor(var CC: TChooseColor): Bool; stdcall; external comdlg32  name 'ChooseColorA';
 function win____GetSaveFileName(var OpenFile: TOpenFilename): Bool; stdcall; external comdlg32  name 'GetSaveFileNameA';
@@ -2990,6 +3008,8 @@ function win____IsClipboardFormatAvailable(format: uint32): BOOL; stdcall; exter
 function win____EmptyClipboard: BOOL; stdcall; external user32 name 'EmptyClipboard';
 function win____OpenClipboard(hWndNewOwner: hauto): BOOL; stdcall; external user32 name 'OpenClipboard';
 function win____CloseClipboard: BOOL; stdcall; external user32 name 'CloseClipboard';
+function win____GetClipboardSequenceNumber:longint32; stdcall;external user32 name 'GetClipboardSequenceNumber';//26oct2026
+
 function win____GdiFlush: BOOL; stdcall; external gdi32 name 'GdiFlush';
 function win____CreateCompatibleDC(DC: hauto): hauto; stdcall; external gdi32 name 'CreateCompatibleDC';
 function win____CreateDIBSection(DC: hauto; const p2: TBitmapInfoHeader; p3: uint32; var p4: pauto; p5: hauto; p6: dword32): hauto; stdcall; external gdi32 name 'CreateDIBSection';
@@ -5655,7 +5675,7 @@ if strmatch(sf,df) and emsg('Source and destination filenames are the same')   t
 
 //init
 a              :=tdynamicstring.create;
-a.text         :=io__fromfilestr2( sf );
+a.text         :=io__fromfilestrb( sf );
 
 if (a.count<=0) and emsg('No text to process') then goto skipend;
 

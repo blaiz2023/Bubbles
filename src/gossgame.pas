@@ -39,13 +39,17 @@ uses gosswin2, gossroot, gossio, gosswin, gossimg, gossgui {$ifdef snd},gosssnd{
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -6258,7 +6262,7 @@ for p:=0 to high(game_slot) do if (game_slot[p].style=gslNone) then
          game_slot[p].style        :=gslText;
          game_slot[p].text         :=str__new8;
 
-         game_slot[p].text.addfast32( d );
+         game_slot[p].text.addfast( d );
 
          end;
 

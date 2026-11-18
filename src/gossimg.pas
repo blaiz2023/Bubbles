@@ -31,21 +31,25 @@ uses gosswin2, gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpe
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. image/graphics (gossimg.pas)
-//## Version.................. 4.00.16400 (+447)
-//## Items.................... 28
-//## Last Updated ............ 30aug2026, 30jul2026, 01jul2026, 19jun2026, 14jun2026, 11jun2026, 09jun2026, 04jun2026, 02jun2026, 23may2026, 04may2026, 16apr2026, 10apr2026, 09apr2026, 03apr2026, 23mar2026, 21mar2026, 19mar2026, 13mar2026, 10mar2026, 07mar2026, 03mar2026, 25feb2026, 01dec2025, 09nov2025, 08nov2025, 24oct2025, 05oct2025, 03oct2025, 26sep2025, 18sep2025, 13sep2025, 04sep2025, 27aug2025, 08aug2025, 25jul2025, 16jul2025, 19jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
-//## Lines of Code............ 32,800+
+//## Version.................. 4.00.16542 (+449)
+//## Items.................... 30
+//## Last Updated ............ 07nov2026, 29oct2026, 27oct2026, 26oct2026, 30aug2026, 30jul2026, 01jul2026, 19jun2026, 14jun2026, 11jun2026, 09jun2026, 04jun2026, 02jun2026, 23may2026, 04may2026, 16apr2026, 10apr2026, 09apr2026, 03apr2026, 23mar2026, 21mar2026, 19mar2026, 13mar2026, 10mar2026, 07mar2026, 03mar2026, 25feb2026, 01dec2025, 09nov2025, 08nov2025, 24oct2025, 05oct2025, 03oct2025, 26sep2025, 18sep2025, 13sep2025, 04sep2025, 27aug2025, 08aug2025, 25jul2025, 16jul2025, 19jun2025, 12jun2025, 09jun2025, 29may2025, 26apr2025, 23mar2025, 22feb2025, 05feb2025, 31jan2025, 02jan2025, 27dec2024, 27nov2024, 15nov2024, 18aug2024, 26jul2024, 17apr2024
+//## Lines of Code............ 33,700+
 //## Origin .................. Human generated and maintained
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -61,24 +65,24 @@ uses gosswin2, gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpe
 //## | tbasicimage            | tobject           | 1.00.187   | 07dec2023   | Lightweight + fast system independent image, not resizable, supports 8/24/32 bit pixel depth - 09may2022, 27jul2021, 25jan2021, ??jan2020: created
 //## | twinbmp                | tobject           | 1.00.170   | 01dec2025   | Replacement for tbitmap - 27aug2025: GDI handling upgrades, 04sep2025, 27aug2025, 01may2025, 26apr2025
 //## | trawimage              | tobject           | 1.00.070   | 26apr2025   | Independent resizeable image -> persistent pixel rows and supports 8/24/32 bit color depth - 27dec2024, 25jul2024: created
-//## | c8__/c24__/c32__/int__ | family of procs   | 1.00.288   | 04jun2026   | Graphic color conversion procs - 02jun2026, 03mar2026, 03oct2025, 16sep2025, 13sep2025, 16jul2025, 06may2025, 18feb2025
-//## | mis*/mis__*            | family of procs   | 1.00.10659 | 04jun2026   | Graphic procs for working with multiple different image objects - 02jun2026, 23may2026, 03apr2026, 19mar2026, 07mar2026, 08nov2025, 18sep2025, 06jun2025, 09may2025, 27dec2024, 27nov2024
+//## | c8__/c24__/c32__/int__ | family of procs   | 1.00.290   | 07nov2026   | Graphic color conversion procs - 04jun2026, 02jun2026, 03mar2026, 03oct2025, 16sep2025, 13sep2025, 16jul2025, 06may2025, 18feb2025
+//## | mis*/mis__*            | family of procs   | 1.00.10679 | 26oct2026   | Graphic procs for working with multiple different image objects - 04jun2026, 02jun2026, 23may2026, 03apr2026, 19mar2026, 07mar2026, 08nov2025, 18sep2025, 06jun2025, 09may2025, 27dec2024, 27nov2024
 //## | ref_*                  | family of procs   | 1.00.100   | 20jul2024   | Reference procs for image adjustment
 //## | canvas__*              | family of procs   | 1.00.045   | 18feb2025   | Indirect support for tcanvas - 28jun2024
 //## | gif__*                 | family of procs   | 1.00.918   | 04may2026   | Read / write GIF images, static and animated, automatic on-the-fly optimisation (solid, transparent and mixed cell modes) - 16apr2026, 13mar2026, 08aug2025, 06aug2024
 //## | mask__*                | family of procs   | 1.00.134   | 04may2026   | Mask related procs for working with alpha channel on 32bit images or 8bit images - 10apr2026, 24oct2025, 08aug2025
-//## | bmp__*                 | family of procs   | 1.00.475   | 09nov2025   | Read / write BMP images - 32bit with alpha/DIB/clipboard formats - 12jun2025, 26may2025, 14may2025, 01may2025, 06aug2024
+//## | bmp__*                 | family of procs   | 1.00.491   | 27oct2026   | Read / write BMP images - 32bit with alpha/DIB/clipboard formats - 09nov2025, 12jun2025, 26may2025, 14may2025, 01may2025, 06aug2024
 //## | dib__*                 | family of procs   | 1.00.052   | 28may2025   | Read / write DIB images - 14may2025, 06aug2024
 //## | tj32__*                | family of procs   | 1.00.045   | 06aug2024   | Read / write TJ32 images -> 32bit hybrid transparent jpeg -> static and animated
 //## | san__*                 | family of procs   | 1.00.020   | 16sep2025   | Read / write SAN images -> supports legacy 24 bit and new 32 bit image strips
 //## | img8__*                | family of procs   | 1.00.020   | 17sep2025   | Read / write PIC8 images -> supports basic mode
 //## | img32__*               | family of procs   | 1.00.040   | 06aug2024   | Read / write IMG32 images -> 32bit raw images -> static and animated
 //## | jpg__*                 | family of procs   | 1.00.272   | 05dec2024   | Read / write JPEG images -> automatic quality control - 24nov2024, 06aug2024
-//## | png__*                 | family of procs   | 1.00.335   | 25jul2025   | Read / write PMG images - 29may2025, 15mar2025, 15nov2024
+//## | png__*                 | family of procs   | 1.00.336   | 27oct2026   | Read / write PMG images - 25jul2025, 29may2025, 15mar2025, 15nov2024
 //## | tea__*                 | family of procs   | 1.00.415   | 23mar2026   | Read / write TEA images - 05oct2025, 08aug2025, 17jun2025, 12dec2024, 18nov2024
 //## | rle8__*                | family of procs   | 1.00.030   | 25feb2026   | Read / write RLE8 images
 //## | tep__*                 | family of procs   | 1.00.082   | 10mar2026   | Read / ????? TEP images - 05oct2025
-//## | ico__*, low__ico*      | family of procs   | 1.00.680   | 30aug2026   | Read / write ICO images - 19jun2026, 02jun2025, 28may2025, 13may2025, 22nov2024
+//## | ico__*, low__ico*      | family of procs   | 1.00.681   | 27oct2026   | Read / write ICO images - 30aug2026, 19jun2026, 02jun2025, 28may2025, 13may2025, 22nov2024
 //## | cur__*                 | family of procs   | 1.00.212   | 09jun2026   | Read / write CUR images - 28may2025, 22nov2024
 //## | ani__*                 | family of procs   | 1.00.210   | 23may2026   | Read / write ANI images - 22nov2024
 //## | ia__*                  | family of procs   | 1.00.131   | 21dec2024   | Read / write image action commands - for passing low level information to graphic subprocs - 24nov2024
@@ -88,6 +92,8 @@ uses gosswin2, gossroot, gossio, gosswin {$ifdef gui},gossdat{$endif}{$ifdef jpe
 //## | pbm__*                 | family of procs   | 1.00.035   | 02jan2025   | Read / write PBM images
 //## | pnm__*                 | family of procs   | 1.00.022   | 02jan2025   | Read / write PNM images
 //## | xbm__*                 | family of procs   | 1.00.060   | 18sep2025   | Read / write XBM images - 02jan2025
+//## | wmf__*                 | family of procs   | 1.00.080   | 29oct2026   | Read / ????? WMF images - 29oct2026
+//## | emf__*                 | family of procs   | 1.00.020   | 29oct2026   | Read / ????? EMF images - 29oct2026
 //## ==========================================================================================================================================================================================================================
 //## Performance Note:
 //##
@@ -130,6 +136,9 @@ const
    //.stream support
    ia_usestr9                         ='use.str9';
 
+   //.patch codes
+   ia_bmp_legacyAlpha                 ='bmp.legacyalpha';//26oct2026
+
    //.info
    ia_info_filename                   ='info.filename';
    ia_fast                            ='fast';//23may2026
@@ -147,6 +156,7 @@ const
 
    //.manual quality
    ia_quality100                      ='quality'+ia_v+'0-100';//0..100 - 0=worst, 100=best
+
    //.auto quality
    ia_bestquality                     ='quality'+ia_v+'best';
    ia_highquality                     ='quality'+ia_v+'high';
@@ -234,37 +244,72 @@ type
    //.bitmap animation helper record
    panimationinformation=^tanimationinformation;
    tanimationinformation=record
-    format:string;//uppercase EXT (e.g. JPG, BMP, SAN etc)
-    subformat:string;//same style as format, used for dual format streams "ATEP: 1)animation header + 2)image"
-    info:string;//UNICODE WARNING --- optional custom information data block packed at end of image data - 22APR2012
-    filename:string;
-    map16:string;//UNICODE WARNING --- 26MAY2009 - used in "CAN or Compact Animation" to map all original cells to compacted imagestrip
-    transparent:boolean;
-    syscolors:boolean;//13apr2021
-    flip:boolean;
-    mirror:boolean;
-    delay:longint;
-    itemindex:longint;
-    count:longint;//0..X (0=1cell, 1=2cells, etc)
-    bpp:byte;
-    binary:boolean;
+
+    format            :string;//uppercase EXT (e.g. JPG, BMP, SAN etc)
+    subformat         :string;//same style as format, used for dual format streams "ATEP: 1)animation header + 2)image"
+    info              :string;//UNICODE WARNING --- optional custom information data block packed at end of image data - 22APR2012
+    filename          :string;
+    map16             :string;//UNICODE WARNING --- 26MAY2009 - used in "CAN or Compact Animation" to map all original cells to compacted imagestrip
+    transparent       :boolean;
+    syscolors         :boolean;//13apr2021
+    flip              :boolean;
+    mirror            :boolean;
+    delay             :longint32;
+    itemindex         :longint32;
+    count             :longint32;//0..X (0=1cell, 1=2cells, etc)
+    bpp               :byte;
+    binary            :boolean;
+
     //cursor - 20JAN2012
-    hotspotX:longint;//-1=not set=default
-    hotspotY:longint;//-1=not set=default
-    hotspotMANUAL:boolean;//use this hotspot instead of automatic hotspot - 03jan2019
+    hotspotX          :longint32;//-1=not set=default
+    hotspotY          :longint32;//-1=not set=default
+    hotspotMANUAL     :boolean;//use this hotspot instead of automatic hotspot - 03jan2019
+
     //32bit capable formats
-    owrite32bpp:boolean;//default=false, for write modes within "ccs.todata()" where 32bit is used as the default save BPP - 22JAN2012
+    owrite32bpp       :boolean;//default=false, for write modes within "ccs.todata()" where 32bit is used as the default save BPP - 22JAN2012
+
     //final
-    readB64:boolean;//true=image was b64 encoded
-    readB128:boolean;//true=image was b128 encoded
-    writeB64:boolean;//true=encode image using b64
-    writeB128:boolean;//true=encode image using b128 - 09feb2015
+    readB64           :boolean;//true=image was b64 encoded
+    readB128          :boolean;//true=image was b128 encoded
+    writeB64          :boolean;//true=encode image using b64
+    writeB128         :boolean;//true=encode image using b128 - 09feb2015
+
     //internal
-    iosplit:longint;//position in IO stream that animation sep. (#0 or "#" occurs)
-    cellwidth:longint;
-    cellheight:longint;
-    use32:boolean;
+    iosplit           :longint32;//position in IO stream that animation sep. (#0 or "#" occurs)
+    cellwidth         :longint32;
+    cellheight        :longint32;
+    use32             :boolean;
+
     end;
+
+   PEnhMetaHeader = ^TEnhMetaHeader;
+   TEnhMetaHeader = packed record
+    iType             :longint32;       { Record type EMR_HEADER}
+    nSize             :longint32;       { Record size in bytes.  This may be greater
+                                          than the sizeof(TEnhMetaHeader). }
+    rclBounds         :twinrect;        { Inclusive-inclusive bounds in device units}
+    rclFrame          :twinrect;        { Inclusive-inclusive Picture Frame of metafile in .01 mm units}
+    dSignature        :longint32;       { Signature.  Must be ENHMETA_SIGNATURE.}
+    nVersion          :longint32;       { Version number}
+    nBytes            :longint32;       { Size of the metafile in bytes}
+    nRecords          :longint32;       { Number of records in the metafile}
+    nHandles          :word;            { Number of handles in the handle table
+                                          Handle index zero is reserved. }
+    sReserved         :word;            { Reserved.  Must be zero.}
+    nDescription      :longint32;       { Number of chars in the unicode description string
+                                          This is 0 if there is no description string }
+    offDescription    :longint32;       { Offset to the metafile description record. }
+                                        { This is 0 if there is no description string }
+    nPalEntries       :longint32;       { Number of entries in the metafile palette.}
+    szlDevice         :tpoint32;          { Size of the reference device in pels}
+    szlMillimeters    :tpoint32;          { Size of the reference device in millimeters}
+    cbPixelFormat     :longint32;       { Size of TPixelFormatDescriptor information }
+                                        { This is 0 if no pixel format is set }
+    offPixelFormat    :longint32;       { Offset to TPixelFormatDescriptor }
+                                        { This is 0 if no pixel format is set }
+    bOpenGL           :longint32;       { True if OpenGL commands are present in }
+                                        { the metafile, otherwise FALSE }
+   end;
 
 
 {tgifsupport}
@@ -312,16 +357,16 @@ type
    public
 
     //animation support
-    ai:tanimationinformation;
-    dtransparent:boolean;
-    omovie:boolean;//default=false, true=fromdata will create the "movie" if not already created
-    oaddress:string;//used for "AAS" to load from a specific folder - 30NOV2010
-    ocleanmask32bpp:boolean;//default=false, true=reads only the upper levels of the 8bit mask of a 32bit icon/cursor to eliminate poor mask quality - ccs.fromicon32() etc - 26JAN2012
-    rhavemovie:boolean;//default=false, true=object has a movie as it's animation
+    ai                          :tanimationinformation;
+    dtransparent                :boolean;
+    omovie                      :boolean;//default=false, true=fromdata will create the "movie" if not already created
+    oaddress                    :string;//used for "AAS" to load from a specific folder - 30NOV2010
+    ocleanmask32bpp             :boolean;//default=false, true=reads only the upper levels of the 8bit mask of a 32bit icon/cursor to eliminate poor mask quality - ccs.fromicon32() etc - 26JAN2012
+    rhavemovie                  :boolean;//default=false, true=object has a movie as it's animation
 
     //create
-    constructor create; virtual;
-    destructor destroy; override;
+    constructor create;         virtual;
+    destructor destroy;         override;
     function copyfrom(s:tbasicimage):boolean;//09may2022, 09feb2022
 
     //information
@@ -727,10 +772,10 @@ function mislimitcolors82432ex(x:tobject;sx,xcellw,xtranscolor,colorlimit:longin
 function degtorad2(deg:extended):extended;//20OCT2009
 function miscurveAirbrush2(var x:array of longint;xcount,valmin,valmax:longint;xflip,yflip:boolean):boolean;//20jan2021, 29jul2016
 
-function miscls(s:tobject;xcolor:longint):boolean;
-function misclsarea(s:tobject;sarea:twinrect;xcolor:longint):boolean;
-function misclsarea2(s:tobject;sarea:twinrect;xcolor,xcolor2:longint):boolean;
-function misclsarea3(s:tobject;sarea:twinrect;xcolor,xcolor2,xalpha,xalpha2:longint):boolean;
+function miscls(const s:tobject;const xcolor:longint32):boolean;
+function misclsarea(const s:tobject;const sarea:twinrect;const xcolor:longint32):boolean;
+function misclsarea2(const s:tobject;const sarea:twinrect;const xcolor,xcolor2:longint32):boolean;
+function misclsarea3(const s:tobject;const sarea:twinrect;xcolor,xcolor2,xalpha,xalpha2:longint32):boolean;
 function misscreenresin248K:longint;//returns 2(K), 4(K) or 8(K) - 14mar2021
 
 //.special
@@ -777,17 +822,20 @@ function mis__tofile(s:tobject;dfilename,dformat:string;var e:string):boolean;//
 function mis__tofile2(s:tobject;dfilename,dformat,daction:string;var e:string):boolean;//09jul2021
 function mis__tofile3(s:tobject;dfilename,dformat:string;var daction,e:string):boolean;//26dec2024, 09jul2021
 
-function mis__fromfile(s:tobject;sfilename:string;var e:string):boolean;//09jul2021
-function mis__fromfile2(s:tobject;sfilename:string;sbuffer:boolean;var e:string):boolean;//09jul2021
+function mis__fromfile(const s:tobject;const sfilename:string;var e:string):boolean;//09jul2021
+function mis__fromfile1(const s:tobject;const sfilename,xaction:string;var e:string):boolean;//26oct2026
+function mis__fromfile2(const s:tobject;const sfilename,xaction:string;const sbuffer:boolean;var e:string):boolean;//26oct2026, 09jul2021
 
 function mis__todata(s:tobject;sdata:pobject;dformat:string;var e:string):boolean;//25jul2024
 function mis__todata2(s:tobject;sdata:pobject;dformat,daction:string;var e:string):boolean;//25jul2024
 function mis__todata3(s:tobject;sdata:pobject;dformat:string;var daction,e:string):boolean;//23may2026, 18mar2026, 19feb2025, 14dec2024: ia_nonAnimatedFormatsSaveImageStrip, 25jul2024
 
-function mis__fromadata(s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
-function mis__fromdata(s:tobject;sdata:pobject;var e:string):boolean;//25jul2024
-function mis__fromdata2(s:tobject;sdata:pobject;sbuffer:boolean;var e:string):boolean;//06jun2025, 25jul2024
-function mis__fromarray(s:tobject;const xdata:array of byte;var e:string):boolean;//01may2025, 02jun2020
+function mis__fromadata(const s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
+
+function mis__fromdata(const s:tobject;const sdata:pobject;var e:string):boolean;//25jul2024
+function mis__fromdata2(const s:tobject;const sdata:pobject;const xaction:string;const sbuffer:boolean;var e:string):boolean;//26oct2026, 06jun2025, 25jul2024
+
+function mis__fromarray(const s:tobject;const xdata:array of byte;var e:string):boolean;//01may2025, 02jun2020
 
 function mis__fromarrayBYTE(const d:tobject;const s:pobject):boolean;//18mar2026
 function mis__frombase64(const d:tobject;const s:pobject):boolean;//18mar2026
@@ -876,6 +924,7 @@ function low__toani32b(s:tobject;slist:tfindlistimage;dformat:string;dpng:boolea
 
 
 //ref procs --------------------------------------------------------------------
+
 function ref_blankX(x:tstr8;xlabel:string;xsize:longint):boolean;
 function ref_blank1000(x:tstr8;xlabel:string):boolean;
 function ref_valid(x:tstr8):boolean;
@@ -919,6 +968,7 @@ procedure ref_setall(x:tstr8;y:extended);
 
 
 //pixel modifier procs ---------------------------------------------------------
+
 procedure fbNoise3(var r,g,b:byte);//faster - 29jul2017
 procedure fbInvert(var r,g,b:byte);
 procedure fbGreyscale(var r,g,b:byte);
@@ -926,6 +976,7 @@ procedure fbSepia(var r,g,b:byte);
 
 
 //png procs --------------------------------------------------------------------
+
 function png__todata(s:tobject;d:pobject;var e:string):boolean;
 function png__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function png__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//29may2025, 06may2025, OK=27jan2021, 20jan2021
@@ -939,6 +990,7 @@ function png8__todata(s:tobject;d:pobject):boolean;
 
 
 //tea procs (text picture) -----------------------------------------------------
+
 //draw-on-the-fly (direct from data buffer) GUI image
 function tea__info(var adata:tlistptr;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;//18mar2026
 function tea__info2(adata:tstr8;var aw,ah,aSOD,aversion,aval1,aval2:longint;var atransparent,asyscolors:boolean):boolean;
@@ -982,13 +1034,14 @@ function tep__fromdata(s:tobject;d:pobject;var e:string):boolean;//10mar2026, 05
 
 
 //ia procs ---------------------------------------------------------------------
-//image action procs -> send and receive optional info from image procs
+
+//image action procs -> send and receive optional info to/from image procs/subprocs
 //.add to end
-function ia__add(xactions,xnewaction:string):string;
-function ia__addlist(xactions:string;xlistofnewactions:array of string):string;
-function ia__sadd(xactions,xnewaction:string;xvals:array of string):string;//name+vals.string
-function ia__iadd(xactions,xnewaction:string;xvals:array of longint):string;//name+vals.longint
-function ia__iadd64(xactions,xnewaction:string;xvals:array of comp):string;//name+vals.longint
+function ia__add(const xactions,xnewaction:string):string;
+function ia__addlist(const xactions:string;const xlistofnewactions:array of string):string;
+function ia__sadd(const xactions,xnewaction:string;const xvals:array of string):string;//name+vals.string
+function ia__iadd(const xactions,xnewaction:string;const xvals:array of longint32):string;//name+vals.longint
+function ia__iadd64(const xactions,xnewaction:string;const xvals:array of longint64):string;//name+vals.longint
 
 //.simplified list of per-image-format "action" options -> mainly for dialog window etc
 procedure ia__useroptions(xinit,xget:boolean;ximgext:string;var xlistindex,xlistcount:longint;var xlabel,xhelp,xaction:string);
@@ -996,41 +1049,44 @@ procedure ia__useroptions_suppress(xall:boolean;xformatmask:string);//use to dis
 procedure ia__useroptions_suppress_clear;
 
 //.add at beginning
-function ia__preadd(xactions,xnewaction:string):string;
-function ia__spreadd(xactions,xnewaction:string;xvals:array of string):string;//name+vals(string)
-function ia__ipreadd(xactions,xnewaction:string;xvals:array of longint):string;//name+vals(longint)
-function ia__ipreadd64(xactions,xnewaction:string;xvals:array of comp):string;//name+vals(comp)
+function ia__preadd(const xactions,xnewaction:string):string;
+function ia__spreadd(const xactions,xnewaction:string;const xvals:array of string):string;//name+vals(string)
+function ia__ipreadd(const xactions,xnewaction:string;const xvals:array of longint32):string;//name+vals(longint)
+function ia__ipreadd64(const xactions,xnewaction:string;const xvals:array of longint64):string;//name+vals(comp)
 
 //find
-function ia__ok(xactions,xfindname:string):boolean;//same as found
-function ia__found(xactions,xfindname:string):boolean;
+function ia__ok(const xactions,xfindname:string):boolean;//same as found
+function ia__found(const xactions,xfindname:string):boolean;
 
-function ia__sfindval(xactions,xfindname:string;xvalindex:longint;xdefval:string;var xout:string):boolean;
-function ia__ifindval(xactions,xfindname:string;xvalindex,xdefval:longint;var xout:longint):boolean;
-function ia__ifindval64(xactions,xfindname:string;xvalindex:longint;xdefval:comp;var xout:comp):boolean;
+function ia__sfindval(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:string;var xout:string):boolean;
+function ia__ifindval(const xactions,xfindname:string;const xvalindex,xdefval:longint32;var xout:longint32):boolean;
+function ia__ifindval64(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:longint64;var xout:longint64):boolean;
 
-function ia__sfindvalb(xactions,xfindname:string;xvalindex:longint;xdefval:string):string;
-function ia__ifindvalb(xactions,xfindname:string;xvalindex,xdefval:longint):longint;
-function ia__ifindval64b(xactions,xfindname:string;xvalindex:longint;xdefval:comp):comp;
+function ia__sfindvalb(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:string):string;
+function ia__ifindvalb(const xactions,xfindname:string;const xvalindex,xdefval:longint32):longint32;
+function ia__ifindval64b(const xactions,xfindname:string;const xvalindex:longint;const xdefval:longint64):longint64;
 
-function ia__sfind(xactions,xfindname:string;var xvals:array of string):boolean;
-function ia__ifind(xactions,xfindname:string;var xvals:array of longint):boolean;
-function ia__ifind64(xactions,xfindname:string;var xvals:array of comp):boolean;
+function ia__sfind(const xactions,xfindname:string;var xvals:array of string):boolean;
+function ia__ifind(const xactions,xfindname:string;var xvals:array of longint32):boolean;
+function ia__ifind64(const xactions,xfindname:string;var xvals:array of longint64):boolean;
 
-function ia__find(xactions,xfindname:string;var xvals:array of string):boolean;
+function ia__find(const xactions,xfindname:string;var xvals:array of string):boolean;
 
 
 //pic8 procs --------------------------------------------------------------------
+
 function img8__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
 function img8__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
 
 
 //san procs --------------------------------------------------------------------
+
 function san__fromdata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
 function san__todata(s:tobject;d:pobject;var e:string):boolean;//16sep2025
 
 
 //img32 procs ------------------------------------------------------------------
+
 //uncompressed image 32bit
 function img32__fromdata(s:tobject;d:pobject;var e:string):boolean;
 function img32__fromdata2(s:tobject;d:pobject;var scellwidth,scellheight,scellcount,sdelayms:longint;var e:string):boolean;
@@ -1040,6 +1096,7 @@ function img32__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
 
 
 //tj32 procs -------------------------------------------------------------------
+
 //transparent jpeg 32bit
 function tj32__fromdata(s:tobject;d:pobject;var e:string):boolean;
 function tj32__fromdata2(s:tobject;d:pobject;var scellwidth,scellheight,scellcount,sdelayms:longint;var e:string):boolean;
@@ -1049,32 +1106,37 @@ function tj32__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
 
 
 //bmp procs --------------------------------------------------------------------
+
+function bmp__formatOK(const x:longint32):boolean;
+function bmp__safeFormat(const xformatCode:longint32):longint32;//26oct2026
+function bmp__safeFormat2(const xformatCode,xdefCode:longint32):longint32;//26oct2026
+
 function bmp__todata(s:tobject;d:pobject;var e:string):boolean;
 function bmp__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function bmp__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//14may2025
 function bmp__pushdata(s,d:pobject):boolean;//pack data inside a bitmap image - 01may2025
 
-function bmp__fromdata(d:tobject;s:pobject;var e:string):boolean;
-function bmp__fromdata2(d:tobject;s:pobject;var xbits:longint;var e:string):boolean;
+function bmp__fromdata(d:tobject;s:pobject;const xaction:string;var e:string):boolean;
+function bmp__fromdata2(d:tobject;s:pobject;const xaction:string;var xbits:longint;var e:string):boolean;
 
-function bmpXX__todata(s:tobject;d:pobject;dbits:longint):boolean;//14may2025
-function bmp32__todata(s:tobject;d:pobject):boolean;//15may2025
-function bmp32__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//15may2025
-function bmp32__todata3(s:tobject;d:pobject;dfullheader:boolean;dinfosize,dbits:longint):boolean;//11jun2025: dinfosize, 09jun2025, 28may2025, 15may2025
+function bmpXX__todata(s:tobject;d:pobject;const xaction:string;const dbits:longint):boolean;//14may2025
+function bmp32__todata(s:tobject;d:pobject;const xaction:string):boolean;//14may2025
+function bmp32__todata2(s:tobject;d:pobject;const xaction:string;const dfullheader:boolean):boolean;//15may2025
+function bmp32__todata3(s:tobject;d:pobject;const xaction:string;const dfullheader:boolean;dinfosize,dbits:longint):boolean;//11jun2025: dinfosize, 09jun2025, 28may2025, 15may2025
 function bmp24__todata(s:tobject;d:pobject):boolean;//14may2025
-function bmp24__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp24__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 function bmp16__todata(s:tobject;d:pobject):boolean;//14may2025
-function bmp16__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp16__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 function bmp8__todata(s:tobject;d:pobject):boolean;//14may2025
-function bmp8__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp8__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 function bmp4__todata(s:tobject;d:pobject):boolean;//14may2025
-function bmp4__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp4__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 function bmp1__todata(s:tobject;d:pobject):boolean;//14may2025
-function bmp1__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
-function bmp1__todata3(s:tobject;d:pobject;dheaderlevel:longint):boolean;//27may2025, 14may2025
+function bmp1__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
+function bmp1__todata3(s:tobject;d:pobject;const dheaderlevel:longint):boolean;//27may2025, 14may2025
 
-function bmp32__fromdata(d:tobject;s:pobject):boolean;//11jun2025: supports DIB +12b patch, 09nov2025, 15may2025
-function bmp32__fromdata2(d:tobject;s:pobject;sallow_dib_patch_12:boolean):boolean;//12jun2025: dib_patch_12 control, 11jun2025: supports DIB +12b patch, 15may2025
+function bmp32__fromdata(d:tobject;s:pobject;const xaction:string):boolean;//11jun2025: supports DIB +12b patch, 09nov2025, 15may2025
+function bmp32__fromdata2(d:tobject;s:pobject;const xaction:string;const sallow_dib_patch_12:boolean):boolean;//26oct2026, 12jun2025: dib_patch_12 control, 11jun2025: supports DIB +12b patch, 15may2025
 function bmp24__fromdata(d:tobject;s:pobject):boolean;//15may2025
 function bmp16__fromdata(d:tobject;s:pobject):boolean;//15may2025
 function bmp8__fromdata(d:tobject;s:pobject):boolean;//09jun2025: supports bi_rgb + bi_rle8 + bi_rle4, 15may2025
@@ -1083,6 +1145,7 @@ function bmp1__fromdata(d:tobject;s:pobject):boolean;//15may2025
 
 
 //dib procs --------------------------------------------------------------------
+
 function dib__fromdata(s:tobject;d:pobject;var e:string):boolean;
 function dib__fromdata2(s:tobject;d:pobject;var xoutbpp:longint;var e:string):boolean;
 
@@ -1107,6 +1170,7 @@ function dib1__fromdata(d:tobject;s:pobject):boolean;//28may2025
 
 
 //jpeg procs -------------------------------------------------------------------
+
 function jpg__can:boolean;
 function jpg__todata(s:tobject;d:pobject;var e:string):boolean;
 function jpg__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
@@ -1114,7 +1178,9 @@ function jpg__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//05dec2
 
 function jpg__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
+
 //tga procs --------------------------------------------------------------------
+
 function tga__todata(s:tobject;d:pobject;var e:string):boolean;
 function tga__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function tga__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//20dec2024
@@ -1125,8 +1191,20 @@ function tga24__todata(s:tobject;d:pobject):boolean;//29may2025
 function tga8__todata(s:tobject;d:pobject):boolean;//29may2025
 
 
+//wmf procs --------------------------------------------------------------------
+
+function wmf__fromheader(const xheader22:string;var dwidth,dheight:longint32):boolean;
+function wmf__writeheader(const d:pobject;const dw,dh:longint32):boolean;
+function wmf__fromdata(const d:tobject;const s:pobject;var e:string):boolean;
+
+
+//emf procs --------------------------------------------------------------------
+
+function emf__fromdata(const d:tobject;const s:pobject;var e:string):boolean;
+
+
 //ppm procs --------------------------------------------------------------------
-//xxxxxxxxxxxxxxxxxxxx//11111111111111111111
+
 function ppm__todata(s:tobject;d:pobject;var e:string):boolean;
 function ppm__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function ppm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
@@ -1134,7 +1212,7 @@ function ppm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
 
 //pgm procs --------------------------------------------------------------------
-//xxxxxxxxxxxxxxxxxxxx//222222222222222222222222222
+
 function pgm__todata(s:tobject;d:pobject;var e:string):boolean;
 function pgm__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function pgm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
@@ -1142,7 +1220,7 @@ function pgm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
 
 //pbm procs --------------------------------------------------------------------
-//xxxxxxxxxxxxxxxxxxxx//222222222222222222222222222
+
 function pbm__todata(s:tobject;d:pobject;var e:string):boolean;
 function pbm__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function pbm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
@@ -1150,7 +1228,7 @@ function pbm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
 
 //pnm procs --------------------------------------------------------------------
-//xxxxxxxxxxxxxxxxxxxx//333333333333333333333
+
 function pnm__todata(s:tobject;d:pobject;var e:string):boolean;
 function pnm__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function pnm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
@@ -1158,7 +1236,7 @@ function pnm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
 
 //xbm procs --------------------------------------------------------------------
-//xxxxxxxxxxxxxxxxxxxx//222222222222222222222222222
+
 function xbm__todata(s:tobject;d:pobject;var e:string):boolean;
 function xbm__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function xbm__todata3(s:tobject;d:pobject;var daction,e:string):boolean;
@@ -1166,6 +1244,7 @@ function xbm__fromdata(s:tobject;d:pobject;var e:string):boolean;
 
 
 //ico procs --------------------------------------------------------------------
+
 function ico__todata(s:tobject;d:pobject;var e:string):boolean;//27may2025
 function ico__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;//27may2025
 function ico__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//19jun2025, 27may2025
@@ -1193,6 +1272,7 @@ function bmp1__toicondata(s:tobject;d:pobject):boolean;//27may2025
 
 
 //cur procs --------------------------------------------------------------------
+
 function cur__todata(s:tobject;d:pobject;var e:string):boolean;
 function cur__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function cur__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//09jun2026, 27may2025
@@ -1214,6 +1294,7 @@ function cur4__todata2(s:tobject;d:pobject;dhotX,dhotY:longint):boolean;
 
 
 //ani procs --------------------------------------------------------------------
+
 function ani__todata(s:tobject;d:pobject;var e:string):boolean;
 function ani__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 function ani__todata3(s:tobject;d:pobject;daction:string;dhotX,dhotY:longint;xonehotspot:boolean;var e:string):boolean;
@@ -1222,6 +1303,7 @@ function ani__todata5(s:tobject;slist:tfindlistimage;d:pobject;dformat,daction:s
 
 
 //gif procs --------------------------------------------------------------------
+
 function gif__fromdata(ss:tobject;ds:pobject;var e:string):boolean;//08aug2025, 06aug2024, 28jul2021, 20JAN2012, 22SEP2009
 function gif__todata(s:tobject;ds:pobject;var e:string):boolean;//11SEP2007
 function gif__todata2(s:tobject;ds:pobject;daction:string;var e:string):boolean;//04may2026
@@ -1238,6 +1320,7 @@ function gif__compressex(x,imgdata:pobject;e:string):boolean;//12mar2026, 12SEP2
 
 
 //mask procs -------------------------------------------------------------------
+
 //alpha support for 32bit images (R,G,B,A*)
 function mask__empty(s:tobject):boolean;
 function mask__count(s:tobject):longint;//24oct2025
@@ -1280,6 +1363,7 @@ function xmask__blur32_power255(const s:tobject;const xdepth100,xpower255:longin
 
 
 //color procs ------------------------------------------------------------------
+
 //.conversion
 procedure c32__swap(var x,y:tcolor32);//16jul2025
 procedure c24__swap(var x,y:tcolor24);//16jul2025
@@ -1292,6 +1376,7 @@ function inta__c32(const x:longint;const a:byte):tcolor32;
 function inta__int(const x:longint;const a:byte):longint;
 procedure int__rgba(const s:longint;var dr,dg,db,da:byte);//03mar2026
 procedure int__rgb(const s:longint;var dr,dg,db:byte);//03mar2026
+function  int__a(const s:longint32):byte;//07nov2026
 function c8__int(const x:tcolor8):longint;
 function c24__int(const x:tcolor24):longint;//16sep2025
 function c24a0__int(const x:tcolor24):longint;//16sep2025
@@ -1434,7 +1519,7 @@ uses main {$ifdef gui},gossgui{$endif} {$ifdef gamecore},gossgame{$endif}, gossf
 
 
 var
-   system_started_img           :boolean                      =false;
+   system_started_img                               :boolean=false;
 
 
 //start-stop procs -------------------------------------------------------------
@@ -1569,8 +1654,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossimg.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.16395'
-else if (xname='date')       then result:='30jul2026'
+if      (xname='ver')        then result:='4.00.16542'
+else if (xname='date')       then result:='07nov2026'
 else if (xname='name')       then result:='Graphics'
 else
    begin
@@ -2845,12 +2930,16 @@ end;
 //png procs --------------------------------------------------------------------
 function png__todata(s:tobject;d:pobject;var e:string):boolean;
 begin
+
 result:=png__todata2(s,d,'',e);
+
 end;
 
 function png__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 begin
+
 result:=png__todata3(s,d,daction,e);
+
 end;
 
 function png__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//29may2025, 06may2025, OK=27jan2021, 20jan2021
@@ -2875,23 +2964,27 @@ end;
 //.determine if 32bit image uses any alpha values
 if (dbits=32) then
    begin
+
    mask__range2(s,v0,v255,vother,vmin,vmax);
 
    //fully solid -> no transparency -> safe to switch to 24 bit mode
    if (vmin>=255) and (vmax>=255) then dbits:=24;
+
    end;
 
 //.count colors -> if 256 or less then switch to 8 bit mode
 if (dbits<=24) then
    begin
+
    case mis__countcolors257(s) of
    0..256:dbits:=8;
    end;//case
+
    end;
 
 //.min bit depth
-if      ia__found(daction,ia_32bitPLUS)   then dbits:=32
-else if ia__found(daction,ia_24bitPLUS)   then dbits:=24;
+if      ia__found(daction,ia_32bitPLUS)   then dbits:=frcmin32(dbits,32)//fixed - 27oct2026
+else if ia__found(daction,ia_24bitPLUS)   then dbits:=frcmin32(dbits,24);
 
 //set
 result:=png__todata4(s,d,dbits,daction,e);
@@ -5797,10 +5890,10 @@ procedure ia__useroptions(xinit,xget:boolean;ximgext:string;var xlistindex,xlist
    end;
 
    function getindex:longint;
-   var
-      e:string;
    begin
-   result:=strint32(io__fromfilestrb(f,e));
+
+   result:=strint32(io__fromfilestrb(f));
+
    end;
 
    procedure setindex(x:longint);
@@ -5915,12 +6008,14 @@ if (not xget) then setindex(xlistindex);
 except;end;
 end;
 
-function ia__add(xactions,xnewaction:string):string;
+function ia__add(const xactions,xnewaction:string):string;
 begin
+
 result:=xactions+insstr(ia_sep,xactions<>'')+xnewaction;
+
 end;
 
-function ia__addlist(xactions:string;xlistofnewactions:array of string):string;
+function ia__addlist(const xactions:string;const xlistofnewactions:array of string):string;
 var
    p:longint;
    v:string;
@@ -5936,12 +6031,14 @@ if (v<>'') then result:=ia__add(result,v);
 end;
 end;
 
-function ia__preadd(xactions,xnewaction:string):string;
+function ia__preadd(const xactions,xnewaction:string):string;
 begin
+
 result:=xnewaction+insstr(ia_sep,xactions<>'')+xactions;
+
 end;
 
-function ia__sadd(xactions,xnewaction:string;xvals:array of string):string;//name+vals(string)
+function ia__sadd(const xactions,xnewaction:string;const xvals:array of string):string;//name+vals(string)
 var
    p:longint;
    v:string;
@@ -5964,236 +6061,325 @@ if (xnewaction<>'') then
    end;
 end;
 
-function ia__spreadd(xactions,xnewaction:string;xvals:array of string):string;//name+vals(string)
+function ia__spreadd(const xactions,xnewaction:string;const xvals:array of string):string;//name+vals(string)
 var
-   p:longint;
-   xdata,v:string;
+   p                  :longint32;
+   xdata              :string;
+   v                  :string;
+
 begin
-result:=xactions;
+
+//get
+result                :=xactions;
+
 if (xnewaction<>'') then
    begin
-   xdata:=xnewaction;
+
+   xdata              :=xnewaction;
 
    for p:=0 to high(xvals) do
    begin
+
    //filter
-   v:=xvals[p];
+   v                  :=xvals[p];
    low__remchar(v,ia_sep);
    low__remchar(v,ia_valsep);
+
    //set
-   xdata:=xdata+ia_valsep+v;
+   xdata              :=xdata + ia_valsep + v;
+
    end;
 
-   result:=xdata+insstr(ia_sep,result<>'')+result;
+   //set
+   result             :=xdata + insstr(ia_sep,result<>'') + result;
+
    end;
+
 end;
 
-function ia__iadd(xactions,xnewaction:string;xvals:array of longint):string;//name+vals(longint)
+function ia__iadd(const xactions,xnewaction:string;const xvals:array of longint32):string;//name+vals(longint)
 var
-   p:longint;
+   p:longint32;
+
 begin
+
 result:=xactions;
+
 if (xnewaction<>'') then
    begin
+
    result:=result+insstr(ia_sep,result<>'')+xnewaction;
+
    for p:=0 to high(xvals) do result:=result+ia_valsep+intstr32(xvals[p]);
+
    end;
+
 end;
 
-function ia__iadd64(xactions,xnewaction:string;xvals:array of comp):string;//name+vals(comp)
+function ia__iadd64(const xactions,xnewaction:string;const xvals:array of longint64):string;//name+vals(comp)
 var
-   p:longint;
+   p:longint32;
+
 begin
+
 result:=xactions;
+
 if (xnewaction<>'') then
    begin
+
    result:=result+insstr(ia_sep,result<>'')+xnewaction;
+
    for p:=0 to high(xvals) do result:=result+ia_valsep+intstr64(xvals[p]);
+
    end;
+
 end;
 
-function ia__ipreadd(xactions,xnewaction:string;xvals:array of longint):string;//name+vals(longint)
+function ia__ipreadd(const xactions,xnewaction:string;const xvals:array of longint32):string;//name+vals(longint)
 var
-   p:longint;
+   p:longint32;
    xdata:string;
+
 begin
+
 result:=xactions;
+
 if (xnewaction<>'') then
    begin
+
    xdata:=xnewaction;
 
    for p:=0 to high(xvals) do xdata:=xdata+ia_valsep+intstr32(xvals[p]);
 
    result:=xdata+insstr(ia_sep,result<>'')+result;
+
    end;
+
 end;
 
-function ia__ipreadd64(xactions,xnewaction:string;xvals:array of comp):string;//name+vals(comp)
+function ia__ipreadd64(const xactions,xnewaction:string;const xvals:array of longint64):string;//name+vals(comp)
 var
-   p:longint;
+   p:longint32;
    xdata:string;
+
 begin
+
 result:=xactions;
+
 if (xnewaction<>'') then
    begin
+
    xdata:=xnewaction;
 
    for p:=0 to high(xvals) do xdata:=xdata+ia_valsep+intstr64(xvals[p]);
 
    result:=xdata+insstr(ia_sep,result<>'')+result;
+
    end;
+
 end;
 
-function ia__found(xactions,xfindname:string):boolean;
+function ia__found(const xactions,xfindname:string):boolean;
 begin
-result:=ia__ok(xactions,xfindname);
+
+result      :=ia__ok(xactions,xfindname);
+
 end;
 
-function ia__ok(xactions,xfindname:string):boolean;
+function ia__ok(const xactions,xfindname:string):boolean;
 var
    v:array[0..9] of string;
 begin
-result:=ia__find(xactions,xfindname,v);
+
+result      :=ia__find(xactions,xfindname,v);
+
 end;
 
-function ia__sfindval(xactions,xfindname:string;xvalindex:longint;xdefval:string;var xout:string):boolean;
+function ia__sfindval(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:string;var xout:string):boolean;
 var
    svals:array[0..9] of string;
+
 begin
-result:=ia__sfind(xactions,xfindname,svals);
+
+result      :=ia__sfind(xactions,xfindname,svals);
 
 case result and (xvalindex>=0) and (xvalindex<=high(svals)) of
+
 true:xout:=strdefb(svals[xvalindex],xdefval);
 else xout:=xdefval;
-end;
+
+end;//case
+
 end;
 
-function ia__ifindval(xactions,xfindname:string;xvalindex,xdefval:longint;var xout:longint):boolean;
+function ia__ifindval(const xactions,xfindname:string;const xvalindex,xdefval:longint32;var xout:longint32):boolean;
 var
    svals:array[0..9] of string;
+
 begin
-result:=ia__sfind(xactions,xfindname,svals);
+
+result      :=ia__sfind(xactions,xfindname,svals);
 
 case result and (xvalindex>=0) and (xvalindex<=high(svals)) of
 true:xout:=strint32(strdefb(svals[xvalindex],intstr32(xdefval)));
 else xout:=xdefval;
-end;
+end;//case
+
 end;
 
-function ia__ifindval64(xactions,xfindname:string;xvalindex:longint;xdefval:comp;var xout:comp):boolean;
+function ia__ifindval64(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:longint64;var xout:longint64):boolean;
 var
    svals:array[0..9] of string;
+
 begin
-result:=ia__sfind(xactions,xfindname,svals);
+
+result      :=ia__sfind(xactions,xfindname,svals);
 
 case result and (xvalindex>=0) and (xvalindex<=high(svals)) of
 true:xout:=strint64(strdefb(svals[xvalindex],intstr64(xdefval)));
 else xout:=xdefval;
-end;
+end;//case
+
 end;
 
-function ia__bfindval(xactions,xfindname:string;xvalindex:longint;xdefval:boolean;var xout:boolean):boolean;//04aug2024
+function ia__bfindval(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:boolean;var xout:boolean):boolean;//04aug2024
 var
    svals:array[0..9] of string;
 begin
-result:=ia__sfind(xactions,xfindname,svals);
+
+result      :=ia__sfind(xactions,xfindname,svals);
 
 case result and (xvalindex>=0) and (xvalindex<=high(svals)) of
 true:xout:=strbol(strdefb(svals[xvalindex],bnc(xdefval)));
 else xout:=xdefval;
-end;
+end;//case
+
 end;
 
-function ia__ifindvalb(xactions,xfindname:string;xvalindex,xdefval:longint):longint;
+function ia__ifindvalb(const xactions,xfindname:string;const xvalindex,xdefval:longint32):longint32;
 begin
+
 ia__ifindval(xactions,xfindname,xvalindex,xdefval,result);
+
 end;
 
-function ia__ifindval64b(xactions,xfindname:string;xvalindex:longint;xdefval:comp):comp;
+function ia__ifindval64b(const xactions,xfindname:string;const xvalindex:longint;const xdefval:longint64):longint64;
 begin
+
 ia__ifindval64(xactions,xfindname,xvalindex,xdefval,result);
+
 end;
 
-function ia__sfindvalb(xactions,xfindname:string;xvalindex:longint;xdefval:string):string;
+function ia__sfindvalb(const xactions,xfindname:string;const xvalindex:longint32;const xdefval:string):string;
 begin
+
 ia__sfindval(xactions,xfindname,xvalindex,xdefval,result);
+
 end;
 
-function ia__sfind(xactions,xfindname:string;var xvals:array of string):boolean;
+function ia__sfind(const xactions,xfindname:string;var xvals:array of string):boolean;
 begin
-result:=ia__find(xactions,xfindname,xvals);
+
+result      :=ia__find(xactions,xfindname,xvals);
+
 end;
 
-function ia__ifind(xactions,xfindname:string;var xvals:array of longint):boolean;
+function ia__ifind(const xactions,xfindname:string;var xvals:array of longint32):boolean;
 var
-   p:longint;
-   svals:array[0..9] of string;
+   p                  :longint32;
+   svals              :array[0..9] of string;
+
 begin
+
 //init
 for p:=0 to high(xvals) do xvals[p]:=0;
 
 //get
-result:=ia__find(xactions,xfindname,svals);
+result                :=ia__find(xactions,xfindname,svals);
+
 if result then
    begin
+
    for p:=0 to smallest32(high(svals),high(xvals)) do xvals[p]:=strint32(svals[p]);
+
    end;
+
 end;
 
-function ia__ifind64(xactions,xfindname:string;var xvals:array of comp):boolean;
+function ia__ifind64(const xactions,xfindname:string;var xvals:array of longint64):boolean;
 var
-   p:longint;
-   svals:array[0..9] of string;
+   p                  :longint32;
+   svals              :array[0..9] of string;
+
 begin
+
 //init
 for p:=0 to high(xvals) do xvals[p]:=0;
 
 //get
-result:=ia__find(xactions,xfindname,svals);
+result                :=ia__find(xactions,xfindname,svals);
+
 if result then
    begin
+
    for p:=0 to smallest32(high(svals),high(xvals)) do xvals[p]:=strint64(svals[p]);
+
    end;
+
 end;
 
-function ia__find(xactions,xfindname:string;var xvals:array of string):boolean;
+function ia__find(const xactions,xfindname:string;var xvals:array of string):boolean;
 var
    fn,fv,n,v,z:string;
-   xlen,zlen,lp,p,zp:longint;
+   xlen,zlen,lp,p,zp:longint32;
    c:char;
 
    procedure xreadvals(x:string);
    var
-      vc,xlen,lp,p:longint;
+      vc,xlen,lp,p:longint32;
       v:string;
       c:char;
+
    begin
+
    //init
-   vc:=0;
-   xlen:=low__len32(x);
+   vc                 :=0;
+   xlen               :=low__len32(x);
 
    //check
    if (xlen<=0) then exit;
 
    //get
-   lp:=1;
+   lp                 :=1;
+
    for p:=1 to xlen do
    begin
-   c:=x[p-1+stroffset];
+
+   c                  :=x[p-1+stroffset];
+
    if (c=ia_valsep) or (p=xlen) then
       begin
+
       if (vc>high(xvals)) then break;
-      v:=strcopy1(x,lp,p-lp+low__insint(1,(p=xlen)));
-      xvals[vc]:=v;
+
+      v               :=strcopy1(x,lp,p-lp+low__insint(1,(p=xlen)));
+      xvals[vc]       :=v;
+
       //inc
       inc(vc);
-      lp:=p+1;
+
+      lp              :=p+1;
+
       end;
+
    end;//p
+
    end;
+
 begin
+
 //defaults
-result:=false;
+result                :=false;
 
 //init
 for p:=0 to high(xvals) do xvals[p]:='';
@@ -6201,74 +6387,102 @@ for p:=0 to high(xvals) do xvals[p]:='';
 //special
 if (xfindname='') then
    begin
-   result:=true;
+
+   result             :=true;
+
    exit;
+
    end;
 
 //check
-xlen:=low__len32(xactions);
+xlen                  :=low__len32(xactions);
+
 if (xlen<=0) then exit;
 
 //split name -> some actions have values as part of their name in order to share multiple different value types, such as quality:100: or quality:5 or quality:best
-fn:=xfindname;
-fv:='';
+fn                    :=xfindname;
+fv                    :='';
+
 for p:=1 to low__len32(fn) do if (fn[p-1+stroffset]=ia_valsep) then
    begin
-   fn:=strcopy1(fn,1,p-1);
-   fv:=strcopy1(xfindname,p+1,low__len32(xfindname));
+
+   fn                 :=strcopy1(fn,1,p-1);
+   fv                 :=strcopy1(xfindname,p+1,low__len32(xfindname));
+
    break;
+
    end;
 
 //find -> work from last to first -> most recent value is at end
-lp:=xlen;
+lp                    :=xlen;
+
 for p:=xlen downto 1 do
 begin
-c:=xactions[p-1+stroffset];
+
+c                     :=xactions[p-1+stroffset];
 
 if (c=ia_sep) or (p=1)then
    begin
+
    //extract last action -> first action
-   if (c=ia_sep) then z:=strcopy1(xactions,p+1,lp-p) else z:=strcopy1(xactions,p,lp-p+1);
-   zlen:=low__len32(z);
+   if (c=ia_sep) then z:=strcopy1(xactions,p+1,lp-p)
+   else               z:=strcopy1(xactions,p,lp-p+1);
+
+   zlen               :=low__len32(z);
 
    //examine extracted action
    if (zlen>=1) then
       begin
+
       //split action into name and values (yes a name can have values too)
-      n:=z;
-      v:='';
+      n               :=z;
+      v               :='';
 
       for zp:=1 to zlen do
       begin
-      c:=z[zp-1+stroffset];
+
+      c               :=z[zp-1+stroffset];
+
       if (c=ia_valsep) or (zp=zlen) then
          begin
-         n:=strcopy1(z,1,zp-low__insint(1,(zp<>zlen)));
-         v:=strcopy1(z,low__Len32(n)+2,zlen);
+
+         n            :=strcopy1(z,1,zp-low__insint(1,(zp<>zlen)));
+         v            :=strcopy1(z,low__Len32(n)+2,zlen);
+
          break;
+
          end;
+
       end;//p2
 
       //match base name -> we now stop after this point, only difference is whether it's TRUE (name vals match if any) or FALSE (no match)
       if strmatch(n,fn) then
          begin
-         result:=strmatch(fv,strcopy1(v,1,low__Len32(fv)));
+
+         result       :=strmatch(fv,strcopy1(v,1,low__Len32(fv)));
+
          if result then
             begin
+
             //read values from the end of the xfindname (e.g. past it's base name and it's name's vals)
             xreadvals( strcopy1(v,low__Len32(fv)+low__insint(2,fv<>''),low__Len32(v)) );
+
             end;
 
          //stop
          break;
+
          end;
+
       end;
 
    //lp
-   lp:=frcmin32(p-1,0);
+   lp                 :=frcmin32(p-1,0);
+
    end;
 
 end;//p
+
 end;
 
 
@@ -6635,10 +6849,10 @@ wn('pD');
 wi32(xdelay);
 
 //image strip
-if not xmaketransparent         then goto skipend;
-if not bmp32__todata(scopy,@vd) then goto skipend;
-if (scopy<>s)                   then freeobj(@scopy);//reduce memory
-if not low__compress(@vd)       then goto skipend;
+if not xmaketransparent            then goto skipend;
+if not bmp32__todata(scopy,@vd,'') then goto skipend;
+if (scopy<>s)                      then freeobj(@scopy);//reduce memory
+if not low__compress(@vd)          then goto skipend;
 wn('pI');
 wd( @vd );
 str__clear(@vd);
@@ -7320,14 +7534,50 @@ end;
 
 
 //bmp procs --------------------------------------------------------------------
-function bmp__fromdata(d:tobject;s:pobject;var e:string):boolean;
-var
-   xbpp:longint;
+
+function bmp__formatOK(const x:longint32):boolean;
 begin
-result:=bmp__fromdata2(d,s,xbpp,e);
+
+case x of
+
+hsOS2              :result:=true;
+hsW95              :result:=true;
+hsV04_nocolorspace :result:=true;
+hsV04              :result:=true;
+hsV05              :result:=true;
+else                result:=false;
+
+end;//case
+
 end;
 
-function bmp__fromdata2(d:tobject;s:pobject;var xbits:longint;var e:string):boolean;//15mar2025
+function bmp__safeFormat(const xformatCode:longint32):longint32;//26oct2026
+begin
+
+result                :=bmp__safeFormat2( xformatCode ,hsV05 );
+
+end;
+
+function bmp__safeFormat2(const xformatCode,xdefCode:longint32):longint32;//26oct2026
+begin
+
+if      bmp__formatOK( xformatCode ) then result:=xformatCode//user
+else if bmp__formatOK( xdefCode    ) then result:=xdefCode//default
+else                                      result:=hsV05;//fallback
+
+end;
+
+function bmp__fromdata(d:tobject;s:pobject;const xaction:string;var e:string):boolean;
+var
+   xbpp     :longint32;
+
+begin
+
+result      :=bmp__fromdata2( d ,s ,xaction ,xbpp ,e );
+
+end;
+
+function bmp__fromdata2(d:tobject;s:pobject;const xaction:string;var xbits:longint;var e:string):boolean;//15mar2025
 label
    skipend;
 var
@@ -7405,8 +7655,8 @@ if (sheadstyle=hsOS2) then
    end;
 
    end
-else
-   begin
+
+else begin
    //common fields to all 3 remaining headers
 
    //.width4
@@ -7444,8 +7694,8 @@ else
 xbits:=sbits;
 
 case sbits of
-16,24,32:result:=bmp32__fromdata(d,s);
-1,4,8   :result:=bmp8__fromdata(d,s);
+16,24,32:result:=bmp32__fromdata( d, s ,xaction );
+1,4,8   :result:=bmp8__fromdata ( d ,s );
 end;
 
 //.ai information
@@ -7461,14 +7711,19 @@ if result then
 
 skipend:
 except;end;
+
 //clear on error
 if not result then
    begin
+
    missize(d,1,1);
    misaiclear2(d);
+
    end;
+
 //free
 str__uaf(s);
+
 end;
 
 function bmp__todata(s:tobject;d:pobject;var e:string):boolean;
@@ -7503,27 +7758,31 @@ end;
 //.determine if 32bit image uses any alpha values
 if (dbits=32) then
    begin
+
    mask__range2(s,v0,v255,vother,vmin,vmax);
 
    //fully solid -> no transparency -> safe to switch to 24 bit mode
    if (vmin>=255) and (vmax>=255) then dbits:=24;
+
    end;
 
 //.count colors -> if 256 or less then switch to 8 bit or 4 bit modes
 if (dbits<=24) then
    begin
+
    case mis__countcolors257(s) of
    0..16  :dbits:=4;
    17..256:dbits:=8;
    end;//case
+
    end;
 
 //.min bit depth
-if      ia__found(daction,ia_32bitPLUS)   then dbits:=32
-else if ia__found(daction,ia_24bitPLUS)   then dbits:=24;
+if      ia__found(daction,ia_32bitPLUS)   then dbits:=frcmin32(dbits,32)//fixed - 27oct2026
+else if ia__found(daction,ia_24bitPLUS)   then dbits:=frcmin32(dbits,24);
 
 //set
-result:=bmpXX__todata(s,d,dbits);
+result:=bmpXX__todata(s,d,daction,dbits);
 
 skipend:
 except;end;
@@ -7606,33 +7865,37 @@ str__uaf(d);
 except;end;
 end;
 
-function bmpXX__todata(s:tobject;d:pobject;dbits:longint):boolean;//14may2025
+function bmpXX__todata(s:tobject;d:pobject;const xaction:string;const dbits:longint):boolean;//14may2025
 begin
+
 case dbits of
-32  :result:=bmp32__todata2(s,d,true);
+
+32  :result:=bmp32__todata2(s,d,xaction,true);
 24  :result:=bmp24__todata2(s,d,true);
 16  :result:=bmp16__todata2(s,d,true);
 8   :result:=bmp8__todata2(s,d,true);
 4   :result:=bmp4__todata2(s,d,true);
 1   :result:=bmp1__todata2(s,d,true);
-else result:=bmp32__todata2(s,d,true);
+else result:=bmp32__todata2(s,d,xaction,true);
+
 end;//case
+
 end;
 
-function bmp32__todata(s:tobject;d:pobject):boolean;//14may2025
+function bmp32__todata(s:tobject;d:pobject;const xaction:string):boolean;//14may2025
 begin
-result:=bmp32__todata2(s,d,true);
+result:=bmp32__todata2(s,d,xaction,true);
 end;
 
-function bmp32__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//15may2025
+function bmp32__todata2(s:tobject;d:pobject;const xaction:string;const dfullheader:boolean):boolean;//15may2025
 begin
-result:=bmp32__todata3(s,d,dfullheader,0,32);
+result:=bmp32__todata3(s,d,xaction,dfullheader,0,32);
 end;
 
-function bmp32__todata3(s:tobject;d:pobject;dfullheader:boolean;dinfosize,dbits:longint):boolean;//11jun2025: dinfosize, 09jun2025, 28may2025, 15may2025
+function bmp32__todata3(s:tobject;d:pobject;const xaction:string;const dfullheader:boolean;dinfosize,dbits:longint):boolean;//11jun2025: dinfosize, 09jun2025, 28may2025, 15may2025
 label//Special Note: if (dbits=24) then V1 (hsW95) header should be used for Clipboard compatibility - 09jun2025
    skipend;
-   
+
 var
    p                  :longint32;
    dcompression       :longint32;
@@ -7716,6 +7979,14 @@ hsV05:;//OK
 else dinfosize:=hsW95;
 end;
 
+//patches
+if (dbits=32) and ia__found(xaction,ia_bmp_legacyAlpha) then//26oct2026
+   begin
+
+   dinfosize          :=hsW95;
+
+   end;
+
 //dcompression - decide
 case dinfosize of
 hsV04_nocolorspace,hsV04,hsV05:dcompression:=BI_BITFIELDS;
@@ -7779,8 +8050,7 @@ if (dinfosize=hsOS2) then
    end
 
 //.hsW95..hsV05
-else
-   begin
+else begin
    //.size4
    w4(dinfosize);
 
@@ -7817,6 +8087,7 @@ else
    //.v4 header extension -> permits saving of 32bit image with alpha channel - 09jun2025
    if (dinfosize>=hsV04_nocolorspace) then
       begin
+
       w4( rgba__int(0,0,255,0) );//red mask
       w4( rgba__int(0,255,0,0) );//green mask
       w4( rgba__int(255,0,0,0) );//blue mask
@@ -7831,15 +8102,20 @@ else
       //jump back from end of header to "intent" is -16
       if (dinfosize=hsV05) then
          begin
+
          dpos:=dheadsize-16;
          w4(4);//same as Gimp
+
          end;
+
       end;
+
    end;
 
 //get
 for sy:=0 to (sh-1) do
 begin
+
 if not misscan82432(s,ymax-sy,sr8,sr24,sr32) then goto skipend;
 
 dpos:=dheadsize + (sy*drowsize);
@@ -8026,9 +8302,9 @@ begin
 result:=bmp24__todata2(s,d,true);
 end;
 
-function bmp24__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp24__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 begin
-result:=bmp32__todata3(s,d,dfullheader,0,24);
+result:=bmp32__todata3(s,d,'',dfullheader,0,24);
 end;
 
 function bmp16__todata(s:tobject;d:pobject):boolean;//14may2025
@@ -8036,9 +8312,9 @@ begin
 result:=bmp16__todata2(s,d,true);
 end;
 
-function bmp16__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp16__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 begin
-result:=bmp32__todata3(s,d,dfullheader,0,16);
+result:=bmp32__todata3(s,d,'',dfullheader,0,16);
 end;
 
 function bmp8__todata(s:tobject;d:pobject):boolean;//14may2025
@@ -8046,7 +8322,7 @@ begin
 result:=bmp8__todata2(s,d,true);
 end;
 
-function bmp8__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp8__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 label
    skipend;
 const
@@ -8290,7 +8566,7 @@ begin
 result:=bmp4__todata2(s,d,true);
 end;
 
-function bmp4__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp4__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 label
    skipend;
 const
@@ -8554,12 +8830,12 @@ begin
 result:=bmp1__todata2(s,d,true);
 end;
 
-function bmp1__todata2(s:tobject;d:pobject;dfullheader:boolean):boolean;//14may2025
+function bmp1__todata2(s:tobject;d:pobject;const dfullheader:boolean):boolean;//14may2025
 begin
 result:=bmp1__todata3(s,d, low__aorb(1,2,dfullheader) );
 end;
 
-function bmp1__todata3(s:tobject;d:pobject;dheaderlevel:longint):boolean;//27may2025, 14may2025
+function bmp1__todata3(s:tobject;d:pobject;const dheaderlevel:longint):boolean;//27may2025, 14may2025
 label
    skipend;
 const
@@ -8838,26 +9114,61 @@ bitmap headers:
  dword32        bV5Reserved;//120..123
 {}
 
-function bmp32__fromdata(d:tobject;s:pobject):boolean;//11jun2025: supports DIB +12b patch, 15may2025
+function bmp32__fromdata(d:tobject;s:pobject;const xaction:string):boolean;//11jun2025: supports DIB +12b patch, 15may2025
 begin
-result:=bmp32__fromdata2(d,s,true);
+
+result      :=bmp32__fromdata2( d ,s ,xaction ,true );
+
 end;
 
-function bmp32__fromdata2(d:tobject;s:pobject;sallow_dib_patch_12:boolean):boolean;//12jun2025: dib_patch_12 control, 11jun2025: supports DIB +12b patch, 15may2025
+function bmp32__fromdata2(d:tobject;s:pobject;const xaction:string;const sallow_dib_patch_12:boolean):boolean;//26oct2026, 12jun2025: dib_patch_12 control, 11jun2025: supports DIB +12b patch, 15may2025
 label
    skipend;
+
 var
-   e:string;
-   sintent,sstartofdata,slen,sheadstyle,sinfosize,simagesize,scompression,spos,srowsize,dbits,dw,dh,dx,dy,int1,int2,sbits:longint;
-   vb32,rmask,gmask,bmask,amask,sr,sg,sb,sa,mr,mg,mb,ma:longint;//mask support (scompression=bi_bitfields)
-   sdib_patchmode_12,sdib,dflip:boolean;
-   s8  :tstr8;//pointer only
-   dr32:pcolorrow32;
-   dr24:pcolorrow24;
-   dr8 :pcolorrow8;
-   c32 :tcolor32;
-   c24 :tcolor24;
-   b   :tobject;
+   e                            :string;
+   sintent                      :longint32;
+   sstartofdata                 :longint32;
+   slen                         :longint32;
+   sheadstyle                   :longint32;
+   sinfosize                    :longint32;
+   simagesize                   :longint32;
+   scompression                 :longint32;
+   spos                         :longint32;
+   srowsize                     :longint32;
+   dbits                        :longint32;
+   dw                           :longint32;
+   dh                           :longint32;
+   dx                           :longint32;
+   dy                           :longint32;
+   int1                         :longint32;
+   int2                         :longint32;
+   sbits                        :longint32;
+   vb32                         :longint32;
+   rmask                        :longint32;
+   gmask                        :longint32;
+   bmask                        :longint32;
+   amask                        :longint32;
+   sr                           :longint32;
+   sg                           :longint32;
+   sb                           :longint32;
+   sa                           :longint32;
+   mr                           :longint32;
+   mg                           :longint32;
+   mb                           :longint32;
+   ma                           :longint32;//mask support (scompression=bi_bitfields)
+   xlegacyAlpha32BPP            :boolean;//26oct2026
+   sdib_patchmode_12            :boolean;
+   sdib                         :boolean;
+   dflip                        :boolean;
+   s8                           :tstr8;//pointer only
+   dr32                         :pcolorrow32;
+   dr24                         :pcolorrow24;
+   dr8                          :pcolorrow8;
+   c32                          :tcolor32;
+   c24                          :tcolor24;
+   b                            :tobject;
+
 
    function xscalemultipler(xbitsused:longint):longint;
    begin
@@ -8926,10 +9237,14 @@ var
 
    procedure rb;
    begin
+
    c32.r:=bb(vb32,rmask,sr,mr);
    c32.g:=bb(vb32,gmask,sg,mg);
    c32.b:=bb(vb32,bmask,sb,mb);
-   if (amask=0) then c32.a:=255 else c32.a:=bb(vb32,amask,sa,ma);
+
+   if (amask=0) then c32.a:=255
+   else              c32.a:=bb(vb32,amask,sa,ma);
+
    end;
 
    procedure r16;//555 = 15bit
@@ -8940,86 +9255,131 @@ var
       var
          z:word;
       begin
+
       z:=v div xfactor;
+
       dec(v,z*xfactor);
+
       z:=z*8;
+
       if (z>255) then z:=255;
+
       dcol:=z;
+
       end;
+
    begin
+
    if (scompression=bi_bitfields) then
       begin
+
       vb32:=r2;
       rb;
+
       end
-   else
-      begin
+
+   else begin
+
       v:=r2;
+
       p(c32.r,1024);
       p(c32.g,32);
       p(c32.b,1);
+
       c32.a:=255;
+
       end;
+
    end;
 
    procedure r24;
    begin
+
    if (scompression=bi_bitfields) then
       begin
+
       vb32:=r3;
       rb;
+
       end
    else
       begin
+
       c32.b:=r1;
       c32.g:=r1;
       c32.r:=r1;
+
       c32.a:=255;
+
       end;
+
    end;
 
    procedure r32;
    begin
+
    if (scompression=bi_bitfields) then
       begin
+
       vb32:=r4;
       rb;
+
       end
-   else
-      begin
+
+   else begin
+
       c32.b:=r1;
       c32.g:=r1;
       c32.r:=r1;
 
-      r1;//value not used - alpha only valud with bi_bitfields
-      c32.a:=255;//09nov2025,
+      if xlegacyAlpha32BPP then
+         begin
+
+         c32.a:=r1//allow 32bit images to be transparent for legacy support - 26oct2026
+
+         end
+
+      else begin
+
+         r1;//value not used - alpha only value with bi_bitfields
+         c32.a:=255;//09nov2025,
+
+         end;
+
       end;
+
    end;
+
 begin
+
 //defaults
-result           :=false;
-s8               :=nil;
-b                :=nil;
-sinfosize        :=0;
-simagesize       :=0;
-scompression     :=bi_rgb;
-dflip            :=false;
-sintent          :=0;
-rmask            :=0;
-gmask            :=0;
-bmask            :=0;
-amask            :=0;
-sdib_patchmode_12:=false;//supports the DIB +12b "patch mode" by checking expected and actual total data sizes for a 12byte discrepancy - 12jun2025
+result                          :=false;
+s8                              :=nil;
+b                               :=nil;
+sinfosize                       :=0;
+simagesize                      :=0;
+scompression                    :=bi_rgb;
+dflip                           :=false;
+sintent                         :=0;
+rmask                           :=0;
+gmask                           :=0;
+bmask                           :=0;
+amask                           :=0;
+sdib_patchmode_12               :=false;//supports the DIB +12b "patch mode" by checking expected and actual total data sizes for a 12byte discrepancy - 12jun2025
 
 try
 //check
 if not str__lock(s)                  then goto skipend;
 if not misok82432(d,dbits,int1,int2) then goto skipend;
 
+//ia actions -> patch support - 26oct2026
+xlegacyAlpha32BPP               :=ia__found( xaction ,ia_bmp_legacyAlpha );
+
 //init
-s8        :=str__as8(s);
-slen      :=str__len32(s);
-spos      :=0;
+s8                              :=str__as8(s);
+slen                            :=str__len32(s);
+spos                            :=0;
+
 if (slen<12) then goto skipend;
 
 //bmp header
@@ -9235,15 +9595,18 @@ spos:=sstartofdata + (dy*srowsize);
 //.32 -> 32
 if (sbits=32) and (dbits=32) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r32;
    dr32[dx]:=c32;
    end;//dx
+
    end
 //.32 -> 24
 else if (sbits=32) and (dbits=24) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r32;
@@ -9252,28 +9615,34 @@ else if (sbits=32) and (dbits=24) then
    c24.b:=c32.b;
    dr24[dx]:=c24;
    end;//dx
+
    end
 //.32 -> 8
 else if (sbits=32) and (dbits=8) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r32;
    dr8[dx]:=c32__lum(c32);
    end;//dx
+
    end
 //.24 -> 32
 else if (sbits=24) and (dbits=32) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r24;
    dr32[dx]:=c32;
    end;//dx
+
    end
 //.24 -> 24
 else if (sbits=24) and (dbits=24) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r24;
@@ -9282,28 +9651,34 @@ else if (sbits=24) and (dbits=24) then
    c24.b:=c32.b;
    dr24[dx]:=c24;
    end;//dx
+
    end
 //.24 -> 8
 else if (sbits=24) and (dbits=8) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r24;
    dr8[dx]:=c32__lum(c32);
    end;//dx
+
    end
 //.16 -> 32
 else if (sbits=16) and (dbits=32) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r16;
    dr32[dx]:=c32;
    end;//dx
+
    end
 //.16 -> 24
 else if (sbits=16) and (dbits=24) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r16;
@@ -9312,38 +9687,49 @@ else if (sbits=16) and (dbits=24) then
    c24.b:=c32.b;
    dr24[dx]:=c24;
    end;//dx
+
    end
 //.16 -> 8
 else if (sbits=16) and (dbits=8) then
    begin
+
    for dx:=0 to (dw-1) do
    begin
    r16;
    dr8[dx]:=c32__lum(c32);
    end;//dx
+
    end;
 
 end;//dy
 
 //successful
 result:=true;
+
 skipend:
 except;end;
+
 //clear on error
 if not result then missize(d,1,1);
+
 //free
 str__free(@b);
 str__uaf(s);
+
 end;
 
 function bmp24__fromdata(d:tobject;s:pobject):boolean;//15may2025
 begin
-result:=bmp32__fromdata(d,s);
+
+result:=bmp32__fromdata( d ,s ,'' );
+
 end;
 
 function bmp16__fromdata(d:tobject;s:pobject):boolean;//15may2025
 begin
-result:=bmp32__fromdata(d,s);
+
+result:=bmp32__fromdata( d ,s ,'' );
+
 end;
 
 function bmp8__fromdata(d:tobject;s:pobject):boolean;//09jun2025: supports bi_rgb + bi_rle8 + bi_rle4, 15may2025
@@ -9924,17 +10310,23 @@ end;
 
 function dib__fromdata2(s:tobject;d:pobject;var xoutbpp:longint;var e:string):boolean;
 begin
-result:=bmp__fromdata2(s,d,xoutbpp,e);
+
+result:=bmp__fromdata2( s ,d ,'' ,xoutbpp ,e );
+
 end;
 
 function dib__todata(s:tobject;d:pobject;var e:string):boolean;
 begin
+
 result:=dib__todata2(s,d,'',e);
+
 end;
 
 function dib__todata2(s:tobject;d:pobject;daction:string;var e:string):boolean;
 begin
+
 result:=dib__todata3(s,d,daction,e);
+
 end;
 
 function dib__todata3(s:tobject;d:pobject;var daction,e:string):boolean;//14may2025
@@ -9984,19 +10376,19 @@ end;
 function dibXX__todata(s:tobject;d:pobject;dbits:longint):boolean;//14may2025
 begin
 case dbits of
-32  :result:=bmp32__todata2(s,d,false);
+32  :result:=bmp32__todata2(s,d,'',false);
 24  :result:=bmp24__todata2(s,d,false);
 16  :result:=bmp16__todata2(s,d,false);
 8   :result:=bmp8__todata2(s,d,false);
 4   :result:=bmp4__todata2(s,d,false);
 1   :result:=bmp1__todata2(s,d,false);
-else result:=bmp32__todata2(s,d,false);
+else result:=bmp32__todata2(s,d,'',false);
 end;//case
 end;
 
 function dib32__todata(s:tobject;d:pobject):boolean;//14may2025
 begin
-result:=bmp32__todata2(s,d,false);
+result:=bmp32__todata2(s,d,'',false);
 end;
 
 function dib24__todata(s:tobject;d:pobject):boolean;//14may2025
@@ -10026,22 +10418,30 @@ end;
 
 function dib32__fromdata(d:tobject;s:pobject):boolean;//15may2025
 begin
-result:=bmp32__fromdata(d,s);
+
+result:=bmp32__fromdata( d ,s ,'' );
+
 end;
 
 function dib24__fromdata(d:tobject;s:pobject):boolean;//15may2025
 begin
+
 result:=bmp24__fromdata(d,s);
+
 end;
 
 function dib16__fromdata(d:tobject;s:pobject):boolean;//15may2025
 begin
+
 result:=bmp16__fromdata(d,s);
+
 end;
 
 function dib8__fromdata(d:tobject;s:pobject):boolean;//28may2025
 begin
+
 result:=bmp8__fromdata(d,s);
+
 end;
 
 function dib4__fromdata(d:tobject;s:pobject):boolean;//28may2025
@@ -10328,6 +10728,7 @@ end;
 
 
 //tga procs --------------------------------------------------------------------
+
 function tga__todata(s:tobject;d:pobject;var e:string):boolean;
 begin
 result:=tga__todata2(s,d,'',e);
@@ -11023,7 +11424,288 @@ result:=tga__todata2(s,d,ia_tga_8bpp,e);
 end;
 
 
+//wmf procs --------------------------------------------------------------------
+
+function wmf__fromheader(const xheader22:string;var dwidth,dheight:longint32):boolean;
+var
+   xleft              :longint32;
+   xright             :longint32;
+   xtop               :longint32;
+   xbottom            :longint32;
+   xinch              :longint32;
+
+   function sm12(const xpos0:longint32;const xword:boolean):longint32;
+   var
+      v               :twrd2;
+
+   begin
+
+   v.bytes[0]         :=byte( xheader22[ xpos0 + stroffset + 0 ] );
+   v.bytes[1]         :=byte( xheader22[ xpos0 + stroffset + 1 ] );
+
+   case xword of
+
+   true:result        :=v.val;
+   else result        :=v.si;
+
+   end;//case
+
+   end;
+
+begin
+
+//defaults
+result                :=false;
+dwidth                :=0;
+dheight               :=0;
+
+//check
+if (low__len32(xheader22)<22) then exit;
+
+//check for magic number
+if (xheader22[0+stroffset]<>#215) or (xheader22[1+stroffset]<>#205) or
+   (xheader22[2+stroffset]<>#198) or (xheader22[3+stroffset]<>#154) then exit;
+
+//dimensions
+xleft                 :=sm12( 0 + 6  ,true );//int16
+xtop                  :=sm12( 0 + 8  ,true );//int16
+xright                :=sm12( 0 + 10 ,true );//int16
+xbottom               :=sm12( 0 + 12 ,true );//int16
+xinch                 :=frcmin32( sm12( 0 + 14 ,true ) ,1 );//word
+dwidth                :=frcmin32(round( (xright  - xleft ) * (96 / xinch) ) ,1 );//vectors are intervals, so not "right-left+1" but "right-left"
+dheight               :=frcmin32(round( (xbottom - xtop  ) * (96 / xinch) ) ,1 );//vectors are intervals, so not "right-left+1" but "right-left"
+
+//successful
+result                :=true;
+
+end;
+
+function wmf__writeheader(const d:pobject;const dw,dh:longint32):boolean;
+label//22 byte header
+   skipend;
+begin
+
+//defaults
+result                :=false;
+
+try
+
+//check
+if not str__lock(d) then goto skipend;
+
+//magic number
+if not str__aadd( d, [215,205,198,154] )                 then goto skipend;
+
+//null
+if not str__addwrd2( d ,0 )                              then goto skipend;
+
+//left
+if not str__addsmi2( d ,0 )                              then goto skipend;
+
+//top
+if not str__addsmi2( d ,0 )                              then goto skipend;
+
+//right
+if not str__addsmi2( d ,frcrange32(dw,0,high(smallint))) then goto skipend;
+
+//bottom
+if not str__addsmi2( d ,frcrange32(dh,0,high(smallint))) then goto skipend;
+
+//inch
+if not str__addwrd2( d ,frcrange32(96,0,high(smallint))) then goto skipend;
+
+//null
+if not str__aadd( d, [0,0,0,0,0,0] )                     then goto skipend;
+
+//successful
+result                :=true;
+
+skipend:
+except;end;
+
+//free
+str__uaf(d);
+
+end;
+
+function wmf__fromdata(const d:tobject;const s:pobject;var e:string):boolean;
+label
+   skipend;
+
+var
+   b                  :tstr8;
+   c                  :twinbmp;
+   xleft              :longint32;
+   xright             :longint32;
+   xtop               :longint32;
+   xbottom            :longint32;
+   xinch              :longint32;
+   dwidth             :longint32;
+   dheight            :longint32;
+   hwmf               :hauto;
+   p                  :longint32;
+
+begin
+
+//defaults
+result                :=false;
+b                     :=nil;
+c                     :=nil;
+hwmf                  :=0;
+e                     :=gecTaskfailed;
+
+try
+
+//check
+if not str__lock(s)              then goto skipend;
+if (d=nil)                       then goto skipend;
+
+if (io__anyformatb(s)<>'WMF') then
+   begin
+
+   e                  :=gecUnknownFormat;
+   goto skipend;
+
+   end;
+
+//init
+b                     :=str__new8;
+b.makeGlobal;
+
+//s -> b ==> copy inbound stream "s" to dedicated "global memory" stream for Windows
+if not str__add( @b, s )         then goto skipend;
+
+//read data
+hwmf                  :=win____SetMetaFileBitsEx( ( b.len32 - 22 ) ,ptr__shift( b.core ,22 ) );
+
+if (hwmf=0)                      then goto skipend;
+
+//dimensions
+xleft                 :=b.sml2[ 0 + 6  ];//int16
+xtop                  :=b.sml2[ 0 + 8  ];//int16
+xright                :=b.sml2[ 0 + 10 ];//int16
+xbottom               :=b.sml2[ 0 + 12 ];//int16
+xinch                 :=frcmin32( b.wrd2[ 0 + 14 ] ,1 );//word
+
+dwidth                :=frcmin32(round( (xright  - xleft ) * (96 / xinch) ) ,1 );//vectors are intervals, so not "right-left+1" but "right-left"
+dheight               :=frcmin32(round( (xbottom - xtop  ) * (96 / xinch) ) ,1 );//vectors are intervals, so not "right-left+1" but "right-left"
+
+//get
+c                     :=miswin24(dwidth,dheight);//old GDI procs used 24-bit bitmaps
+
+mis__cls(c,255,255,255,255);
+
+win____SetMapMode( c.dc ,8 );//MM_ANISOTROPIC = 8
+if not win____SetViewportExtEx( c.dc ,dwidth ,dheight ,nil ) then goto skipend;//required by Windows in order to know what size to draw at
+if not win____PlayMetaFile( c.dc ,hwmf )                     then goto skipend;
+if not mis__copy( c ,d )                                     then goto skipend;
+
+//successful
+result                :=true;
+
+skipend:
+
+except;end;
+
+//free
+if (b<>nil)  then str__free(@b);
+if (c<>nil)  then freeobj(@c);
+str__uaf(s);
+if (hwmf<>0) then win____deletemetafile(hwmf);
+
+end;
+
+
+//emf procs --------------------------------------------------------------------
+
+function emf__fromdata(const d:tobject;const s:pobject;var e:string):boolean;
+label
+   skipend;
+
+var
+   b                  :tstr8;
+   c                  :twinbmp;
+   xleft              :longint32;
+   xright             :longint32;
+   xtop               :longint32;
+   xbottom            :longint32;
+   xinch              :longint32;
+   dwidth             :longint32;
+   dheight            :longint32;
+   hemf               :hauto;
+   p                  :longint32;
+   h                  :TEnhMetaHeader;
+
+begin
+
+//defaults
+result                :=false;
+b                     :=nil;
+c                     :=nil;
+hemf                  :=0;
+e                     :=gecTaskfailed;
+
+try
+
+//check
+if not str__lock(s)              then goto skipend;
+if (d=nil)                       then goto skipend;
+
+if (io__anyformatb(s)<>'EMF') then
+   begin
+
+   e                  :=gecUnknownFormat;
+   goto skipend;
+
+   end;
+
+//init
+b                     :=str__new8;
+b.makeGlobal;
+
+//s -> b ==> copy inbound stream "s" to dedicated "global memory" stream for Windows
+if not str__add( @b, s )         then goto skipend;
+
+//read data
+hemf                  :=win____SetEnhMetaFileBits( b.len32 ,b.core );
+
+if (hemf=0)                      then goto skipend;
+
+//header
+low__cls( @h ,sizeof(h) );
+
+if (0=win____GetEnhMetaFileHeader( hemf ,sizeof(h) ,@h )) then goto skipend;
+
+//dimensions
+dwidth                :=frcmin32( h.rclBounds.right  - h.rclBounds.left ,1 );
+dheight               :=frcmin32( h.rclBounds.bottom - h.rclBounds.top  ,1 );
+
+//get
+c                     :=miswin24(dwidth,dheight);//old GDI procs used 24-bit bitmaps
+
+mis__cls(c,255,255,255,255);
+
+if not win____PlayEnhMetaFile( c.dc ,hemf ,area__make(0,0,pred(dwidth),pred(dheight)) ) then goto skipend;
+if not mis__copy( c ,d )                                                    then goto skipend;
+
+//successful
+result                :=true;
+
+skipend:
+
+except;end;
+
+//free
+if (b<>nil)  then str__free(@b);
+if (c<>nil)  then freeobj(@c);
+str__uaf(s);
+if (hemf<>0) then win____DeleteEnhMetaFile(hemf);
+
+end;
+
+
 //ppm procs --------------------------------------------------------------------
+
 function ppm__todata(s:tobject;d:pobject;var e:string):boolean;
 begin
 result:=ppm__todata2(s,d,'',e);
@@ -12844,8 +13526,8 @@ if (not xtransparent) or xsimple0255 then
    end;
 
 //.min bit depth
-if      ia__found(daction,ia_32bitPLUS)   then dbits:=32
-else if ia__found(daction,ia_24bitPLUS)   then dbits:=24;
+if      ia__found(daction,ia_32bitPLUS)   then dbits:=frcmin32(dbits,32)//fixed - 27oct2026
+else if ia__found(daction,ia_24bitPLUS)   then dbits:=frcmin32(dbits,24);
 
 //set
 result:=icoXX__todata(s,d,dbits);
@@ -19475,55 +20157,85 @@ end;
 
 function mis__tofile(s:tobject;dfilename,dformat:string;var e:string):boolean;//09jul2021
 begin
+
 result:=mis__tofile2(s,dfilename,dformat,'',e);
+
 end;
 
 function mis__tofile2(s:tobject;dfilename,dformat,daction:string;var e:string):boolean;//09jul2021
 begin
+
 result:=mis__tofile3(s,dfilename,dformat,daction,e);
+
 end;
 
 function mis__tofile3(s:tobject;dfilename,dformat:string;var daction,e:string):boolean;//26dec2024, 09jul2021
 const
-   dsizeThreshold=10000000;//40Mb at 32bit
+   dsizeThreshold     =10000000;//40Mb at 32bit
+
 var
-   d:tobject;
+   d                  :tobject;
 begin
+
 //defaults
-result:=false;
+result                :=false;
+d                     :=nil;
 
 try
-daction:=ia__spreadd(daction,ia_info_filename,[dfilename]);
-if ia__found(daction,ia_usestr9) or (mult64(misw(s),mish(s))>dsizeThreshold) then d:=str__new9 else d:=str__new8;
-result:=mis__todata3(s,@d,dformat,daction,e) and io__tofile(dfilename,@d,e);
+
+//init
+daction               :=ia__spreadd( daction ,ia_info_filename ,[dfilename] );
+
+
+if ia__found(daction,ia_usestr9) or (mult64(misw(s),mish(s))>dsizeThreshold) then d:=str__new9
+else                                                                              d:=str__new8;
+
+//get
+result                :=mis__todata3(s,@d,dformat,daction,e) and io__tofile(dfilename,@d,e);
+
 except;end;
 
 //free
-str__free(@d);
+if (d<>nil) then str__free(@d);
 
 end;
 
-function mis__fromfile(s:tobject;sfilename:string;var e:string):boolean;//09jul2021
+function mis__fromfile(const s:tobject;const sfilename:string;var e:string):boolean;//09jul2021
 begin
-result:=mis__fromfile2(s,sfilename,false,e);
+
+result:=mis__fromfile2( s ,sfilename ,'' ,false ,e );
+
 end;
 
-function mis__fromfile2(s:tobject;sfilename:string;sbuffer:boolean;var e:string):boolean;//09jul2021
+function mis__fromfile1(const s:tobject;const sfilename,xaction:string;var e:string):boolean;//26oct2026
+begin
+
+result:=mis__fromfile2( s ,sfilename ,xaction ,false ,e );
+
+end;
+
+function mis__fromfile2(const s:tobject;const sfilename,xaction:string;const sbuffer:boolean;var e:string):boolean;//26oct2026, 09jul2021
 var
-   a:tobject;
+   a        :tobject;
+
 begin
+
 //defaults
-result:=false;
-e:=gecTaskfailed;
-a:=nil;
+result      :=false;
+e           :=gecTaskfailed;
+a           :=nil;
+
+try
+
 //get
-try
-a:=str__new9;
-result:=io__fromfile64(sfilename,@a,e) and mis__fromdata2(s,@a,sbuffer,e);
+a           :=str__new9;
+result      :=io__fromfile64(sfilename,@a,e) and mis__fromdata2( s ,@a ,xaction ,sbuffer ,e );
+
 except;end;
-try
+
+//free
 str__free(@a);
-except;end;
+
 end;
 
 function mis__todata(s:tobject;sdata:pobject;dformat:string;var e:string):boolean;//25jul2024
@@ -19893,74 +20605,102 @@ result:=str__fromb642(s,s,i) and mis__fromdata(d,s,e);
 
 end;
 
-function mis__fromadata(s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
+function mis__fromadata(const s:tobject;const xdata:array of byte;var e:string):boolean;//05feb2025
 var
-   b:tstr8;
+   b                  :tstr8;
+
 begin
-result:=false;
-b:=nil;
-e:=gecTaskfailed;
+
+//defaults
+result                :=false;
+b                     :=nil;
+e                     :=gecTaskfailed;
 
 try
-b:=str__new8;
+
+//init
+b                     :=str__new8;
 b.aadd(xdata);
-result:=mis__fromdata(s,@b,e);
+
+//get
+result                :=mis__fromdata(s,@b,e);
+
 except;end;
+
+//free
 str__free(@b);
+
 end;
 
-function mis__fromdata(s:tobject;sdata:pobject;var e:string):boolean;//25jul2024
+function mis__fromdata(const s:tobject;const sdata:pobject;var e:string):boolean;//25jul2024
 begin
-result:=mis__fromdata2(s,sdata,false,e);
+
+result                :=mis__fromdata2( s ,sdata ,'' ,false ,e );
+
 end;
 
-function mis__fromdata2(s:tobject;sdata:pobject;sbuffer:boolean;var e:string):boolean;//06jun2025, 25jul2024
+function mis__fromdata2(const s:tobject;const sdata:pobject;const xaction:string;const sbuffer:boolean;var e:string):boolean;//26oct2026, 06jun2025, 25jul2024
 label
    skipend;
 var
-   d,ddataobj:tobject;
-   ddata:pobject;
-   dbuffered:boolean;
-   sbits,sw,sh:longint;
-   sformat:string;
-   sbase64:boolean;
-   int1,int2:longint;
+   d                            :tobject;
+   ddataobj                     :tobject;
+   ddata                        :pobject;
+   dbuffered                    :boolean;
+   sbits                        :longint32;
+   sw                           :longint32;
+   sh                           :longint32;
+   sformat                      :string;
+   sbase64                      :boolean;
+   int1                         :longint32;
+   int2                         :longint32;
 
    function startbuffer:boolean;
    begin
+
    //get
    if sbuffer then
       begin
-      dbuffered:=true;
-      d:=misraw(sbits,sw,sh);
-      result:=mis__copy(s,d);
+
+      dbuffered                 :=true;
+      d                         :=misraw(sbits,sw,sh);
+      result                    :=mis__copy(s,d);
+
       end
-   else result:=true;
+
+   else result                  :=true;
 
    //static image by default
    mis__nocells(d);
+
    end;
 
    function stopbuffer:boolean;
    begin
+
    //get
    if dbuffered then
       begin
-      result:=mis__copy(d,s);
-      dbuffered:=false;
+
+      result                    :=mis__copy(d,s);
+      dbuffered                 :=false;
       freeobj(@d);
+
       end
-   else result:=true;
+
+   else result                  :=true;
+
    end;
+
 begin
 
 //defaults
-result      :=false;
-e           :=gecTaskfailed;
-d           :=s;
-ddataobj    :=nil;
-ddata       :=@ddataobj;
-dbuffered   :=false;
+result                          :=false;
+e                               :=gecTaskfailed;
+d                               :=s;
+ddataobj                        :=nil;
+ddata                           :=@ddataobj;
+dbuffered                       :=false;
 
 try
 
@@ -19976,20 +20716,24 @@ if not mis__format(sdata,sformat,sbase64) then
    case strmatch(sformat,'zip') of
    true:begin
 
-      ddataobj:=str__newsametype(sdata);//same type
-      ddata:=@ddataobj;
+      ddataobj                  :=str__newsametype(sdata);//same type
+      ddata                     :=@ddataobj;
 
       if (not str__add(ddata,sdata)) or (not low__decompress(ddata)) then
          begin
+
          e:=gecDatacorrupt;
          goto skipend;
+
          end;
 
       //failed again -> quit
       if not mis__format(ddata,sformat,sbase64) then
          begin
+
          e:=gecUnknownformat;
          goto skipend;
+
          end;
 
       end;
@@ -20008,8 +20752,10 @@ if not mis__format(sdata,sformat,sbase64) then
 //double buffer to protect "s" from corruption -> we overwrite "s" only when we have good data
 if sbuffer then
    begin
+
    d        :=misraw(sbits,sw,sh);
    if not miscopy(s,d) then goto skipend;
+
    end;
 
 //get
@@ -20029,7 +20775,23 @@ if (sformat='ANI') then
 else if (sformat='BMP') then//does not require a buffer - 25jul2024
    begin
 
-   if not bmp__fromdata(d,ddata,e) then goto skipend;
+   if not bmp__fromdata( d ,ddata ,xaction ,e ) then goto skipend;
+
+   end
+
+//.wmf
+else if (sformat='WMF') then//does not require a buffer - 25jul2024
+   begin
+
+   if not wmf__fromdata( d ,ddata ,e ) then goto skipend;
+
+   end
+
+//.emf
+else if (sformat='EMF') then//does not require a buffer - 25jul2024
+   begin
+
+   if not emf__fromdata( d ,ddata ,e ) then goto skipend;
 
    end
 
@@ -20207,16 +20969,18 @@ else if (sformat='XBM') then//does not require a buffer - 18sep2025
 
    end
 
-else
-   begin
+else begin
+
    goto skipend;
+
    end;
 
 //successful
-result:=true;
+result                          :=true;
+
 skipend:
+
 except;end;
-try
 
 //cellwidth and cellheight -> default to 0x0 when no "ai" present, such with jpeg/bitmap - 26jul2024
 if mishasai(s) and ((misai(s).cellwidth=0) or (misai(s).cellheight=0)) then
@@ -20232,93 +20996,123 @@ if (d<>nil)     and (d<>s)         then freeobj(@d);
 
 //last
 str__uaf(sdata);
-except;end;
+
 end;
 
-function mis__fromarray(s:tobject;const xdata:array of byte;var e:string):boolean;//01may2025, 02jun2020
+function mis__fromarray(const s:tobject;const xdata:array of byte;var e:string):boolean;//01may2025, 02jun2020
 var
-   b:tstr8;
+   b                            :tstr8;
+
 begin
-result:=false;
-b     :=nil;
-e     :=gecTaskfailed;
+
+//defaults
+result                          :=false;
+b                               :=nil;
+e                               :=gecTaskfailed;
 
 try
-b:=str__new8;
+
+//init
+b                               :=str__new8;
 b.aadd(xdata);
-result:=mis__fromdata(s,@b,e);
+
+//get
+result                          :=mis__fromdata(s,@b,e);
+
 except;end;
+
 //free
 str__free(@b);
+
 end;
 
-function miscls(s:tobject;xcolor:longint):boolean;
+function miscls(const s:tobject;const xcolor:longint32):boolean;
 begin
-result:=misclsarea2(s,maxarea,xcolor,xcolor);
+
+result      :=misclsarea2(s,maxarea,xcolor,xcolor);
+
 end;
 
-function misclsarea(s:tobject;sarea:twinrect;xcolor:longint):boolean;
+function misclsarea(const s:tobject;const sarea:twinrect;const xcolor:longint32):boolean;
 begin
-result:=misclsarea3(s,sarea,xcolor,xcolor,clnone,clnone);
+
+result      :=misclsarea3(s,sarea,xcolor,xcolor,clnone,clnone);
+
 end;
 
-function misclsarea2(s:tobject;sarea:twinrect;xcolor,xcolor2:longint):boolean;
+function misclsarea2(const s:tobject;const sarea:twinrect;const xcolor,xcolor2:longint32):boolean;
 begin
-result:=misclsarea3(s,sarea,xcolor,xcolor2,clnone,clnone);
+
+result      :=misclsarea3(s,sarea,xcolor,xcolor2,clnone,clnone);
+
 end;
 
-function misclsarea3(s:tobject;sarea:twinrect;xcolor,xcolor2,xalpha,xalpha2:longint):boolean;
+function misclsarea3(const s:tobject;const sarea:twinrect;xcolor,xcolor2,xalpha,xalpha2:longint32):boolean;
 label
-   skipdone,skipend;
+   skipdone ,skipend;
+
 var
-  sr8 :pcolorrow8;
-  sr16:pcolorrow16;
-  sr24:pcolorrow24;
-  sr32:pcolorrow32;
-  sc8 :tcolor8;
-  sc16:tcolor16;
-  sc24,sc,sc2:tcolor24;
-  sc32:tcolor32;
-  dx,dy,sbits,sw,sh:longint;
-  xpert:extended;
-  xcolorok,xalphaok,shasai:boolean;
-  da:twinrect;
-  xa:byte;
+  sr8                 :pcolorrow8;
+  sr16                :pcolorrow16;
+  sr24                :pcolorrow24;
+  sr32                :pcolorrow32;
+  sc8                 :tcolor8;
+  sc16                :tcolor16;
+  sc24                :tcolor24;
+  sc                  :tcolor24;
+  sc2                 :tcolor24;
+  sc32                :tcolor32;
+  dx                  :longint32;
+  dy                  :longint32;
+  sbits               :longint32;
+  sw                  :longint32;
+  sh                  :longint32;
+  xpert               :extended;
+  xcolorok            :boolean;
+  xalphaok            :boolean;
+  shasai              :boolean;
+  da                  :twinrect;
+  xa                  :byte;
+
 begin
+
 //defaults
-result:=false;
-sc8:=0;
-sc16:=0;
-xa:=0;
+result                :=false;
+sc8                   :=0;
+sc16                  :=0;
+xa                    :=0;
 
 try
+
 //check
 if not misinfo8162432(s,sbits,sw,sh,shasai) then exit;
 
 //range
 if (sarea.right<sarea.left) or (sarea.bottom<sarea.top) or (sarea.bottom<0) or (sarea.top>=sh) or (sarea.right<0) or (sarea.left>=sw) then
    begin
-   result:=true;
+
+   result             :=true;
    exit;
+
    end;
 
-da.left      :=frcrange32(sarea.left,0,sw-1);
-da.right     :=frcrange32(sarea.right,0,sw-1);
-da.top       :=frcrange32(sarea.top,0,sh-1);
-da.bottom    :=frcrange32(sarea.bottom,0,sh-1);
+da.left               :=frcrange32(sarea.left,0,sw-1);
+da.right              :=frcrange32(sarea.right,0,sw-1);
+da.top                :=frcrange32(sarea.top,0,sh-1);
+da.bottom             :=frcrange32(sarea.bottom,0,sh-1);
 
 //init
 //.color
 if (xcolor <>clnone) and (xcolor2=clnone) then xcolor2:=xcolor;
 if (xcolor2<>clnone) and (xcolor =clnone) then xcolor:=xcolor2;
 
-xcolorok     :=(xcolor<>clnone) and (xcolor2<>clnone);
+xcolorok              :=(xcolor<>clnone) and (xcolor2<>clnone);
 
 if xcolorok then
    begin
 
-   sc        :=int__c24(xcolor);
-   sc2       :=int__c24(xcolor2);
+   sc                 :=int__c24(xcolor);
+   sc2                :=int__c24(xcolor2);
 
    end;
 
@@ -20326,13 +21120,13 @@ if xcolorok then
 if (xalpha <>clnone) and (xalpha2=clnone) then xalpha2:=xalpha;
 if (xalpha2<>clnone) and (xalpha =clnone) then xalpha:=xalpha2;
 
-xalphaok     :=(xalpha<>clnone) and (xalpha2<>clnone);
+xalphaok              :=(xalpha<>clnone) and (xalpha2<>clnone);
 
 if xalphaok then
    begin
 
-   xalpha    :=frcrange32(xalpha,0,255);
-   xalpha2   :=frcrange32(xalpha2,0,255);
+   xalpha             :=frcrange32(xalpha,0,255);
+   xalpha2            :=frcrange32(xalpha2,0,255);
 
    end;
 
@@ -20342,54 +21136,75 @@ if (not xcolorok) and (not xalphaok) then goto skipdone;
 //get
 for dy:=da.top to da.bottom do
 begin
+
 //.color gradient - optional
 if xcolorok and ((xcolor<>xcolor2) or (dy=da.top)) then
    begin
    //.make color
    if (xcolor=xcolor2) then
       begin
-      sc24.r:=sc.r;
-      sc24.g:=sc.g;
-      sc24.b:=sc.b;
+
+      sc24.r          :=sc.r;
+      sc24.g          :=sc.g;
+      sc24.b          :=sc.b;
+
       end
-   else
-      begin
-      xpert:=(dy-da.top+1)/(da.bottom-da.top+1);
-      sc24.r:=round( (sc.r*(1-xpert))+(sc2.r*xpert) );
-      sc24.g:=round( (sc.g*(1-xpert))+(sc2.g*xpert) );
-      sc24.b:=round( (sc.b*(1-xpert))+(sc2.b*xpert) );
+
+   else begin
+
+      xpert           :=(dy-da.top+1)/(da.bottom-da.top+1);
+      sc24.r          :=round( (sc.r*(1-xpert))+(sc2.r*xpert) );
+      sc24.g          :=round( (sc.g*(1-xpert))+(sc2.g*xpert) );
+      sc24.b          :=round( (sc.b*(1-xpert))+(sc2.b*xpert) );
+
       end;
+
    //.more bits
    case sbits of
    8:begin
-      sc8:=sc24.r;
+
+      sc8             :=sc24.r;
+
       if (sc24.g>sc8) then sc8:=sc24.g;
       if (sc24.b>sc8) then sc8:=sc24.b;
+
       end;
-   16:sc16:=(sc24.r div 8) + (sc24.g div 8)*32 + (sc24.b div 8)*1024;
+
+   16:sc16            :=(sc24.r div 8) + (sc24.g div 8)*32 + (sc24.b div 8)*1024;
+
    32:begin
-      sc32.r:=sc24.r;
-      sc32.g:=sc24.g;
-      sc32.b:=sc24.b;
-      sc32.a:=255;//fully solid
+
+      sc32.r          :=sc24.r;
+      sc32.g          :=sc24.g;
+      sc32.b          :=sc24.b;
+      sc32.a          :=255;//fully solid
+
       end;
+
    end;//case
+
    end;
 
 //.alpha gradient - optional
 //was: if xalphaok and (xalpha<>xalpha2) or (dy=da.top) then
 if xalphaok and ((xalpha<>xalpha2) or (dy=da.top)) then//fixed error - 22apr2021
    begin
+
    //.make alpha
    if (xalpha=xalpha2) then
       begin
+
       xa:=xalpha;
+
       end
-   else
-      begin
+
+   else begin
+
       xpert:=(dy-da.top+1)/(da.bottom-da.top+1);
       xa:=byte(frcrange32(round( (xalpha*(1-xpert))+(xalpha2*xpert) ),0,255));
+
       end;
+
    end;
 
 //.scan
@@ -20397,44 +21212,73 @@ if not misscan2432(s,dy,sr24,sr32) then goto skipend;
 
 //.pixels
 case sbits of
+
 8 :begin
+
    if not xcolorok then goto skipdone;
+
    sr8:=pointer(sr24);
+
    for dx:=da.left to da.right do sr8[dx]:=sc8;
+
    end;
+
 16:begin
+
    if not xcolorok then goto skipdone;
+
    sr16:=pointer(sr24);
+
    for dx:=da.left to da.right do sr16[dx]:=sc16;
+
    end;
+
 24:begin
+
    if not xcolorok then goto skipdone;
+
    for dx:=da.left to da.right do sr24[dx]:=sc24;
+
    end;
+
 32:begin
+
    //.c + a
    if xcolorok and xalphaok then
       begin
+
       sc32.a:=xa;
+
       for dx:=da.left to da.right do sr32[dx]:=sc32;
+
       end
+
    //.c only
    else if xcolorok then
       begin
+
       for dx:=da.left to da.right do sr32[dx]:=sc32;
+
       end
+
    //.a only
    else if xalphaok then
       begin
+
       for dx:=da.left to da.right do sr32[dx].a:=xa;
+
       end;
+
    end;
+
 end;//case
+
 end;//dy
 
 //successful
 skipdone:
-result:=true;
+
+result                :=true;
 
 skipend:
 except;end;
@@ -31704,6 +32548,13 @@ begin
 dr:=tcolor32(s).r;
 dg:=tcolor32(s).g;
 db:=tcolor32(s).b;
+
+end;
+
+function int__a(const s:longint32):byte;//07nov2026
+begin
+
+result      :=tcolor32(s).a;
 
 end;
 

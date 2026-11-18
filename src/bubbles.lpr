@@ -18,7 +18,9 @@ uses
   gosswin,
   gossjpg,
   gosszip,
-  gamefiles;
+  gamefiles,
+  gossfast,
+  gossdoc;
   { you can add units after this }
 
 
@@ -30,6 +32,7 @@ uses
 {$R ver.res}
 
 begin
+
 //(1)false=event driven disabled, (2)false=file handle caching disabled, (3)true=gui app mode
 app__boot(false,true,not isconsole);
 end.

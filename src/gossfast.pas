@@ -39,13 +39,17 @@ uses gossroot, gossimg, gosswin;
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -946,6 +950,10 @@ function rescache__delFastdraw(x:pobject):boolean;
 function rescache__newMapped(const xid,dW,sx1,sx2,sW:longint32):tdynamicinteger;//02apr2026
 function rescache__delMapped(x:pobject):boolean;
 
+function  faststr__new8:tstr8;//22oct2026
+procedure faststr__free(const x:pobject);//22oct2026
+procedure faststr__autofree(const x:pobject);//22oct2026
+procedure faststr__uaf(const x:pobject);//22oct2026
 
 //resource procs ---------------------------------------------------------------
 
@@ -2899,6 +2907,51 @@ for p:=0 to high(rescache_str8.obj) do if (x^=rescache_str8.obj[p]) then
 
 //fallback
 if str__ok(x) then freeobj(x);
+
+end;
+
+function faststr__new8:tstr8;//22oct2026
+begin
+
+result                :=rescache__newStr8;
+
+end;
+
+procedure faststr__free(const x:pobject);//22oct2026
+begin
+
+if str__is8(x) then rescache__delStr8(x)
+else                freeobj(x);
+
+end;
+
+procedure faststr__autofree(const x:pobject);//22oct2026
+begin
+
+if str__ok(x) then
+   begin
+
+   if      (x^ is tstr8) and (x^ as tstr8).oautofree and ((x^ as tstr8).lockcount=0) then faststr__free(x)
+   else if (x^ is tstr9) and (x^ as tstr9).oautofree and ((x^ as tstr9).lockcount=0) then freeobj(x);
+
+   end;
+
+end;
+
+procedure faststr__uaf(const x:pobject);//22oct2026
+begin
+
+if str__unlock(x) then
+   begin
+
+   case str__is8(x) of
+
+   true:faststr__autofree(x);
+   else str__autofree(x);
+
+   end;//case
+
+   end;
 
 end;
 

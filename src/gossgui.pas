@@ -37,23 +37,27 @@ uses gosswin2, gossroot, gossfast, gosstext, gossimg, gossio {$ifdef snd},gosssn
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. GUI (gossgui.pas)
-//## Version.................. 4.00.33776 (+5948) (Build no reduced by 5611 due to WordCore (now TextCore) removed to dedicated unit gosstext.pas - 16feb2026)
+//## Version.................. 4.00.33833 (+5948) (Build no reduced by 5611 due to WordCore (now TextCore) removed to dedicated unit gosstext.pas - 16feb2026)
 //## Items.................... 47
-//## Last Updated ............ 04aug2026, 29jul2026, 23jul2026, 19jul2026, 16jul2026, 13jul2026, 10jul2026, 09jul2026, 07jul2026, 01jul2026, 25jun2026, 23jun2026, 21jun2026, 15jun2026, 05jun2026, 29may2026, 28may2026, 27may2026, 26may2026, 23may2026, 14may2026, 08may2026, 06may2026, 03may2026, 23apr2026, 22apr2026, 17apr2026, 15apr2026, 11apr2026, 07apr2026, 03apr2026,
+//## Last Updated ............ 14nov2026, 29oct2026, 26oct2026, 22oct2026, 15oct2026, 04aug2026, 29jul2026, 23jul2026, 19jul2026, 16jul2026, 13jul2026, 10jul2026, 09jul2026, 07jul2026, 01jul2026, 25jun2026, 23jun2026, 21jun2026, 15jun2026, 05jun2026, 29may2026, 28may2026, 27may2026, 26may2026, 23may2026, 14may2026, 08may2026, 06may2026, 03may2026, 23apr2026, 22apr2026, 17apr2026, 15apr2026, 11apr2026, 07apr2026, 03apr2026,
 //##                                      29mar2026, 26mar2026, 23mar2026, 18mar2026, 10mar2026, 06mar2026, 28feb2026, 26feb2026, 15feb2026, 01feb2026, 23jan2026, 13jan2026, 11jan2026, 07jan2026, 29dec2025, 27dec2025, 26dec2025, 17dec2025, 13dec2025, 12dec2025, 04dec2025, 01dec2025, 30nov2025, 28nov2025, 09nov2025, 06nov2025, 24oct2025, 08oct2025, 05oct2025, 29sep2025, 26sep2025, 18sep2025, 15sep2025, 09sep2025, 07sep2025, 28aug2025, 23aug2025, 15aug2025, 10aug2025, 08aug2025, 26jul2025, 24jul2025, 17jul2025, 14jul2025, 04jul2025, 16jun2025, 12jun2025, 09jun2025, 07jun2025, 03jun2025, 29may2025, 29apr2025, 13apr2025, 31mar2025, 24mar2025, 18feb2025, 28dec2024, 11dec2024, 29nov2024, 22nov2024, 15nov2024, 10nov2024, 04oct2024, 28aug2024, 01ug2024, 25jul2024, 28jun2024, 22mar2024, 09feb2024, 13dec2023, 25nov2023, 19may2023, 25feb2023, 30dec2022, 15nov2022, 06nov2022, 11oct2022, 28sep2022, 05jul2022, 29jun2022, 14jun2022, 31may2022, 14may2022, 30apr2022, 30mar2022, 27feb2022, 08feb2022, 31jan2021, 30dec2021,
 //##                                      19dec2021, 30sep2021, 29aug2021, 09aug2021, 27jul2021, 07jul2021, 20jun2021, 02jun2021, 30may2021, 12may2021, 10may2021, 30apr2021, 19apr2021, 14apr2021, 03apr2021, 31mar2021, 20mar2021, 08mar2021, 26feb2021, 01feb2021, 28jan2021, 11oct2020, 25sep2020, 07sep2020, 26aug2020, 22aug2020, 28jul2020, 23may2020, 10may2020
-//## Lines of Code............ 57,500+
+//## Lines of Code............ 57,700+
 //## Origin .................. Human generated and maintained
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -71,18 +75,18 @@ uses gosswin2, gossroot, gossfast, gosstext, gossimg, gossio {$ifdef snd},gosssn
 //## | scale__*               | family of procs   | 1.00.092  | 17dec2025   | System wide scaling support - 10dec2025, 05sep2025
 //## | system__*              | family of procs   | 1.00.050  | 13may2025   | System management and Windows message handling
 //## | sysback__*             | family of procs   | 1.00.150  | 06may2026   | Background image management procs (integrates with tbackgroundmanager) - 17apr2026, 07mar2026, 01mar2026, 19aug2025, 11apr2025, 18mar2025
-//## | clip__*                | family of procs   | 1.00.386  | 05jun2026   | Clipboard copy/paste for text and images - 26may2026, 03apr2026, 18mar2026, 01sep2025, 08aug2025: fixed "cf_png" bad value, 12jun2025, 01jun2025, 01jun2025, 29apr2025, 17mar2025, 17dec2024
+//## | clip__*                | family of procs   | 1.00.390  | 26oct2026   | Clipboard copy/paste for text and images - 05jun2026, 26may2026, 03apr2026, 18mar2026, 01sep2025, 08aug2025: fixed "cf_png" bad value, 12jun2025, 01jun2025, 01jun2025, 29apr2025, 17mar2025, 17dec2024
 //## | canvas__*              | family of procs   | 1.00.050  | 01dec2024   | TCanvas abstraction procs
 //## | cols_*                 | color schemes     | 1.00.450  | 09mar2025   | Collection of built-in color schemes
 //## | tbasicapp              | tobjectex         | 1.00.045  | 10dec2025   | Basic GUI app structure, complete with GUI (tbasicsystem) - 10aug2024, 30jul2021, 24jul2021
 //## | trnd8                  | tobject           | 1.00.020  | 29nov2023   | Random stream generator
 //## | tbackgroundmanager     | tobject           | 1.00.334  | 06may2026   | Handles static, animated and dynamic background imagery for "tbasicsystem" - 02mar2026, 07jan2026, 13dec2025, 03jun2025
-//## | tbasicsystem           | tobject           | 1.00.6050 | 16jul2026   | GUI rendering and control system - 13jul2026, 14may2026, 08may2026, 23apr2026, 07apr2026, 03apr2026, 26mar2026, 10mar2026, 06mar2026, 01feb2026, 13jan2026, 29dec2025, 13dec2025, 01dec2025, 09nov2025, 08oct2025, 17sep2025, 09sep2025, 31aug2025, 27aug2025, 17aug2025, 10aug2025, 26jul2025, 04jul2025, 28may2025, 15may2025, 21apr2025, 18feb2025, 04feb2025: auto switches between using buffer 1+2 or only buffer 1 for optimal rendering, 28jan2025, 28nov2024: supports background exclusion areas, 21nov2024: background pauses for window resize/reposition, 18nov2024, 26jul2024m 28jun2024: fixed part paint, 09dec2023, 19nov2023, 12feb2023, 20may2022, 27mar2022: updated onaccept proc for deep drag and drop support, 26feb2022, Fixed ibuffer.w/h mismatch with mustmask - 21sep2021, 29aug2021, 28jul2021, 07jul2021, 18jun2021, 29may2021, 14apr2021, 03apr2021, 08mar2021, 25feb2021, 11oct2020, 28jul2020, 20may2020
+//## | tbasicsystem           | tobject           | 1.00.6092 | 29oct2026   | GUI rendering and control system - 15oct2026, 16jul2026, 13jul2026, 14may2026, 08may2026, 23apr2026, 07apr2026, 03apr2026, 26mar2026, 10mar2026, 06mar2026, 01feb2026, 13jan2026, 29dec2025, 13dec2025, 01dec2025, 09nov2025, 08oct2025, 17sep2025, 09sep2025, 31aug2025, 27aug2025, 17aug2025, 10aug2025, 26jul2025, 04jul2025, 28may2025, 15may2025, 21apr2025, 18feb2025, 04feb2025: auto switches between using buffer 1+2 or only buffer 1 for optimal rendering, 28jan2025, 28nov2024: supports background exclusion areas, 21nov2024: background pauses for window resize/reposition, 18nov2024, 26jul2024m 28jun2024: fixed part paint, 09dec2023, 19nov2023, 12feb2023, 20may2022, 27mar2022: updated onaccept proc for deep drag and drop support, 26feb2022, Fixed ibuffer.w/h mismatch with mustmask - 21sep2021, 29aug2021, 28jul2021, 07jul2021, 18jun2021, 29may2021, 14apr2021, 03apr2021, 08mar2021, 25feb2021, 11oct2020, 28jul2020, 20may2020
 //## | tbasiccontrol          | tobject           | 1.00.1306 | 19jul2026   | Flicker free base control with built-in _onnotify/_ontimer and _onpaint procs for easy customisation - 13jul2026, 09jul2026, 23jun2026, 28may2026, 29mar2026, 23mar2026, 25feb2026, 26dec2025, 04dec2025, 30nov2025, 05sep2025, 19jul2025, 03jul2025, 24may2025, 19apr2025, 31mar2025, 06jan2025, 25dec2024, 28nov2024, 19aug2024, 28jun2024: fixed ldso4 leak, 02dec2023: ldso4 cliparea handling, 17nov2023, 12jan2022, 09sep2021, 27mar2021, 11oct2020, 20may2020, 12apr2020, 14mar2020
 //## | tbasicimgview          | tbasiccontrol     | 1.00.758  | 04jun2026   | Animated image viewer - 29may2026, 03apr2026, 18feb2025, 30jan2025, 26dec2024
 //## | tbasichelp             | tbasiccontrol     | 1.00.100  | 16may2025   | Realtime help scroller - 02aug2024, 12apr2020, 25mar2020
 //## | tbasicnav              | tbasiccontrol     | 1.00.1270 | 05may2026   | Multi-purpose favorites/files/folders/open/save navigation control - 18sep2025, 04sep2025, 05jun2025, 24jan2025, 28dec2024, 01dec2024: removed " - " from preview label,22nov2024, 20aug2024, 11feb2023, 11oct2022, 27sep2022, 28jun2022, 22may2022, 23mar2022, 12jan2022, 09aug2021, 28jul2021, 18jun2021, 06apr2021, 25mar2021, 22sep2020
-//## | tbasicbwp              | tbasiccontrol     | 1.00.700  | 17feb2026   | GUI front-end for TextCore -> multi-format text box -> supports txt, bwd, bwp, rtf and dic text documents - 23jan2026, 27aug2025, 20apr2025, 31mar2025, 17dec2024, 09dec2024: keyboard shortcut removed for "copy as plain text", 28aug2024, 18feb2023, 04oct2022, 24sep2022, 18jun2022, 29may2021, 12mar2021
+//## | tbasicbwp              | tbasiccontrol     | 1.00.710  | 14nov2026   | GUI front-end for TextCore -> multi-format text box -> supports txt, bwd, bwp, rtf and dic text documents - 17feb2026, 23jan2026, 27aug2025, 20apr2025, 31mar2025, 17dec2024, 09dec2024: keyboard shortcut removed for "copy as plain text", 28aug2024, 18feb2023, 04oct2022, 24sep2022, 18jun2022, 29may2021, 12mar2021
 //## | tbwpbar                | tbasiccontrol     | 1.00.160  | 01mar2026   | Font name / size / color and style toolbar for tbasicbwp text box - 15nov2023
 //## | tbasiccolor            | tbasiccontrol     | 1.00.377  | 23jun2026   | Color picker with optional shade ranges - 24oct2025, 03feb2025, 09dec2024: xshadecolor24 proc for when low__capcolor fails, 09dec2024: tweaked color capture, 01mar2021
 //## | tbasiccolormatrix      | tbasiccontrol     | 1.00.098  | 02feb2025   | Realtime drawn color matrix - 02feb2025: direct color grab within color matrix, 09dec2024, 09dec2024: tweaked color capture, 2021
@@ -98,7 +102,7 @@ uses gosswin2, gossroot, gossfast, gosstext, gossimg, gossio {$ifdef snd},gosssn
 //## | tbasicimageexts        | tbasiccontrol     | 1.00.025  | 21dec2024   | An action list for specific image formats -> to work with dialog windows
 //## | tbasictea              | tbasiccontrol     | 1.00.280  | 23mar2026   | Mini TEA image view and adjustment editor - 03mar2026, 11dec2025, 12jan2025, 2021
 //## | tbasiccolors           | tbasiccontrol     | 1.00.552  | 11dec2025   | Multi-color picker with system and static colors support - 24may2025, 09mar2025, 15mar2022, 19mar2021
-//## | tbasictoolbar          | tbasiccontrol     | 1.00.3455 | 19jul2026   | Toolbar with "title + links" support - 10jul2026, 03may2026, 20mar202, 10dec2025, 28nov2025, 04sep2025, 20jul2025, 09jun2025, 26may2025, 24mar2025, 28dec2024, 27dec2024: upgraded to support Window Head functions, 21jul2024, 09dec2023, 03nov2023, 26sep2022, 28jun2022, 25mar2022, 19dec2021, 21sep2021, 07jul2021, 30may2021, 27mar2021, 21feb2021, 11oct2020, 22sep2020, 23apr2020, 29mar2020
+//## | tbasictoolbar          | tbasiccontrol     | 1.00.3456 | 22oct2026   | Toolbar with "title + links" support - 19jul2026, 10jul2026, 03may2026, 20mar202, 10dec2025, 28nov2025, 04sep2025, 20jul2025, 09jun2025, 26may2025, 24mar2025, 28dec2024, 27dec2024: upgraded to support Window Head functions, 21jul2024, 09dec2023, 03nov2023, 26sep2022, 28jun2022, 25mar2022, 19dec2021, 21sep2021, 07jul2021, 30may2021, 27mar2021, 21feb2021, 11oct2020, 22sep2020, 23apr2020, 29mar2020
 //## | tbasicmenu             | tbasiccontrol     | 1.00.2960 | 16jul2026   | Menu handler - 13jul2026, 09jul2026, 23may2026, 15apr2026, 02apr2026, 21mar2026, 26feb2026, 12dec2025, 04dec2025, 04sep2025, 28aug2025, 18aug2025, 03jul2025, 16may2025, 21dec2024, 17nov2024, 04oct2024, 20jul2024: soft back shade for title items, 28sep2022, 20mar2022, 26feb2022, 08jun2021, 27mar2021, 11oct2020, 13apr2020
 //## | tbasicscrollbar        | tbasiccontrol     | 1.00.490  | 12dec2025   | Streamlined scrollbar with full and partial keyboard/wheel handling -> can pass critical handling to parent control for consistent operation - 13sep2025, 04oct2022, 03mar2022, 08feb2022, 25jul2021, 13apr2020
 //## | tbasicscroll           | tbasiccontrol     | 1.00.610  | 23jul2026   | Vertical scrollbox - 19jul2026, 03apr2026, 13jan2026, 19jul2025, 05jun2025, 14may2025, 17mar2025, 12jan2024, 17dec2024, 04oct2022, 02jun2021, 29may2021, 08mar2021, 25feb2021, 14aug2020, 05apr2020
@@ -839,92 +843,92 @@ type
    private
 
     //general
-    ishowmenu             :tstr8;//pointer only
-    isnapshot64           :comp;
-    imousedownref         :comp;
-    ihidecursorref        :comp;
-    ipumptimer2           :comp;
-    ibufferresize64       :comp;
-    ilastsystem_slowref64 :comp;
-    iecomode64            :comp;
-    iopacitytimer         :comp;
-    itimer5000            :comp;
-    itimer1000            :comp;
-    itimer100             :comp;
-    itimer250             :comp;
-    ishowonceref          :comp;
-    iform_sizecheckcount  :longint;
-    isizing               :longint;
-    ilastmousemovecheckx  :longint;
-    ilastmousemovechecky  :longint;
-    icursorloadid         :longint;
-    ishowaitcount         :longint;
-    icloselocked          :longint;
-    ilastdataid           :longint;
-    iwinmax               :longint;
-    iwinlimit             :longint;
-    ilastsystem_mustidSLOW:longint;
-    ilastsystem_mustid    :longint;
-    iform_sizing          :boolean;
-    if1_showhelp          :boolean;
-    if2_restoredefaults   :boolean;
-    iecopainting          :boolean;
-    ishowoptions_crosssync:boolean;
-    iwinemaximised        :boolean;
-    imustcloseprompt      :boolean;
-    itimer_busy           :boolean;
-    idragging_fullwin     :boolean;
-    iclosed               :boolean;
-    iontimerbusy          :boolean;
-    itiming               :boolean;
-    imustclose            :boolean;
-    ialigning             :boolean;
-    ipaintedwithtile      :boolean;
-    ipaintfirst           :boolean;
-    inormalarea           :twinrect;//nor only
-    istable               :byte;
-    ikeyboardlaststate    :byte;
-    fontimer              :tevent;
-    fontimer2             :tevent;
+    ishowmenu                   :tstr8;//pointer only
+    isnapshot64                 :longint64;
+    imousedownref               :longint64;
+    ihidecursorref              :longint64;
+    ipumptimer2                 :longint64;
+    ibufferresize64             :longint64;
+    ilastsystem_slowref64       :longint64;
+    iecomode64                  :longint64;
+    iopacitytimer               :longint64;
+    itimer5000                  :longint64;
+    itimer1000                  :longint64;
+    itimer100                   :longint64;
+    itimer250                   :longint64;
+    ishowonceref                :longint64;
+    iform_sizecheckcount        :longint32;
+    isizing                     :longint32;
+    ilastmousemovecheckx        :longint32;
+    ilastmousemovechecky        :longint32;
+    icursorloadid               :longint32;
+    ishowaitcount               :longint32;
+    icloselocked                :longint32;
+    ilastdataid                 :longint32;
+    iwinmax                     :longint32;
+    iwinlimit                   :longint32;
+    ilastsystem_mustidSLOW      :longint32;
+    ilastsystem_mustid          :longint32;
+    iform_sizing                :boolean;
+    if1_showhelp                :boolean;
+    if2_restoredefaults         :boolean;
+    iecopainting                :boolean;
+    ishowoptions_crosssync      :boolean;
+    iwinemaximised              :boolean;
+    imustcloseprompt            :boolean;
+    itimer_busy                 :boolean;
+    idragging_fullwin           :boolean;
+    ilastScale                  :double;//15oct2026
+    iclosed                     :boolean;
+    iontimerbusy                :boolean;
+    itiming                     :boolean;
+    imustclose                  :boolean;
+    ialigning                   :boolean;
+    ipaintedwithtile            :boolean;
+    ipaintfirst                 :boolean;
+    istable                     :byte;
+    ikeyboardlaststate          :byte;
+    fontimer                    :tevent;
+    fontimer2                   :tevent;
 
     //game mode support - 29jan2025
-    igamemode             :boolean;
-    igamemode_cansize     :boolean;
-    igamemode_canmove     :boolean;
-    igamemode_onpaint     :tevent;
-    igamemode_onshortcut  :tsystemnotify;
-    igamemode_onnotify    :tsystemnotify;
-    igamemode_onkey       :tsystemkeyevent;
-    igamemode_onmouse     :tsystemmouseevent;
-    fonkey                :tsystemkeyevent;//general purpose
+    igamemode                   :boolean;
+    igamemode_cansize           :boolean;
+    igamemode_canmove           :boolean;
+    igamemode_onpaint           :tevent;
+    igamemode_onshortcut        :tsystemnotify;
+    igamemode_onnotify          :tsystemnotify;
+    igamemode_onkey             :tsystemkeyevent;
+    igamemode_onmouse           :tsystemmouseevent;
+    fonkey                      :tsystemkeyevent;//general purpose
 
     //fps painting stat
-    ifps                  :longint;
-    ifpscount             :longint;
+    ifps                        :longint32;
+    ifpscount                   :longint32;
 
     //automatic opacity
-    ilastopacity100x      :longint;
-    ilastopacitystep      :longint;
-    ilastopacityref       :string;
+    ilastopacity100x            :longint32;
+    ilastopacitystep            :longint32;
+    ilastopacityref             :string;
 
     //wound support
-    iwounddirx            :longint;
-    iwounddiry            :longint;
-    iwoundlastx           :longint;
-    iwoundlasty           :longint;
-    iwoundratex           :longint;
-    iwoundratey           :longint;
-    iwoundratelimit       :longint;
-    iwoundref             :comp;
+    iwounddirx                  :longint32;
+    iwounddiry                  :longint32;
+    iwoundlastx                 :longint32;
+    iwoundlasty                 :longint32;
+    iwoundratex                 :longint32;
+    iwoundratey                 :longint32;
+    iwoundratelimit             :longint32;
+    iwoundref                   :longint64;
 
     //hint support
-    ihint                 :string;
-    ihintlines            :tdynamicstring;
-    ihinttitle_linecount  :longint;//number of lines title covers -> usually only one or zero, but may be 2 or more if it's wrapped - 03jan2025
-    ihintarea             :twinrect;
-    ihintXY               :tpoint;
-    ihintTimeout          :comp;
-    ihintOnsecs           :longint;
+    ihint                       :string;
+    ihintlines                  :tdynamicstring;
+    ihinttitle_linecount        :longint32;//number of lines title covers -> usually only one or zero, but may be 2 or more if it's wrapped - 03jan2025
+    ihintarea                   :twinrect;
+    ihintXY                     :tpoint;
+    ihintTimeout                :longint64;
+    ihintOnsecs                 :longint32;
 
     //showoptions support
     ishowoptions_inuse              :boolean;
@@ -963,146 +967,146 @@ type
     ishowoptions_snoop_vpos2        :longint;
 
     //background support - 02mar2025
-    ibackgroundmanager    :tbackgroundmanager;
+    ibackgroundmanager          :tbackgroundmanager;
 
     //core support
-    icore                 :array[0..maxcore] of tbasiccontrol;
-    icorecount            :longint;
+    icore                       :array[0..maxcore] of tbasiccontrol;
+    icorecount                  :longint32;
 
     //action support
-    ias                   :array[0..maxcore] of char;
-    iam                   :array[0..maxcore] of byte;
-    iax                   :array[0..maxcore] of longint;
-    iay                   :array[0..maxcore] of longint;
-    iacount               :longint;
+    ias                         :array[0..maxcore] of char;
+    iam                         :array[0..maxcore] of byte;
+    iax                         :array[0..maxcore] of longint32;
+    iay                         :array[0..maxcore] of longint32;
+    iacount                     :longint32;
 
     //pop support
-    ipophost              :tbasiccontrol;
-    ipopshortcut          :longint;//aknone=nothing
+    ipophost                    :tbasiccontrol;
+    ipopshortcut                :longint32;//aknone=nothing
 
     //window support
-    iwinhover             :longint;
-    iwinhoverlayer        :longint;
-    iwinfocus             :longint;
-    iwinfocuslayer        :longint;
-    idragindex            :longint;
-    idragstart            :longint;
-    idragrect             :twinrect;//note: used internally within "__onpaint()" only - 18may2020
-    isizeindex            :longint;
-    isizestart            :longint;//25feb2021
+    iwinhover                   :longint32;
+    iwinhoverlayer              :longint32;
+    iwinfocus                   :longint32;
+    iwinfocuslayer              :longint32;
+    idragindex                  :longint32;
+    idragstart                  :longint32;
+    idragrect                   :twinrect;//note: used internally within "__onpaint()" only - 18may2020
+    isizeindex                  :longint32;
+    isizestart                  :longint32;//25feb2021
 
     //keyboard + mouse support
-    idownrect             :twinrect;
-    imousebuttonlock      :longint;
-    iwheel                :longint;
-    ikey                  :longint;
-    imousebutton          :longint;
-    ihoverindex           :longint;
-    ifocusindex           :longint;
-    ifocussizemodex       :longint;
-    ifocussizemodey       :longint;//min32=none, -1=resize, 0..N=coreindex
-    ishiftok              :boolean;
-    ictrlok               :boolean;
-    ialtok                :boolean;
-    iscreendraggingout    :boolean;
-    iscreenmovingfine     :boolean;
-    iscreendragging       :boolean;
-    iscreendraggingv      :boolean;
-    iscreendraggingh      :boolean;
-    iscreendraggingfine   :boolean;
-    iscreendraggingfinev  :boolean;
-    iscreendraggingfineh  :boolean;
-    imousemoved           :boolean;
-    imousedown            :boolean;
-    imousewasdown         :boolean;
-    imousedbclick         :boolean;
-    iscreenmovingfinexy   :tpoint;
-    imousedownxy          :tpoint;
-    imousemovexy          :tpoint;
-    iscreendownxy         :tpoint;
-    iscreenmovexy         :tpoint;
-    iscreenmovingfine64   :comp;
-    imousedbclicktime     :comp;
-    fonshortcut           :tsystemnotify;
+    idownrect                   :twinrect;
+    imousebuttonlock            :longint32;
+    iwheel                      :longint32;
+    ikey                        :longint32;
+    imousebutton                :longint32;
+    ihoverindex                 :longint32;
+    ifocusindex                 :longint32;
+    ifocussizemodex             :longint32;
+    ifocussizemodey             :longint32;//min32=none, -1=resize, 0..N=coreindex
+    ishiftok                    :boolean;
+    ictrlok                     :boolean;
+    ialtok                      :boolean;
+    iscreendraggingout          :boolean;
+    iscreenmovingfine           :boolean;
+    iscreendragging             :boolean;
+    iscreendraggingv            :boolean;
+    iscreendraggingh            :boolean;
+    iscreendraggingfine         :boolean;
+    iscreendraggingfinev        :boolean;
+    iscreendraggingfineh        :boolean;
+    imousemoved                 :boolean;
+    imousedown                  :boolean;
+    imousewasdown               :boolean;
+    imousedbclick               :boolean;
+    iscreenmovingfinexy         :tpoint;
+    imousedownxy                :tpoint;
+    imousemovexy                :tpoint;
+    iscreendownxy               :tpoint;
+    iscreenmovexy               :tpoint;
+    iscreenmovingfine64         :longint64;
+    imousedbclicktime           :longint64;
+    fonshortcut                 :tsystemnotify;
 
     //paint support
-    ipartpaint_arealist   :array[0..99] of twinrect;
-    ipartpaint_count      :longint;
-    ipartpaintareaok      :boolean;
-    ipaintingpart         :boolean;
-    imasking              :boolean;
-    ipaintbusy            :boolean;
-    imaskval              :longint;
-    ipainting             :longint;
-    imustpaint            :longint;
-    imustalign            :longint;
-    ialignid              :longint;
-    ipaintid              :longint;
-    ipostpaint_fullid     :longint;
-    ipostpaint_partid     :longint;
-    ipostpaint_id         :longint;
+    ipartpaint_arealist         :array[0..99] of twinrect;
+    ipartpaint_count            :longint32;
+    ipartpaintareaok            :boolean;
+    ipaintingpart               :boolean;
+    imasking                    :boolean;
+    ipaintbusy                  :boolean;
+    imaskval                    :longint32;
+    ipainting                   :longint32;
+    imustpaint                  :longint32;
+    imustalign                  :longint32;
+    ialignid                    :longint32;
+    ipaintid                    :longint32;
+    ipostpaint_fullid           :longint32;
+    ipostpaint_partid           :longint32;
+    ipostpaint_id               :longint32;
 
     //buffers
-    ibuffer               :twinbmp;//main buffer all controls are rendered onto
-    ibuffer2              :twinbmp;//bridge buffer that accepts pixels from "ibuffer" and renders them onto the form (ihost) via canvas
-    ibuffer2info          :tfastbufferinfo;//set by xdrawtohost__start
-    ibufferID2            :longint;
-    idragbuffer           :trawimage;//drag buffer -> used for dragging windows - 28dec2025
-    idragbufferRef64      :longint64;
-    imask                 :tmask8;
-    imaskRef64            :longint64;
+    ibuffer                     :twinbmp;//main buffer all controls are rendered onto
+    ibuffer2                    :twinbmp;//bridge buffer that accepts pixels from "ibuffer" and renders them onto the form (ihost) via canvas
+    ibuffer2info                :tfastbufferinfo;//set by xdrawtohost__start
+    ibufferID2                  :longint32;
+    idragbuffer                 :trawimage;//drag buffer -> used for dragging windows - 28dec2025
+    idragbufferRef64            :longint64;
+    imask                       :tmask8;
+    imaskRef64                  :longint64;
 
     //.simple drag and drop - 21jul2024
-    idragdrop_icon        :tbasicimage;//used for drag and drop dragging
-    idragdrop_startarea   :twinrect;//mouse down
-    idragdrop_paintarea   :twinrect;//current paint area
-    idragdrop_code2       :string;
-    idragdrop_ref         :string;
-    idragdrop_dragging    :boolean;
-    idragdrop_lastarea    :twinrect;
-    idragdrop_power255    :longint;//06jun2025
+    idragdrop_icon              :tbasicimage;//used for drag and drop dragging
+    idragdrop_startarea         :twinrect;//mouse down
+    idragdrop_paintarea         :twinrect;//current paint area
+    idragdrop_code2             :string;
+    idragdrop_ref               :string;
+    idragdrop_dragging          :boolean;
+    idragdrop_lastarea          :twinrect;
+    idragdrop_power255          :longint32;//06jun2025
 
     //splash
-    isplash               :tbasicsplash;
+    isplash                     :tbasicsplash;
 
     //status support
-    istatuswin            :tbasicscroll;
-    istatustime           :comp;
-    istatuspert           :double;
-    istatustab            :string;
-    istatusrowcount       :longint;
-    istatustext           :array[0..9] of string;
-    istatustep            :array[0..9] of longint;
-    istatustitle          :string;
-    istatusscale          :double;//05may2026
-    istatusshow           :boolean;
-    istatusstopped        :boolean;
+    istatuswin                  :tbasicscroll;
+    istatustime                 :longint64;
+    istatuspert                 :double;
+    istatustab                  :string;
+    istatusrowcount             :longint32;
+    istatustext                 :array[0..9] of string;
+    istatustep                  :array[0..9] of longint32;
+    istatustitle                :string;
+    istatusscale                :double;//05may2026
+    istatusshow                 :boolean;
+    istatusstopped              :boolean;
 
     //xdrawtohost support
-    idrawtohost_count     :longint;
-    idrawtohost_usetile   :boolean;
-    idrawtohost_arealist  :array[0..99] of twinrect;
+    idrawtohost_count           :longint32;
+    idrawtohost_usetile         :boolean;
+    idrawtohost_arealist        :array[0..99] of twinrect;
 
     //form support
-    iform_handle          :hauto;
-    iform_paintdc         :hauto;
-    iform_lastdpi         :longint;
-    iform_downrect        :twinrect;
-    iform_caption         :string;
-    iform_sizeref         :string;
-    iform_cornersREF      :string;
-    iform_fullscreen      :boolean;
-    iform_active          :boolean;
-    iform_width           :longint;
-    iform_height          :longint;
-    ipaint_tryagain_count :longint;
-    iform_lastshift       :boolean;
-    iform_lastalt         :boolean;
-    iform_lastctrl        :boolean;
-    ilaststate            :char;
+    iform_handle                :hauto;
+    iform_paintdc               :hauto;
+    iform_lastdpi               :longint32;
+    iform_downrect              :twinrect;
+    iform_caption               :string;
+    iform_sizeref               :string;
+    iform_cornersREF            :string;
+    iform_fullscreen            :boolean;
+    iform_active                :boolean;
+    iform_width                 :longint32;
+    iform_height                :longint32;
+    ipaint_tryagain_count       :longint32;
+    iform_lastshift             :boolean;
+    iform_lastalt               :boolean;
+    iform_lastctrl              :boolean;
+    ilaststate                  :char;
 
     //rootwin
-    irootwin              :tbasicscroll;
+    irootwin                    :tbasicscroll;
 
     function xcommonevent(a:tbasiccontrol;xstyle:string;xcode:longint;xcode2:string;xtepcolor:longint):boolean;
     function xcommongetitem(sender:tobject;xindex:longint;var xtab:string;var xtep,xtepcolor:longint;var xcaption,xcaplabel,xhelp,xcode2:string;var xcode,xshortcut,xindent:longint;var xflash,xenabled,xtitle,xsep,xbold:boolean):boolean;//04dec2025
@@ -1328,8 +1332,8 @@ type
 
     property left   :longint read form__getleft   write form__setleft;
     property top    :longint read form__gettop    write form__settop;
-    property width  :longint read iform_width  write form__setwidth;
-    property height :longint read iform_height write form__setheight;
+    property width  :longint read iform_width     write form__setwidth;
+    property height :longint read iform_height    write form__setheight;
 
     procedure setbounds(dx,dy,dw,dh:longint);
     procedure setbounds2(dx,dy,dw,dh:longint;xforcerepaint:boolean);
@@ -1554,6 +1558,7 @@ type
     function wtop(var x:tbasiccontrol;var xindex:longint):boolean;//xxxxxxxxxxxxx//dodgy, needs upgrading........
     function xacceptfindbyxy(sx,sy:longint;var xout:tbasiccontrol):boolean;//updated - 20mar2022
     procedure xsync_opacity;//02dec2024: streamlined viopacityspeed
+    procedure xsync_scaleChanged(const xoldscale,xnewscale:double);//15oct2026
 
     //control handlers
     function control__fastfindxy(const sx,sy:longint;var xcoreindex:longint):boolean;//07may2026
@@ -2828,10 +2833,11 @@ type
 
     //io
     function ioget(xdata:tstr8;xformat:string):boolean;
-    function ioset(xdata:tstr8):boolean;
-    function ioset2(xdata:tstr8;xvpos_px,xvpos:longint):boolean;
-    function ioset3(xdata:tstr8;xvpos_px,xvpos,xhpos,xpos,xpos2:longint;xtransform,xwebimages:boolean):boolean;
-    function ioset4(xdata:tstr8;const dformat:string;xvpos_px,xvpos,xhpos,xpos,xpos2:longint;xtransform,xwebimages:boolean):boolean;//17feb2026
+    function ioset(const xdata:tstr8):boolean;
+    function ioset2(const xdata:tstr8;const xvpos_px,xvpos:longint):boolean;
+    function ioset3(const xdata:tstr8;const xvpos_px,xvpos,xhpos,xpos,xpos2:longint;const xtransform,xwebimages:boolean):boolean;
+    function ioset4(const xdata:tstr8;const dformat:string;const xvpos_px,xvpos,xhpos,xpos,xpos2:longint;const xtransform,xwebimages:boolean):boolean;//17feb2026
+    function setvals(const xvpos_px,xvpos,xhpos,xpos,xpos2:longint):boolean;//14nov2026
 
     //.txt
     function iogettxt(xdata:tstr8):boolean;
@@ -2906,28 +2912,45 @@ type
    tbwpbar=class(tbasiccontrol)
    private
 
-    itimer250:comp;
-    iref:string;
-    ibox:tbasicbwp;
-    imustWrapStyle,ihoverindex,idownindex,icount:longint;
-    iarea:array[0..19] of twinrect;
-    ipert:array[0..19] of longint;
-    icap:array[0..19] of string;
+    itimer250                   :longint64;
+    iref                        :string;
+    ibox                        :tbasicbwp;
+    imustWrapStyle              :longint32;
+    ihoverindex                 :longint32;
+    idownindex                  :longint32;
+    icount                      :longint32;
+    iarea                       :array[0..19] of twinrect;
+    ipert                       :array[0..19] of longint32;
+    icap                        :array[0..19] of string;
+    ihelp                       :array[0..19] of string;//15oct2026
+
     //index refs
-    iname,isize,icolor,inormal,ibold,iitalic,istrikeout,iunderline,ihighlight,ileft,icenter,iright,iwrap:longint;
+    iname                       :longint32;
+    isize                       :longint32;
+    icolor                      :longint32;
+    inormal                     :longint32;
+    ibold                       :longint32;
+    iitalic                     :longint32;
+    istrikeout                  :longint32;
+    iunderline                  :longint32;
+    ihighlight                  :longint32;
+    ileft                       :longint32;
+    icenter                     :longint32;
+    iright                      :longint32;
+    iwrap                       :longint32;
 
     procedure setbox(x:tbasicbwp);
-    function xnew(xcap:string;xpert:longint):longint;
+    function xnew(const xcap,xhelp:string;xpert:longint32):longint32;
 
    public
 
     //options
-    osysbox:boolean;//default=false=use specified box, true=use currently set box
-    ocancolor:boolean;
-    ocanalign:boolean;
-    ocanname:boolean;
-    ocansize:boolean;
-    opassiveWrap:boolean;//true=triggers proc "mustWrapStyle" to be used, false=directly adjusts textbox wrap style - 01mar2026
+    osysbox                     :boolean;//default=false=use specified box, true=use currently set box
+    ocancolor                   :boolean;
+    ocanalign                   :boolean;
+    ocanname                    :boolean;
+    ocansize                    :boolean;
+    opassiveWrap                :boolean;//true=triggers proc "mustWrapStyle" to be used, false=directly adjusts textbox wrap style - 01mar2026
 
     //create
     constructor create(xparent:tobject);
@@ -3978,7 +4001,7 @@ type
     function cadd3(xcap:string;xtep,xcode:longint;xcode2,xhelp:string;xenabled,xvisible,ximgright:boolean;xcountdown:longint):longint;
     function cadd4(xcap:string;xtep,xcode:longint;xcode2,xhelp:string;xenabled,xvisible,ximgright,xbutpad:boolean;xcountdown,xsize,xalign:longint):longint;
     function addsep:longint;
-    function addsep2(xcode2:string):longint;
+    function addsep2(const xcode2:string):longint;
     function addhline:longint;//draw horizontal line under current line - 26sep2022
     function newline:longint;//05jun2021
     function newpartline:longint;//23mar2024
@@ -6159,6 +6182,7 @@ function clip__pastetext2(xdata:pobject):boolean;//27apr2025
 //.image
 function clip__cancopyimage:boolean;//12apr2021
 function clip__copyimage(s:tobject):boolean;//10jun2025, 09jun2025, 26apr2025
+function clip__copyimage2(const s:tobject;const xaction:string):boolean;//26oct2026, 10jun2025, 09jun2025, 26apr2025
 
 function clip__copyimageAsArrayByte(const s:tobject;const dformat:string;const dhighQuality,dShowSuccess:boolean):boolean;//18mar2026
 function clip__copyimageAsBase64(const s:tobject;dformat:string;const dhighQuality,dShowSuccess:boolean):boolean;//05jun2026, 18mar2026
@@ -6809,8 +6833,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,8)='gossgui.') then strdel1(xname,1,8) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.33776'
-else if (xname='date')       then result:='04aug2026'
+if      (xname='ver')        then result:='4.00.33833'
+else if (xname='date')       then result:='14nov2026'
 else if (xname='name')       then result:='GUI'
 else
    begin
@@ -10760,7 +10784,7 @@ if (not result) and clip__hasformat(cf_dibv5) then
    a.makeglobalFROM( win____GetClipboardData(cf_dibv5) , false);
    if (a.len>=1) then
       begin
-      result:=bmp32__fromdata2(d,@a,true);//allow the "dib_patch_12" mode
+      result:=bmp32__fromdata2( d ,@a ,'' ,true );//allow the "dib_patch_12" mode
       a.ejectcore;
       end;
    except;end;
@@ -10774,7 +10798,7 @@ if (not result) and clip__hasformat(cf_dib) then
    a.makeglobalFROM( win____GetClipboardData(cf_dib) , false);
    if (a.len>=1) then
       begin
-      result:=bmp32__fromdata(d,@a);
+      result:=bmp32__fromdata( d ,@a ,'' );
       a.ejectcore;
       end;
    except;end;
@@ -11183,53 +11207,80 @@ str__free(@d);
 
 end;
 
-function clip__copyimage(s:tobject):boolean;//10jun2025, 09jun2025, 26apr2025
+function clip__copyimage(s:tobject):boolean;//26oct2026
+begin
+
+result                :=clip__copyimage2( s ,'' );
+
+end;
+
+function clip__copyimage2(const s:tobject;const xaction:string):boolean;//26oct2026, 10jun2025, 09jun2025, 26apr2025
 label
    skipend;
+
 var
-   e:string;
-   d:tstr8;
-   sbits,sw,sh:longint;
-   xopened,shasai:boolean;
+   e                            :string;
+   d                            :tstr8;
+   sbits                        :longint32;
+   sw                           :longint32;
+   sh                           :longint32;
+   xopened                      :boolean;
+   shasai                       :boolean;
+
 begin
+
 //defaults
-result      :=false;
-xopened     :=false;
-d           :=nil;
+result                          :=false;
+xopened                         :=false;
+d                               :=nil;
 
 try
+
 //open clipboard
 if not clip__openedAndclear(xopened) then goto skipend;
 
 //init
 if not misinfo(s,sbits,sw,sh,shasai) then goto skipend;
-d:=str__new8;
+
+d                               :=str__new8;
 
 //write PNG - only if image has transparent pixels - MS Paint for Win11 requires PNG, whereas Gimp v2.10.34 accepts PNG/DIB
-if mask__hasTransparency32(s) then
+if mask__hasTransparency32(s) or ia__found(xaction,ia_32bitPLUS) then
    begin
+
    d.makeglobal;
-   if not png__todata(s,@d,e)                      then goto skipend;
+
+   if not png__todata2( s ,@d ,xaction ,e )        then goto skipend;
+
    if (0=win____setclipboarddata(cf_png,d.handle)) then goto skipend;
+
    d.ejectcore;
+
    end;
 
 //write DIBv5
 d.makeglobal;
+
 //if not bmp32__todata3(s,@d,false,hsV05,low__aorb(32,24,misb(s)=24)) then goto skipend;
-if not bmp32__todata3(s,@d,false,hsV05,32)          then goto skipend;
+if not bmp32__todata3(s,@d,xaction,false,hsV05,32) then goto skipend;
+
 if (0=win____setclipboarddata(cf_dibv5,d.handle))   then goto skipend;//11jun2025: fixed
+
 d.ejectcore;
 
 //write DIBv1
 d.makeglobal;
-if not bmp32__todata3(s,@d,false,hsW95,24)      then goto skipend;//use old V1 header which has no transparency for backward compatibility such as WordPad on Win11 - 09jun2025
+
+if not bmp32__todata3(s,@d,'',false,hsW95,24)   then goto skipend;//use old V1 header which has no transparency for backward compatibility such as WordPad on Win11 - 09jun2025
+
 if (0=win____setclipboarddata(cf_dib,d.handle)) then goto skipend;
+
 d.ejectcore;
 
 //successful
-result:=true;
+result                          :=true;
 skipend:
+
 except;end;
 
 //free
@@ -12719,7 +12770,6 @@ s            :=vnew2(956);
 if zzok(syssettings,1050) then s.data:=zzvars(syssettings,140).data;
 siFiltersettings(s);
 zzvars(s,141);//re-check
-
 
 //get
 
@@ -15511,24 +15561,24 @@ ipert[p]    :=0;
 
 end;
 
-iname       :=xnew('name',30);
-xnew('-',1);
-isize       :=xnew('size',10);
-xnew('-',1);
-icolor      :=xnew('Color',15);
-xnew('-',2);
-inormal     :=xnew('N',4);
-ibold       :=xnew('B',4);
-iitalic     :=xnew('I',4);
-iunderline  :=xnew('U',4);
-istrikeout  :=xnew('S',4);
-ihighlight  :=xnew('H',4);
-xnew('-',2);
-ileft       :=xnew('L',4);
-icenter     :=xnew('C',4);
-iright      :=xnew('R',4);
-xnew('-',2);
-iwrap       :=xnew('W',4);
+iname       :=xnew('name','Font name',30);
+xnew('-','',1);
+isize       :=xnew('size','Font size',10);
+xnew('-','',1);
+icolor      :=xnew('Color','Font color',15);
+xnew('-','',2);
+inormal     :=xnew('N','Remove style',4);
+ibold       :=xnew('B','Toggle bold',4);
+iitalic     :=xnew('I','Toggle italic',4);
+iunderline  :=xnew('U','Toggle underline',4);
+istrikeout  :=xnew('S','Toggle strikeout',4);
+ihighlight  :=xnew('H','Toggle highlight',4);
+xnew('-','',2);
+ileft       :=xnew('L','Left align',4);
+icenter     :=xnew('C','Center',4);
+iright      :=xnew('R','Right align',4);
+xnew('-','',2);
+iwrap       :=xnew('W','Toggle word wrap',4);
 
 //controls
 //clientheight:=20;
@@ -15570,11 +15620,12 @@ else
 end;
 
 
-function tbwpbar.xnew(xcap:string;xpert:longint):longint;
+function tbwpbar.xnew(const xcap,xhelp:string;xpert:longint):longint;
 begin
 
 result                :=frcrange32(icount,0,high(iarea));
 icap[result]          :=xcap;
+ihelp[result]         :=xhelp;
 ipert[result]         :=xpert;
 
 inc(icount);
@@ -15711,22 +15762,24 @@ end;
 
 procedure tbwpbar._ontimer(sender:tobject);
 var
-   xmustpaint:boolean;
-   b:tobject;
-   int1,int2:longint;
+   xmustpaint                   :boolean;
+   b                            :tobject;
+   int1                         :longint32;
+   int2                         :longint32;
+
 begin
-try
+
 //defaults
-xmustpaint:=false;
+xmustpaint                      :=false;
 
 //.itimer250
 if (slowms64>itimer250) then
    begin
 
    //box data has changed
-   b     :=findbox2;
-   int1  :=-1;
-   int2  :=-1;
+   b                            :=findbox2;
+   int1                         :=-1;
+   int2                         :=-1;
 
    if (b<>nil) then
       begin
@@ -15734,24 +15787,28 @@ if (slowms64>itimer250) then
       if (b is tbasicbwp) then
          begin
 
-         int1:=(b as tbasicbwp).core.cursorpos;
-         int2:=(b as tbasicbwp).core.dataid3;
+         int1                   :=(b as tbasicbwp).core.cursorpos;
+         int2                   :=(b as tbasicbwp).core.dataid3;
 
          end;
 
       end;
 
-   if low__setstr(iref,bolstr(ocanalign)+bolstr(ocancolor)+'|'+intstr32(int1)+'-'+intstr32(int2)) then xmustpaint:=true;
+   if low__setstr(iref,bolstr(ocanalign)+bolstr(ocancolor)+'|'+intstr32(int1)+'-'+intstr32(int2)) then
+      begin
+
+      xmustpaint                :=true;
+
+      end;
 
    //reset
-   itimer250:=slowms64+250;
+   itimer250                    :=slowms64 + 250;
 
    end;
 
 //paint
 if xmustpaint then paintnow;
 
-except;end;
 end;
 
 procedure tbwpbar.setbox(x:tbasicbwp);
@@ -15813,8 +15870,16 @@ if gui.mousedown and (not gui.mousewasdown) then
    end;
 
 //hover index
-if low__setint(ihoverindex,findindex(mousemovexy.x,mousemovexy.y)) then xmustpaint:=true;
+if low__setint(ihoverindex,findindex(mousemovexy.x,mousemovexy.y)) then
+   begin
 
+   xmustpaint:=true;
+
+   //.help - 15oct2026
+   if (ihoverindex>=0) and (ihoverindex<icount) then help2:=ihelp[ihoverindex]
+   else                                              help2:='';
+
+   end;
 
 //mouse up
 if (not gui.mousedown) and gui.mousewasdown then
@@ -19153,13 +19218,11 @@ istatusstopped           :=false;
 
 //gui state
 iwinemaximised           :=false;//supports PROPER maximise display in Wine - 05feb2022
-inormalarea              :=area__make(0,0,100,100);
 
 //show modes
 smnone                   :=0;
 smmodal                  :=1;
 smwait                   :=2;
-//xxxxxxxxxxishowmode:=smnone;
 
 //index styles
 xsnone                   :=0;//nothing is selected
@@ -19182,6 +19245,7 @@ idragstart               :=-1;
 isizeindex               :=-1;
 isizestart               :=-1;
 idragging_fullwin        :=false;//15apr2021
+ilastScale               :=0;
 
 //32bit buffer for "twinbmp" is slightly faster -> e.g. upto 25% faster...............//??????????????
 ibuffer                  :=miswin(24,1,1);//starts off as 24bit, when it changes to 32bit make sure to set alpha to 255 as no integrated(attached to tbasicsystem) fastdraw proc will
@@ -19438,7 +19502,7 @@ if (syssettings<>nil) and (state='n') then
    syssettings.i['top']      :=top;
    syssettings.i['width']    :=width;
    syssettings.i['height']   :=height;
-   syssettings.i['wh.scale'] :=round32( viscale*100 );//17dec2025
+   syssettings.i['wh.scale'] :=round32( viscale * 100 );//17dec2025
 
    end;
 
@@ -19827,27 +19891,39 @@ end;
 
 procedure tbasicsystem.form__wmsize(var m:twinmessage);
 var
-   a:twinrect;
-   v:char;
+   a        :twinrect;
+   v        :char;
+
 begin
 
-v:=state;
+v           :=state;
+ilastscale  :=scale__calculate; //used to cancel "xsync_scalechanged" in "xtimer()" proc -> as Microsoft calls this proc when a
+                                //monitor's scaling is changed.
 
 if (v='+') then
    begin
 
-   a:=monitors__workarea_auto(monitorindex);
+   a        :=monitors__workarea_auto(monitorindex);
+
    setbounds(a.left,a.top,a.right-a.left+1,a.bottom-a.top+1);
 
    end
+
 else if (v='f') then
    begin
 
-   a:=monitors__area_auto(monitorindex);
+   a        :=monitors__area_auto(monitorindex);
+
    setbounds(a.left,a.top,a.right-a.left+1,a.bottom-a.top+1);
 
    end
-else if (v='n') then form__sizeSync;
+
+else if (v='n') then
+   begin
+
+   form__sizeSync;
+
+   end;
 
 end;
 
@@ -19880,23 +19956,28 @@ end;
 
 procedure tbasicsystem.setbounds(dx,dy,dw,dh:longint);
 begin
+
 form__setbounds2(dx,dy,dw,dh,false);
+
 end;
 
 procedure tbasicsystem.setbounds2(dx,dy,dw,dh:longint;xforcerepaint:boolean);
 begin
+
 form__setbounds2(dx,dy,dw,dh,xforcerepaint);
+
 end;
 
 procedure tbasicsystem.form__setbounds2(dx,dy,dw,dh:longint;xforcerepaint:boolean);//05may2025
 var
-   a:twinrect;
+   a        :twinrect;
+
 begin
 
 //range
-a:=area;
-dw:=frcmax32( frcmin32( dw, (2*form__bordersize)+ form__minwidth  ), monitors__areatotalwidth);
-dh:=frcmax32( frcmin32( dh, (2*form__bordersize)+ form__minheight ), monitors__areatotalheight);
+a           :=area;
+dw          :=frcmax32( frcmin32( dw, (2*form__bordersize)+ form__minwidth  ), monitors__areatotalwidth);
+dh          :=frcmax32( frcmin32( dh, (2*form__bordersize)+ form__minheight ), monitors__areatotalheight);
 
 //get
 form__move(iform_handle,dx,dy,dw,dh, xforcerepaint or (dw<>(a.right-a.left+1)) or (dh<>(a.bottom-a.top+1)) );
@@ -19906,22 +19987,25 @@ end;
 
 procedure tbasicsystem.form__sizeSync;
 var
-   a:twinrect;
-   dw,dh:longint;
+   a        :twinrect;
+   dw       :longint32;
+   dh       :longint32;
+
 begin
 
 //read actual width/height
-a:=area;
-dw:=frcmin32(a.right-a.left+1,0);
-dh:=frcmin32(a.bottom-a.top+1,0);
+a           :=area;
+dw          :=frcmin32( a.right -a.left+1 ,0 );
+dh          :=frcmin32( a.bottom-a.top +1 ,0 );
 
 if (dw<>iform_width) or (dh<>iform_height) then
    begin
 
-   iform_width:=dw;
-   iform_height:=dh;
-   imustalign:=2;
-   imustpaint:=2;
+   iform_width        :=dw;
+   iform_height       :=dh;
+   imustalign         :=2;
+   imustpaint         :=2;
+
    form__paintnow;
    app__turbo;
 
@@ -20088,6 +20172,13 @@ var
    else if (m.r=htclient) then m.r:=low__aorb(htclient,htcaption,xcanmove)
    else                        m.r:=htclient;
 
+   //window is being dragged by its caption (header)
+   if (m.r=htcaption) and xcanmove then
+      begin
+      
+
+      end;
+
    end;
 begin
 
@@ -20111,6 +20202,7 @@ if haverootwin then
 
       end;
    end;
+
 end;
 
 
@@ -20327,19 +20419,25 @@ end;
 
 procedure tbasicsystem.form__wmmousedown(xbut:longint;var m:twinmessage);
 begin
+
 if not assigned(igamemode_onmouse) then win____SetCapture(iform_handle);//capture the mouse
 form__mouse(0,xbut,m);
+
 end;
 
 procedure tbasicsystem.form__wmmousemove(var m:twinmessage);
 begin
+
 form__mouse(1,0,m);
+
 end;
 
 procedure tbasicsystem.form__wmmouseup(xbut:longint;var m:twinmessage);
 begin
+
 form__mouse(2,xbut,m);
 if not assigned(igamemode_onmouse) then win____ReleaseCapture;//release captured mouse
+
 end;
 
 procedure tbasicsystem.form__wmkeydown(var m:twinmessage);//23jan2025
@@ -22891,42 +22989,54 @@ end;
 
 function tbasicsystem.dragging:boolean;//21nov2024
 begin//dragging a floating window or resizing a window
+
 result:=(idragindex>=0) or idragging_fullwin;
+
 end;
 
 function tbasicsystem.dragging_an_internal_window:boolean;//28nov2024
 begin//dragging a floating window
+
 result:=(idragindex>=0);
+
 end;
 
 procedure tbasicsystem.dragstart_fullwin;//this relates to external OS only and NOT to our internal system - 15apr2021
 begin
-idragging_fullwin:=true;
+
+if not idragging_fullwin then
+   begin
+
+   idragging_fullwin            :=true;
+
+   end;
+
 end;
 
 procedure tbasicsystem.dragstop;
 var
-   xmustpaint:boolean;
+   xmustpaint                   :boolean;
+
 begin
 
 //init
-xmustpaint:=false;
+xmustpaint                      :=false;
 
 //get
 if (idragindex>=0) then
    begin
 
-   idragindex:=-1;
-   idragstart:=-1;
-   xmustpaint:=true;
+   idragindex                   :=-1;
+   idragstart                   :=-1;
+   xmustpaint                   :=true;
 
    end;
 
 if idragging_fullwin then
    begin
 
-   idragging_fullwin:=false;
-   xmustpaint:=true;
+   idragging_fullwin            :=false;
+   xmustpaint                   :=true;
 
    end;
 
@@ -25636,6 +25746,7 @@ if (xmustalign>=1) then
    begin
 
    low__iroll(ialignid,1);
+
    for p:=0 to (icorecount-1) do if xrootok(icore[p]) then icore[p].xalign;
 
    end;
@@ -26021,13 +26132,13 @@ begin
 
 if not itiming then
    begin
-   itiming:=true;
 
-   try
-   xtimer;
-   except;end;
+   itiming  :=true;
 
-   itiming:=false;
+   try;xtimer;except;end;
+
+   itiming  :=false;
+
    end;
 
 end;
@@ -26035,9 +26146,7 @@ end;
 procedure tbasicsystem.__ontimer2(sender:tobject);
 begin
 
-try
-xtimer;
-except;end;
+try;xtimer;except;end;
 
 end;
 
@@ -26045,12 +26154,16 @@ procedure tbasicsystem.pumptimer2;//forceably drive the timer - 15jul2021
 begin//Warning: Use of this proc can cause out of order mouse messages etc via the "anext" proc being called simultaneously
 
 app__timers;//24jan2025, 19feb2021
+
 __ontimer2(self);
 
 if (slowms64>=ipumptimer2) then
    begin
+
    app__processallmessages;
-   ipumptimer2:=slowms64+100;
+
+   ipumptimer2        :=add64(slowms64,100);
+
    end;
 
 end;
@@ -26097,9 +26210,25 @@ if (v64>=sysflash_timer) then
 if vimustsync and (not visyncing) then
    begin
 
-   vimustsync:=false;
+   vimustsync                   :=false;
 
-   if (app__gui<>nil) then visync;
+   if (app__gui<>nil) then
+      begin
+
+      //sync
+      visync;
+
+      //scale changed - 15oct2026
+      if (ilastscale<>viscale) then
+         begin
+
+         xsync_scaleChanged( ilastscale ,viscale );
+
+         ilastscale             :=viScale;
+
+         end;
+
+      end;
 
    alignallnow;
    paintallnow;
@@ -26429,6 +26558,32 @@ if (v64>=iopacitytimer) and (ipaintfirst or (not xnormalmode)) then
 
 //leak__hunt(-1,'sys.xtimer');
 except;end;
+end;
+
+procedure tbasicsystem.xsync_scaleChanged(const xoldscale,xnewscale:double);//15oct2026
+var//Note: This proc is required when the main app window is dragged from one monitor to
+   //      another monitor with different scaling.
+   //
+   //Important: When a monitor's scaling is changed (e.g. via user input from OS)
+   //           Microsoft automatically resizes the app's window, so this proc is not
+   //           required to fire under this condition.
+   a                            :twinrect;
+   dw                           :longint32;
+   dh                           :longint32;
+
+begin
+
+//check
+if (xoldscale<=0) or (xnewscale<=0) or (xoldscale=xnewscale) or (state<>'n') then exit;//scale changes only apply to app window when in normal mode
+
+//get
+a                               :=form__area;
+dw                              :=round32( width  * (xnewscale/xoldscale) );
+dh                              :=round32( height * (xnewscale/xoldscale) );
+
+//set
+form__setbounds2( a.left ,a.top ,dw ,dh ,false );
+
 end;
 
 procedure tbasicsystem.xsync_opacity;//02dec2024: streamlined viopacityspeed
@@ -28433,6 +28588,8 @@ pesan+//16sep2025
 perle6+
 perle8+
 perle32+
+pewmf+
+peemf+
 peany;
 
 //get
@@ -41000,27 +41157,28 @@ icore.readonly:=true;
 icore.showcursor:=false;
 end;
 
-function tbasicbwp.ioset(xdata:tstr8):boolean;
+function tbasicbwp.ioset(const xdata:tstr8):boolean;
 begin
 result:=ioset3(xdata,-1,-1,-1,-1,-1,false,false);
 end;
 
-function tbasicbwp.ioset2(xdata:tstr8;xvpos_px,xvpos:longint):boolean;
+function tbasicbwp.ioset2(const xdata:tstr8;const xvpos_px,xvpos:longint):boolean;
 begin
 result:=ioset3(xdata,xvpos_px,xvpos,-1,-1,-1,false,false);
 end;
 
-function tbasicbwp.ioset3(xdata:tstr8;xvpos_px,xvpos,xhpos,xpos,xpos2:longint;xtransform,xwebimages:boolean):boolean;
+function tbasicbwp.ioset3(const xdata:tstr8;const xvpos_px,xvpos,xhpos,xpos,xpos2:longint;const xtransform,xwebimages:boolean):boolean;
 begin
 result:=ioset4(xdata,'',xvpos_px,xvpos,xhpos,xpos,xpos2,xtransform,xwebimages);
 end;
 
-function tbasicbwp.ioset4(xdata:tstr8;const dformat:string;xvpos_px,xvpos,xhpos,xpos,xpos2:longint;xtransform,xwebimages:boolean):boolean;//17feb2026
+function tbasicbwp.ioset4(const xdata:tstr8;const dformat:string;const xvpos_px,xvpos,xhpos,xpos,xpos2:longint;const xtransform,xwebimages:boolean):boolean;//17feb2026
 begin
 
 result:=true;
 
 icore.clear2;//leaves UNDO alone - 27sep2022
+
 icore.iosetdata2(xdata,dformat);
 
 if xtransform then icore.transform(xwebimages,false,nil);//25mar2026, 16feb2026
@@ -41043,6 +41201,32 @@ if (xvpos_px>=0) or (xvpos>=0) or (xhpos>=0) or (xpos>=0) or (xpos2>=0) then scr
 itimersync_fastcount:=20;//20 fast cycles
 
 end;
+
+function tbasicbwp.setvals(const xvpos_px,xvpos,xhpos,xpos,xpos2:longint):boolean;//14nov2026
+begin
+
+result                :=true;//pass-thru
+
+icore.cursorpos       :=0;
+
+case (xvpos_px>=0) of
+
+true:icore.vpos_px    :=frcmin32(xvpos_px,0);
+else icore.vpos       :=frcmin32(xvpos,0);
+
+end;//case
+
+icore.hpos            :=frcmin32(xhpos,0);
+
+xsync;//12mar2021
+
+//.delayed scroll - 18dec2021
+if (xvpos_px>=0) or (xvpos>=0) or (xhpos>=0) or (xpos>=0) or (xpos2>=0) then scrollto( xvpos_px ,xvpos ,xhpos ,xpos ,xpos2 ,true );
+
+itimersync_fastcount  :=20;//20 fast cycles
+
+end;
+
 
 function tbasicbwp.ioget(xdata:tstr8;xformat:string):boolean;
 begin
@@ -49534,7 +49718,7 @@ result:=add3(tstSep,tepnone,0,'','',true,true,false);
 
 end;
 
-function tbasictoolbar.addsep2(xcode2:string):longint;
+function tbasictoolbar.addsep2(const xcode2:string):longint;
 begin
 
 result:=add3(tstSep,tepnone,0,xcode2,'',true,true,false);

@@ -8,7 +8,7 @@ interface
 {$ifdef con3} {$define con2} {$define net} {$define ipsec} {$endif}
 {$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gosswin2, gossio, gossimg, gossnet, tools;
+uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin, gosswin2, gossio, gossimg, gossnet, tools ,gossfast;
 {$B-} {generate short-circuit boolean evaluation code -> stop evaluating logic as soon as value is known}
 
 //## ==========================================================================================================================================================================================================================
@@ -31,10 +31,10 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. app code (main.pas) -> Bubbles - Multi-Function Server
-//## Version.................. 3.00.11252 (+99)
+//## Version.................. 3.00.11342 (+99)
 //## Items.................... 5
-//## Last Updated ............ 09oct2026, 08oct2026, 09aug2025, 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
-//## Lines of Code............ 13,600+
+//## Last Updated ............ 18nov2026, 09oct2026, 08oct2026, 09aug2025, 19jun2025, 17jun2025, 07apr2025, 22feb2025, 21nov2024, 18aug2024, 03may2024, 29apr2024, 30mar2024, 22mar2024, 16mar2024, 02mar2024, 29feb2024: str__splice(), 19feb2024, 13feb2024, 22jan224, 15jan2024, 03jan2023, 28dec2023, 26dec2023
+//## Lines of Code............ 14,000+
 //##
 //## main.pas ................ app code
 //## gossroot.pas ............ console/gui app startup and control
@@ -46,7 +46,7 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version    | Date        | Update history / brief description of function
 //## |------------------------|-------------------|------------|-------------|--------------------------------------------------------
-//## | Bubbles                | family of procs   | 1.00.10533 | 09oct2026   | Bubbles - 08oct2026, 09aug2025, 19jun2025, 07apr2025
+//## | Bubbles                | family of procs   | 1.00.10623 | 18nov2026   | Bubbles - 09oct2026, 08oct2026, 09aug2025, 19jun2025, 07apr2025
 //## | tmailsender            | tobjectex         | 1.00.530   | 07apr2025   | DNS lookup and STMP mail sender
 //## | tshortdnscache         | tobjectex         | 1.00.030   | 06apr2025   | DNS A/MX record cache
 //## | tshortlist             | tobjectex         | 1.00.020   | 06apr2025   | Simple list
@@ -62,42 +62,61 @@ uses gossroot, {$ifdef gui}gossgui,{$endif} {$ifdef snd}gosssnd,{$endif} gosswin
 
 
 const
-   iadminpath               ='/admin/';
-   ipowerlimit              =100;
-   idefaultpower            =100;
-   iserverqueuesize         =10*1000;//10K
-   ibufferlimit             =100*1000;//100K
-   idefaultpassword         ='admin';
-   idefaultdisksite         ='www_';
-   idefaultport             =1080;
-   idefaultconnections      =1000;
-   idefaultthreshold        =10000000;//10 Mb
-   idefaultcachesize        =1200;//Mb
-   imaxcachesize            =1500;//Mb
+
+   //codes ---------------------------------------------------------------------
+
+   //.optional per file codes list -> for HTML and HTM files, for some dynamic content, write codes in "<some filename>.html.codes"
+   codes_sep1                   =#32;
+   codes_sep2                   =',';
+
+   codes_spamguard              ='s';
 
 
-   icontact_def_off         ='Unable to accept messages at this stage';
-   icontact_def_ok          ='Thank you for your online message';
-   icontact_def_fail        ='Your online message could not be processed';
+   //io masks ------------------------------------------------------------------
 
-   iaddurl_def_off          ='Unable to accept url submissions at this stage';
-   iaddurl_def_ok           ='Thank you for your submission, we will index it shortly';
-   iaddurl_def_fail         ='Your url submission could not be processed';
+   //note: sets what files to load and which not to load
 
-   imaxheadersize           =maxword;//65K
-   imaxuploadsize_normal    =maxword;//65K
-   imaxuploadsize_admin     =200*1024*1000;//200Mb
-   iinbox_msgsperpage       =500;
-   iinbox_msgastext_size    =10*1024*1000;//10Mb
-   ilogs_perpage            =500;
-   ilogs_report_read_limit  =500*1024*1000;//500Mb - this may take ~50 sec to compile into a Log Report, meanwhile the server is held up
-   ilogs_report_large_limit =10000;//10K items for such things as Vistors and Referrers
+   mask_includeList             ='*;'              ;
+   mask_excludeList             ='*.'+fecodes+';'  ;
+
+
+   //core ----------------------------------------------------------------------
+
+   iadminpath                   ='/admin/';
+   ipowerlimit                  =100;
+   idefaultpower                =100;
+   iserverqueuesize             =10*1000;//10K
+   ibufferlimit                 =100*1000;//100K
+   idefaultpassword             ='admin';
+   idefaultdisksite             ='www_';
+   idefaultport                 =1080;
+   idefaultconnections          =1000;
+   idefaultthreshold            =10000000;//10 Mb
+   idefaultcachesize            =1200;//Mb
+   imaxcachesize                =1500;//Mb
+
+   icontact_def_off             ='Unable to accept messages at this stage';
+   icontact_def_ok              ='Thank you for your online message';
+   icontact_def_fail            ='Your online message could not be processed';
+
+   iaddurl_def_off              ='Unable to accept url submissions at this stage';
+   iaddurl_def_ok               ='Thank you for your submission, we will index it shortly';
+   iaddurl_def_fail             ='Your url submission could not be processed';
+
+   imaxheadersize               =maxword;//65K
+   imaxuploadsize_normal        =maxword;//65K
+   imaxuploadsize_admin         =200*1024*1000;//200Mb
+   iinbox_msgsperpage           =500;
+   iinbox_msgastext_size        =10*1024*1000;//10Mb
+   ilogs_perpage                =500;
+   ilogs_report_read_limit      =500*1024*1000;//500Mb - this may take ~50 sec to compile into a Log Report, meanwhile the server is held up
+   ilogs_report_large_limit     =10000;//10K items for such things as Vistors and Referrers
 
    //client types
-   ctNone=0;//not in use
-   ctHttp=1;//web server http 1.1
-   ctMail=2;//mail server
-   ctMax =2;
+   ctNone                       =0;//not in use
+   ctHttp                       =1;//web server http 1.1
+   ctMail                       =2;//mail server
+   ctMax                        =2;
 
 
 bubbles_ico_32px
@@ -121,249 +140,302 @@ bubbles_ico_32px
 
 
    //flow stages
-   fs__sendlist__haveaddr                 =0;
+   fs__sendlist__haveaddr       =0;
 
    //.mx record lookup
-   fs__mxdns__usecache                    =10;
-   fs__mxdns__connect                     =20;
-   fs__mxdns__pushquery                   =30;
-   fs__mxdns__pullquery                   =40;
+   fs__mxdns__usecache          =10;
+   fs__mxdns__connect           =20;
+   fs__mxdns__pushquery         =30;
+   fs__mxdns__pullquery         =40;
 
    //.a record lookup
-   fs__Adns__mxlist                       =100;
-   fs__adns__usecache                     =110;
-   fs__adns__connect                      =120;
-   fs__adns__pushquery                    =130;
-   fs__adns__pullquery                    =140;
+   fs__Adns__mxlist             =100;
+   fs__adns__usecache           =110;
+   fs__adns__connect            =120;
+   fs__adns__pushquery          =130;
+   fs__adns__pullquery          =140;
 
    //.mail send
-   fs__sendmail__iplist                   =200;
-   fs__sendmail__start                    =210;//work through the mail-server-domains -> ips
-   fs__sendmail__pull_welcome             =220;
-   fs__sendmail__push_helo                =230;
-   fs__sendmail__pull_helo                =240;
-   fs__sendmail__push_mailfrom            =250;
-   fs__sendmail__pull_mailfrom            =260;
-   fs__sendmail__push_rcptto              =270;
-   fs__sendmail__pull_rcptto              =280;
-   fs__sendmail__push_data                =290;
-   fs__sendmail__pull_data                =300;
-   fs__sendmail__push_message             =310;
-   fs__sendmail__pull_message             =320;
+   fs__sendmail__iplist         =200;
+   fs__sendmail__start          =210;//work through the mail-server-domains -> ips
+   fs__sendmail__pull_welcome   =220;
+   fs__sendmail__push_helo      =230;
+   fs__sendmail__pull_helo      =240;
+   fs__sendmail__push_mailfrom  =250;
+   fs__sendmail__pull_mailfrom  =260;
+   fs__sendmail__push_rcptto    =270;
+   fs__sendmail__pull_rcptto    =280;
+   fs__sendmail__push_data      =290;
+   fs__sendmail__pull_data      =300;
+   fs__sendmail__push_message   =310;
+   fs__sendmail__pull_message   =320;
 
-   fs__sendmail__doneaddress              =410;
-   fs__sendmail__addressfailed            =420;
+   fs__sendmail__doneaddress    =410;
+   fs__sendmail__addressfailed  =420;
 
 
 type
 //xxxxxxxxxxxxxxxxxxxxxxxxx//6666666666666666666666666666
+
 {tnewvisitor}
-   tnewvisitor_addr=array[0..40] of byte;
-   tnewvisitor=class(tobjectex)
+   tnewvisitor_addr                       =array[0..40] of byte;
+   tnewvisitor                            =class(tobjectex)
    private
-    ilimit:longint;
-    ilen :array[0..19999] of byte;
-    iref1:array[0..19999] of longint;
-    iref2:array[0..19999] of longint;
-    iaddr:array[0..19999] of tnewvisitor_addr;
-    itime:array[0..19999] of comp;
+
+    ilimit                                :longint32;
+    ilen                                  :array[0..19999] of byte;
+    iref1                                 :array[0..19999] of longint32;
+    iref2                                 :array[0..19999] of longint32;
+    iaddr                                 :array[0..19999] of tnewvisitor_addr;
+    itime                                 :array[0..19999] of longint64;
+
    public
+
     //create
     constructor create;
-    destructor destroy; override;
+    destructor  destroy;                  override;
+
     //workers
     procedure clear;
-    function new(const xip:string):boolean;
+    function  new(const xip:string)       :boolean;
+
    end;
 
+
 {tshortdnscache}
-   tshortdnscache=class(tobjectex)
+   tshortdnscache                         =class(tobjectex)
    private
-    ilimit:longint;
-    idomref:array[0..999] of comp;
-    idomain:array[0..999] of string;
-    iinfo  :array[0..999] of string;//A-record=list of IPs, MX-record=list of domains
-    itime64:array[0..999] of comp;
+
+    ilimit                                :longint32;
+    idomref                               :array[0..999] of longint64;
+    idomain                               :array[0..999] of string;
+    iinfo                                 :array[0..999] of string;//A-record=list of IPs, MX-record=list of domains
+    itime64                               :array[0..999] of longint64;
+
    public
+
     //create
     constructor create;
-    destructor destroy; override;
+    destructor  destroy;                  override;
+
     //information
-    property limit:longint read ilimit;
+    property  limit                       :longint32 read ilimit;
+
     //clear
-    function clear:boolean;
+    function  clear                       :boolean;
+
     //domain
-    function exists(const xdomain:string):boolean;
-    function exists2(xdomain:string;var xinfo:string):boolean;
-    function dead(const xdomain:string):boolean;//mark as dead
-    function add(xdomain,xinfo:string):boolean;
+    function  exists(const xdomain:string)                    :boolean;
+    function  exists2(xdomain:string;var xinfo:string)        :boolean;
+    function  dead(const xdomain:string)                      :boolean;//mark as dead
+    function  add(xdomain,xinfo:string)                       :boolean;
+
    end;
+
 
 {tshortlist}
    tshortlist=class(tobjectex)
    private
-    ilimit,icount:longint;
-    ilist:array[0..199] of string;
+
+    ilimit                                :longint32;
+    icount                                :longint32;
+    ilist                                 :array[0..199] of string;
+
    public
+
     //create
     constructor create;
     destructor destroy; override;
+
     //information
-    property limit:longint read ilimit;
-    property count:longint read icount;
+    property  limit                       :longint32 read ilimit;
+    property  count                       :longint32 read icount;
+
     //clear
-    function clear:boolean;
+    function  clear                       :boolean;
+
     //fill entire list (one line of text per slot)
-    function fill(const xtext:string):boolean;
-    function fill2(const xtext:string;xstripwhitespace,xremoveblanklines:boolean):boolean;
+    function  fill(const xtext:string)    :boolean;
+    function  fill2(const xtext:string;xstripwhitespace,xremoveblanklines:boolean)          :boolean;
+
     //pull slot content (from begnning of list)
-    function canpull:boolean;
-    function pull(var x:string):boolean;
-    function pullb:string;
+    function  canpull                     :boolean;
+    function  pull(var x:string)          :boolean;
+    function  pullb                       :string;
+
     //push slot content (append to end of list)
-    function canpush:boolean;
-    function push(const x:string):boolean;
+    function  canpush                     :boolean;
+    function  push(const x:string)        :boolean;
+
    end;
 
+
 //xxxxxxxxxxxxxxxxxxxxxxxxxxxxx//000000000000000000
+{tmailsender}
    tmailsender=class(tobjectex)
    private
-    isocket:tsocket;
-    ipaused,itimerbusy,idisable,isockconnected,isockclosed:boolean;
-    istartref,ifilelistref,ilinger,itimeout:comp;
-    iflow:tflowcontrol;
-    ierrorinfo,ifilename,iusername,idomain,imaildomain,ifolder,ifrom,ito,ifallbacklist,idnslist:string;//root nameservers
-    itemp,idata,iline:tstr8;//email message itself
-    iport,iip4:longint;
-    isendlist,ifilelist:tdynamicstring;
-    ivars:tfastvars;
+
+    isocket                               :tsocket;
+    ipaused                               :boolean;
+    itimerbusy                            :boolean;
+    idisable                              :boolean;
+    isockconnected                        :boolean;
+    isockclosed                           :boolean;
+    istartref                             :longint64;
+    ifilelistref                          :longint64;
+    ilinger                               :longint64;
+    itimeout                              :longint64;
+    iflow                                 :tflowcontrol;
+    ierrorinfo                            :string;
+    ifilename                             :string;
+    iusername                             :string;
+    idomain                               :string;
+    imaildomain                           :string;
+    ifolder                               :string;
+    ifrom                                 :string;
+    ito                                   :string;
+    ifallbacklist                         :string;
+    idnslist                              :string;//root nameservers
+    itemp                                 :tstr8;//email message itself
+    idata                                 :tstr8;
+    iline                                 :tstr8;
+    iport                                 :longint32;
+    iip4                                  :longint32;
+    isendlist                             :tdynamicstring;
+    ifilelist                             :tdynamicstring;
+    ivars                                 :tfastvars;
 
     //dns
-    dns__pulllen :longint;
-    dns__pullbuf :tstr8;
-    dns__pushbuf :tstr8;
-    dns__rootlist:tshortlist;
-    dns__mxlist  :tshortlist;
-    dns__alist   :tshortlist;
-    dns__mxcache :tshortdnscache;
-    dns__acache  :tshortdnscache;
+    dns__pulllen                          :longint32;
+    dns__pullbuf                          :tstr8;
+    dns__pushbuf                          :tstr8;
+    dns__rootlist                         :tshortlist;
+    dns__mxlist                           :tshortlist;
+    dns__alist                            :tshortlist;
+    dns__mxcache                          :tshortdnscache;
+    dns__acache                           :tshortdnscache;
 
     //.mail
-    mail__buf       :tstr8;
-    mail__pulledcode:longint;
-    mail__pulledfullcode:string;//includes any description
+    mail__buf                             :tstr8;
+    mail__pulledcode                      :longint;
+    mail__pulledfullcode                  :string;//includes any description
 
     //socket
     procedure xsockstop;
-    function xsockstart(xip4,xport:longint):boolean;
+    function  xsockstart(xip4,xport:longint32)      :boolean;
     //timeout
-    function xtimedout:boolean;
+    function  xtimedout                   :boolean;
 
     //dns io procs - low level tcp 2 byte header (push=dns__pushbuf and pull=dns__pullbuf)
-    function  dns__moretime:boolean;
-    function  dns__pushclear:boolean;
-    function  dns__pushdone:boolean;
-    function  dns__push:boolean;
-    function  dns__pullclear:boolean;
-    function  dns__pull:boolean;
-    function  dns__pulldone:boolean;
+    function  dns__moretime               :boolean;
+    function  dns__pushclear              :boolean;
+    function  dns__pushdone               :boolean;
+    function  dns__push                   :boolean;
+    function  dns__pullclear              :boolean;
+    function  dns__pull                   :boolean;
+    function  dns__pulldone               :boolean;
 
     //mail io procs (push/pull=mail__buf)
-    function mail__moretime:boolean;
-    function mail__linger_timedout(xms:longint):boolean;
-    function mail__pushclear:boolean;
-    function mail__pushadd(const x:string):boolean;
-    function mail__push:boolean;
-    function mail__pushdone:boolean;
-    function mail__pullclear:boolean;
-    function mail__pull:boolean;
-    function mail__pulldone:boolean;
-    function mail__pullcode:boolean;
+    function  mail__moretime:boolean;
+    function  mail__linger_timedout(xms:longint32)  :boolean;
+    function  mail__pushclear                       :boolean;
+    function  mail__pushadd(const x:string)         :boolean;
+    function  mail__push                            :boolean;
+    function  mail__pushdone                        :boolean;
+    function  mail__pullclear                       :boolean;
+    function  mail__pull                            :boolean;
+    function  mail__pulldone                        :boolean;
+    function  mail__pullcode                        :boolean;
 
     //message queue
-    function msg__clear:boolean;
-    function msg__found:boolean;//load next email in queue + it's sendlist (or create it)
-    function msg__sendlist_havenext:boolean;//next address in sendlist to send the email to
-    function msg__sendlist_markdone(xsentOK:boolean):boolean;//mark that address as sent=OK or sent=FAILED
-    function msg__notdelivered(xerrmsg:string;xattachOriginalMessage:boolean):boolean;
+    function  msg__clear                  :boolean;
+    function  msg__found                  :boolean;//load next email in queue + it's sendlist (or create it)
+    function  msg__sendlist_havenext      :boolean;//next address in sendlist to send the email to
+    function  msg__sendlist_markdone(xsentOK:boolean)                             :boolean;//mark that address as sent=OK or sent=FAILED
+    function  msg__notdelivered(xerrmsg:string;xattachOriginalMessage:boolean)    :boolean;
     procedure msg__reset_filelist;
-    function msg__nextfileinqueue:string;
+    function  msg__nextfileinqueue        :string;
     procedure setfolder(x:string);
 
     //other
-    procedure onmessage(m,w,l:longint);
+    procedure onmessage(m,w,l:longint32);
     procedure setdnslist(const x:string);
+
    public
+
     //vars
-    ouseragent:string;
-    osenderdomain:string;
+    ouseragent                            :string;
+    osenderdomain                         :string;
+
     //create
     constructor create;
-    destructor destroy; override;
+    destructor  destroy;                  override;
 
     //information
-    property fallbacklist:string read ifallbacklist;//ip4
-    property dnslist:string read idnslist write setdnslist;//ip4
-    property folder:string read ifolder write setfolder;
-    property paused:boolean read ipaused write ipaused;
-    function status:string;//debug purposes
+    property fallbacklist                 :string read ifallbacklist;//ip4
+    property dnslist                      :string read idnslist                   write setdnslist;//ip4
+    property folder                       :string read ifolder                    write setfolder;
+    property paused                       :boolean read ipaused                   write ipaused;
+    function status                       :string;//debug purposes
 
     //workers
-    function saveTOqueue(xnewemail:pobject):boolean;//save an "eml" email datastream into the queue
+    function  saveTOqueue(xnewemail:pobject)                                      :boolean;//save an "eml" email datastream into the queue
 
     //host driven
     procedure xtimer;
+
    end;
 
 
 var
+
    //timers
-   iboostref:comp=0;
-   itimerGMT:comp=0;
-   itimer100:comp=0;
-   itimer1000:comp=0;
-   itimer5000:comp=0;
-   itimer30000:comp=0;
-   itimer_eventdriven:comp=0;
+   iboostref                    :longint64=0;
+   itimerGMT                    :longint64=0;
+   itimer100                    :longint64=0;
+   itimer1000                   :longint64=0;
+   itimer5000                   :longint64=0;
+   itimer30000                  :longint64=0;
+   itimer_eventdriven           :longint64=0;
 
    //core vars
-   imailport:longint=25;//fixed at 25
-   imail_domain:string='';
-   imail_mask:string='';//inbound mail mask -> used to allow only accepted email addresses/domains - optional
-   imail_fromaddress:string='';
-   imail_sizelimit:longint=10;//in megabytes
-   imail_allow:boolean=false;
-   imail_sender:tmailsender=nil;//05apr2025
-   inewvisitor:tnewvisitor=nil;//07apr2025
-   iua_mask:string='';//ban inbound http user agents - optional - 09aug2025
-   iip_mask:string='';//ban inbound http IPs - optional - 09aug2025
+   imailport                    :longint32=25;//fixed at 25
+   imail_domain                 :string='';
+   imail_mask                   :string='';//inbound mail mask -> used to allow only accepted email addresses/domains - optional
+   imail_fromaddress            :string='';
+   imail_sizelimit              :longint32=10;//in megabytes
+   imail_allow                  :boolean=false;
+   imail_sender                 :tmailsender=nil;//05apr2025
+   inewvisitor                  :tnewvisitor=nil;//07apr2025
+   iua_mask                     :string='';//ban inbound http user agents - optional - 09aug2025
+   iip_mask                     :string='';//ban inbound http IPs - optional - 09aug2025
 
-   iendofdaydone:boolean=false;
-   itimerbusy:boolean=false;
-   iloaddate:tdatetime;
-   iramlimit:longint=1500;//1.5Gb
-   ipowerlevel:longint=idefaultpower;
-   iconnlimit:longint=0;
-   iconncount:longint=0;
-   iconncount_1sec:longint=0;
-   ihttpserver:pnetwork=nil;
-   imailserver:pnetwork=nil;//port 25
-   imustsavesettings:boolean=false;
-   imustcloseall:boolean=false;
-   imustport:boolean=false;
-   ibubbles_png:tstr9=nil;
-   ibubbles_ico_32px:tstr9=nil;
-   ichunksize:longint=0;
-   iresumesupport:boolean=true;
-   igmtoffset_hours:longint=0;
-   igmtoffset_minutes:longint=0;
-   inotthislink:string='';//07apr2025
+   iendofdaydone                :boolean=false;
+   itimerbusy                   :boolean=false;
+   iloaddate                    :tdatetime;
+   iramlimit                    :longint32=1500;//1.5Gb
+   ipowerlevel                  :longint32=idefaultpower;
+   iconnlimit                   :longint32=0;
+   iconncount                   :longint32=0;
+   iconncount_1sec              :longint32=0;
+   ihttpserver                  :pnetwork=nil;
+   imailserver                  :pnetwork=nil;//port 25
+   imustsavesettings            :boolean=false;
+   imustcloseall                :boolean=false;
+   imustport                    :boolean=false;
+   ibubbles_png                 :tstr9=nil;
+   ibubbles_ico_32px            :tstr9=nil;
+   ichunksize                   :longint32=0;
+   iresumesupport               :boolean=true;
+   igmtoffset_hours             :longint32=0;
+   igmtoffset_minutes           :longint32=0;
+   inotthislink                 :string='';//07apr2025
 
    //shared resources -> these are used amongst all connections
-   ibuffer:array[0..65535] of byte;//shared buffer
-   ibuf2:tobject;//can be tstr8 or tstr9
-   igmtstr:string;
-   ivars:tfastvars;
+   ibuffer                      :array[0..65535] of byte;//shared buffer
+   ibuf2                        :tobject;//can be tstr8 or tstr9
+   igmtstr                      :string;
+   ivars                        :tfastvars;
 
    icontact_allow               :boolean;
    icontact_question            :boolean;
@@ -375,69 +447,104 @@ var
    isubscribe_question          :boolean;
 
    //settings
-   imustboost,icache,ialongsideexe,ishutidle,icsp,inorefdown,isubscribeEachNotice,isubscribenotice,isummarynotice,iquotanotice,ireloadnotice,ireverseproxy,ilivestats,irawlogs:boolean;
-   iconsolerate,iport:longint;
-   iidletimeout:comp;
-   imap:tfastvars;//list of domain mapping
-   idom:tfastvars;//list of domains to track hits for
-   idominfo:tfastvars;//stores number of files and memory (in bytes) for each disk site (domain)
-   imime:tfastvars;//list of mime types
-   imime_fallback:tfastvars;
-   iredirect:tfastvars;//list of redirect links for ALL sites
+   imustboost                   :boolean;
+   icache                       :boolean;
+   ialongsideexe                :boolean;
+   ishutidle                    :boolean;
+   icsp                         :boolean;
+   inorefdown                   :boolean;
+   isubscribeEachNotice         :boolean;
+   isubscribenotice             :boolean;
+   isummarynotice               :boolean;
+   iquotanotice                 :boolean;
+   ireloadnotice                :boolean;
+   ireverseproxy                :boolean;
+   ilivestats                   :boolean;
+   irawlogs                     :boolean;
+
+   iconsolerate                 :longint32;
+   iport                        :longint32;
+   iidletimeout                 :longint64;
+   imap                         :tfastvars;//list of domain mapping
+   idom                         :tfastvars;//list of domains to track hits for
+   idominfo                     :tfastvars;//stores number of files and memory (in bytes) for each disk site (domain)
+   imime                        :tfastvars;//list of mime types
+   imime_fallback               :tfastvars;
+   iredirect                    :tfastvars;//list of redirect links for ALL sites
+
    //tracking
-   imustmakepngs:boolean;
-   ihitmustsave:boolean;
-   ihit,ihitref:tfastvars;//list of domains and their hits plus "total"
-   ibytes:tfastvars;//list of domains and their bandwidth
-   ihitpng:tfastvars;//one PNG image per domain, dynamically created/allocated - 26dec2023
+   imustmakepngs                :boolean;
+   ihitmustsave                 :boolean;
+   ihit                         :tfastvars;//list of domains and their hits plus "total"
+   ihitref                      :tfastvars;
+   ibytes                       :tfastvars;//list of domains and their bandwidth
+   ihitpng                      :tfastvars;//one PNG image per domain, dynamically created/allocated - 26dec2023
+
    //.request rate info
-   irequestrate:longint=0;//number of requests per minute
-   irequestrate0:longint=0;//temp var
+   irequestrate                 :longint32=0;//number of requests per minute
+   irequestrate0                :longint32=0;//temp var
 
    //security
-   i127_0_0_1:tint4;
+   i127_0_0_1                   :tint4;
 
    //admin
-   iadminkey:string;
-   isessiontimeout   :comp=0;
-   icookietimeout    :comp=0;
-   isessioncount     :longint=0;//for information purposes only
-   isessionnameLEN   :longint=100;
-   isessiontime      :array[0..99] of comp;//0=not in use, else=use to detect idle time
-   isessioncookietime:array[0..99] of comp;
-   isessionname      :array[0..99] of string;//list of ids of logged in users as a file path (both sessionname and isessioncookie are required for access to /admin/ services) - 11mar2024
-   isessioncookie    :array[0..99] of string;//list of ids of logged in users as a cookie
-   isessionua        :array[0..99] of string;//user agent -> if this differs during a session then auto logout the user and report a security warning
-   ihelpdata         :string='';//filled via xmakehelp
+   iadminkey                    :string;
+   isessiontimeout              :longint64=0;
+   icookietimeout               :longint64=0;
+   isessioncount                :longint32=0;//for information purposes only
+   isessionnameLEN              :longint32=100;
+   isessiontime                 :array[0..99] of longint64;//0=not in use, else=use to detect idle time
+   isessioncookietime           :array[0..99] of longint64;
+   isessionname                 :array[0..99] of string;//list of ids of logged in users as a file path (both sessionname and isessioncookie are required for access to /admin/ services) - 11mar2024
+   isessioncookie               :array[0..99] of string;//list of ids of logged in users as a cookie
+   isessionua                   :array[0..99] of string;//user agent -> if this differs during a session then auto logout the user and report a security warning
+   ihelpdata                    :string='';//filled via xmakehelp
 
    //ram file cache
-   ireload_domindex:longint;
-   irambytes,ireload_rambytes,ireload_ramlimit,ithreshold:comp;
-   iramfilescached,iramfilecount,iramcount:longint;//does not shrink for maximum stability
-   iramgmt:string;
-   iramdate:tdatetime;
-   iramid:longint;//increments each time "xreload()" is called
-   inref1:tdynamicinteger;
-   inref2:tdynamicinteger;
-   iname:tdynamicstring;
-   idata:tdynamicstr9;//07feb2024: using 4K memory blocks
-   isize:tdynamiccomp;//for content-length
-   idate:tdynamicdatetime;//used to make etag in realtime and for header purposes
-   imode:tdynamicinteger;//wsmRam, wsmDisk, wsmLink
-   idomindex:tdynamicinteger;
-   ihave:tdynamicbyte;//used during creload() proc to determine if file is to be included in the RAM cache
+   ireload_domindex             :longint32;
+   irambytes                    :longint64;
+   ireload_rambytes             :longint64;
+   ireload_ramlimit             :longint64;
+   ithreshold                   :longint64;
+   iramfilescached              :longint32;
+   iramfilecount                :longint32;
+   iramcount                    :longint32;//does not shrink for maximum stability
+   iramgmt                      :string;
+   iramdate                     :tdatetime;
+   iramid                       :longint32;//increments each time "xreload()" is called
 
-   idaily_bandwidth,idaily_bandwidth_quota,idaily_bandwidth_quota_bytes:comp;
-   idaily_bandwidth_exceeded:boolean;
-   idaily_newvisitors,idaily_visitors,idaily_requests,idaily_hits,idaily_email,idaily_contact,idaily_jobs:comp;//for use with xlivestatus -> reset every 24hr by "xendofday"
+   //file slots
+   inref1                       :tdynamicinteger;
+   inref2                       :tdynamicinteger;
+   iname                        :tdynamicstring;
+   idata                        :tdynamicstr9;//07feb2024: using 4K memory blocks
+   isize                        :tdynamiccomp;//for content-length
+   idate                        :tdynamicdatetime;//used to make etag in realtime and for header purposes
+   imode                        :tdynamicinteger;//wsmRam, wsmDisk, wsmLink
+   idomindex                    :tdynamicinteger;
+   ihave                        :tdynamicbyte;//used during creload() proc to determine if file is to be included in the RAM cache
+   ispamGuardOK                 :tdynamicbyte;//18nov2026
+
+
+   idaily_bandwidth             :longint64;//for use with xlivestatus -> reset every 24hr by "xendofday"
+   idaily_bandwidth_quota       :longint64;
+   idaily_bandwidth_quota_bytes :longint64;
+   idaily_bandwidth_exceeded    :boolean;
+   idaily_newvisitors           :longint64;
+   idaily_visitors              :longint64;
+   idaily_requests              :longint64;
+   idaily_hits                  :longint64;
+   idaily_email                 :longint64;
+   idaily_contact               :longint64;
+   idaily_jobs                  :longint64;
 
    //fast folder references
-   ifastfolder__logs:string;
-   ifastfolder__inbox:string;
-   ifastfolder__inbox_read:string;
-   ifastfolder__trash:string;//16mar2024
-   ifastfolder__trash_read:string;
-   ifastfolder__root:string;
+   ifastfolder__logs            :string;
+   ifastfolder__inbox           :string;
+   ifastfolder__inbox_read      :string;
+   ifastfolder__trash           :string;//16mar2024
+   ifastfolder__trash_read      :string;
+   ifastfolder__root            :string;
 
    //contact form question support
    ispamGuard_answer            :array [0..999] of longint32;//0=question not set, as answers are always ">=1" - 04apr2024
@@ -445,25 +552,27 @@ var
 
 
 //info procs -------------------------------------------------------------------
-function app__info(xname:string):string;
-function app__bol(xname:string):boolean;
-function info__app(xname:string):string;//information specific to this unit of code - 09apr2024
+
+function  app__info(xname:string):string;
+function  app__bol(xname:string):boolean;
+function  info__app(xname:string):string;//information specific to this unit of code - 09apr2024
+
 
 //basic app functions ----------------------------------------------------------
-function app__netmore:tnetmore;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
+function  app__netmore:tnetmore;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
 procedure app__create;
 procedure app__destroy;
-function app__onmessage(m,w,l:longint):longint;
+function  app__onmessage(m,w,l:longint):longint;
 procedure app__onpaintOFF;//called when screen was live and visible but is now not live, and output is back to line by line
 procedure app__onpaint(sw,sh:longint);
 procedure app__ontimer;
-function app__syncandsavesettings:boolean;
+function  app__syncandsavesettings:boolean;
 
 //header creators
-function header__make(var a:pnetwork;xcode:longint;xacceptranges,xcustom404:boolean;xval,xtext,xmoreheaders:string):boolean;
-function header__make206(var a:pnetwork;xpartFROM,xpartTO,xFILESIZE:comp;xdate:tdatetime;xcache:boolean):boolean;
-function header__make3(var a:pnetwork;xcode:longint;xacceptranges:boolean;xconlen:comp;xdate:tdatetime;xcache,xnoreferrer:boolean;xmoreheaders:string):boolean;
-function header__make4(var a:pnetwork;xcode:longint;xacceptranges,xmustclose,xfirstwrite:boolean):boolean;
+function  header__make(var a:pnetwork;xcode:longint;xacceptranges,xcustom404:boolean;xval,xtext,xmoreheaders:string):boolean;
+function  header__make206(var a:pnetwork;xpartFROM,xpartTO,xFILESIZE:comp;xdate:tdatetime;xcache:boolean):boolean;
+function  header__make3(var a:pnetwork;xcode:longint;xacceptranges:boolean;xconlen:comp;xdate:tdatetime;xcache,xnoreferrer:boolean;xmoreheaders:string):boolean;
+function  header__make4(var a:pnetwork;xcode:longint;xacceptranges,xmustclose,xfirstwrite:boolean):boolean;
 
 //stream procs
 procedure stm__readdata1(var a:pnetwork);
@@ -472,91 +581,97 @@ procedure stm__writedata3(var a:pnetwork);
 procedure stm__readmail(var a:pnetwork);//implements the SMTP protocol - 20feb2025: disable connection reuse for email, 11mar2024: updated to 40K search
 
 //log report procs
-function log__info(xname:string):string;
+function  log__info(xname:string):string;
 procedure log__makereport(var a:pnetwork;slogfilename:string);
-function log__buildreport(var a:pnetwork;d:tobject;dmakeref,slogfilename:string):boolean;
+function  log__buildreport(var a:pnetwork;d:tobject;dmakeref,slogfilename:string):boolean;
 
 //Spam Guard support - 09oct2026
 function  spamGuard__makeQuestion(var xquestion:string):boolean;
+function  spamGuard__makeQuestionb:string;
 function  spamGuard__checkAnswer(const xanswer:longint32):boolean;
+function  spamGuard__code(const xquestion:string):string;
+function  spamGuard__html(var a:pnetwork;const xenable:boolean):boolean;//18nov2026
 
 //support procs
-function hits__extcounts(xext:string):boolean;
+function  hits__extcounts(xext:string):boolean;
 procedure inc__dailyjobs;
 procedure xload_counter(var x:tfastvars;xfilename:string);//17jun2025
-function xconn_limit:longint;//maximum number of records permitted
-function xconn_count:longint;//number of records in use
-function xaccept_connection_autotype(s:tsocket):boolean;
+function  xconn_limit:longint;//maximum number of records permitted
+function  xconn_count:longint;//number of records in use
+function  xaccept_connection_autotype(s:tsocket):boolean;
 procedure xclose_connection(x:pnetwork);
 procedure xsetdaily_bandwidth_quota(xquota_in_mb:comp);
-function bubbles__daily_bandwidth_exceeded:boolean;
+function  bubbles__daily_bandwidth_exceeded:boolean;
 procedure bubbles__inc_daily_bandwidth(xlen:comp);
-function xmakehelp(xclaudehelp:boolean):string;
-function xsymbol(xname:string):string;
-function xstrcopyto(x:string;xto:char):string;
-function xforce_backslash(x:string):string;
-function xforce_slash(x:string):string;
-function xaddfiletoram(var xfolder:string;var xrec:tsearchrec;var xsize:comp;var xdate:tdatetime;xisfile,xisfolder:boolean;xhelper:tobject):boolean;
-function xdomfiles(n:string):longint;
-function xdombytes(n:string):comp;
-function xreload(xboot:boolean):boolean;//01may2024: optimised for fast reload
-function xmakehash(x:string):string;
-function xextractsessionname(xpath:string;var xname:string):boolean;
-function xpassword_ok(xpassword:string):boolean;
-function xnewsession(xpassword,xuseragent:string;var xsessionname,xsessioncookie:string;var xindex:longint):boolean;
-function xsessionok(xsessionname,xsessioncookie,xuseragent,xip,xadminpage:string;var xindex:longint):boolean;
-function xsessiondel(xsessionname:string):boolean;//27dec2023
+function  xmakehelp(xclaudehelp:boolean):string;
+function  xsymbol(xname:string):string;
+function  xstrcopyto(x:string;xto:char):string;
+function  xforce_backslash(x:string):string;
+function  xforce_slash(x:string):string;
+function  xaddfiletoram(var xfolder:string;var xrec:tsearchrec;var xsize:comp;var xdate:tdatetime;xisfile,xisfolder:boolean;xhelper:tobject):boolean;
+function  xdomfiles(n:string):longint;
+function  xdombytes(n:string):comp;
+function  xreload(const xboot:boolean):boolean;//01may2024: optimised for fast reload
+function  xmakehash(x:string):string;
+function  xextractsessionname(xpath:string;var xname:string):boolean;
+function  xpassword_ok(xpassword:string):boolean;
+function  xnewsession(xpassword,xuseragent:string;var xsessionname,xsessioncookie:string;var xindex:longint):boolean;
+function  xsessionok(xsessionname,xsessioncookie,xuseragent,xip,xadminpage:string;var xindex:longint):boolean;
+function  xsessiondel(xsessionname:string):boolean;//27dec2023
 procedure xsessiondelall;
-function xramnewslot(xname:string;var xslot:longint;var xnew:boolean):boolean;
-function xramfind(m:tnetbasic):boolean;
-function xfileinram(xfilename:string):boolean;
-function xfromfile64(m:tnetbasic;xfrom:comp;var xfilesize:comp;var xfiledate:tdatetime;xchunksize:longint;xfirst,xmustbuffer:boolean):boolean;
-function xstreamstart(var a:pnetwork;wmode:longint;xfilename:string;xcancache:boolean):boolean;
-function xstreammore(var a:pnetwork;var xdataproblem,xdone:boolean):boolean;
+function  xramnewslot(const xname:string;var xslot:longint;var xnew:boolean):boolean;
+
+function ram__findSlot  (var m:tnetbasic;var xslot:longint32):boolean;//18nov2026
+function ram__findandSet(var m:tnetbasic):boolean;
+
+function  xfileinram(xfilename:string):boolean;
+function  xfromfile64(m:tnetbasic;xfrom:comp;var xfilesize:comp;var xfiledate:tdatetime;xchunksize:longint;xfirst,xmustbuffer:boolean):boolean;
+function  xstreamstart(var a:pnetwork;wmode:longint;xfilename:string;xcancache:boolean):boolean;
+function  xstreammore(var a:pnetwork;var xdataproblem,xdone:boolean):boolean;
 procedure xwritemsg(xsubject,xmsg:string);
 procedure xendofday;
-function xdailysummary(xreset:boolean):string;
-function xlogs(var a:pnetwork;xcmd:string):string;
-function mail__bestformat(s,d:pobject;var dhtml:boolean;var dfrom,dto,ddate,dsubject:string):boolean;
-function xneurl(x:string):string;//netencode url
-function xencodetextforhtml_barely(x:string):string;//only filter out [<>"] 3 chars
-function xcompose(var a:pnetwork;xstyle,xcmd,xcmd2:string):string;//03apr2025
-function xinbox__folder(xstyle:string;xread:boolean):string;
-function xinbox_filenameassubject(s:string;var xdatestr,xsubjectstr:string):boolean;
-function xinbox(var a:pnetwork;xstyle,xcmd,xcmd2:string):string;
-function xinbox_act(var a:pnetwork;xname:string):string;
+function  xdailysummary(xreset:boolean):string;
+function  xlogs(var a:pnetwork;xcmd:string):string;
+function  mail__bestformat(s,d:pobject;var dhtml:boolean;var dfrom,dto,ddate,dsubject:string):boolean;
+function  xneurl(x:string):string;//netencode url
+function  xencodetextforhtml_barely(x:string):string;//only filter out [<>"] 3 chars
+function  xcompose(var a:pnetwork;xstyle,xcmd,xcmd2:string):string;//03apr2025
+function  xinbox__folder(xstyle:string;xread:boolean):string;
+function  xinbox_filenameassubject(s:string;var xdatestr,xsubjectstr:string):boolean;
+function  xinbox(var a:pnetwork;xstyle,xcmd,xcmd2:string):string;
+function  xinbox_act(var a:pnetwork;xname:string):string;
 procedure xinbox__markread(xstyle,xname:string);
 procedure xinbox_msgastext(var a:pnetwork;xstyle,xname:string);//14mar2024: Updated for Facebook emails
-function xdommapping2(xonesiteonly:string;var xerrorcount:longint):string;
-function xdommapping(var xerrorcount:longint):string;
-function xinfostats:string;
-function xcolumnRight(x:string):string;
-function xminiconsole:string;
-function xpowerlevel:string;
-function xtotallabel(xpreblankline:boolean;xcount:comp;xname,xname12:string):string;
-function xconbut(xpageurl,xcmd,xcmd2,xtitle,xbutlabel:string):string;
-function xlivestatus(xstyle:longint):string;//realtime vital statistics - 21feb2025
-function xinfo2(xpageurl,xcmd:string):string;
+function  xdommapping2(xonesiteonly:string;var xerrorcount:longint):string;
+function  xdommapping(var xerrorcount:longint):string;
+function  xinfostats:string;
+function  xcolumnRight(x:string):string;
+function  xminiconsole:string;
+function  xpowerlevel:string;
+function  xtotallabel(xpreblankline:boolean;xcount:comp;xname,xname12:string):string;
+function  xconbut(xpageurl,xcmd,xcmd2,xtitle,xbutlabel:string):string;
+function  xlivestatus(xstyle:longint):string;//realtime vital statistics - 21feb2025
+function  xinfo2(xpageurl,xcmd:string):string;
 procedure xinfo(xpageurl,xcmd:string;var xtitle,xout:string);
 function xmanage:string;//19jun2025
-function xredirect__have(sname:string;var dnameORurl:string):boolean;
-function xredirect__sitelinks(ssite:string):string;
+function  xredirect__have(sname:string;var dnameORurl:string):boolean;
+function  xredirect__sitelinks(ssite:string):string;
 procedure xredirect__addlocal(xsite,xlinks:string);
 procedure xredirect__clean(xremovesite:string);
-function xh2(xlinkname,xname:string):string;
-function xh2b(xlinkname,xname,xclass:string):string;
-function xvsep:string;
-function xvsepbig:string;
-function xhtmlstart(var a:pnetwork;xshowtoolbar:boolean):string;
-function xhtmlstart1(var a:pnetwork;xhead:string;xshowtoolbar:boolean;xmaxwidth:longint):string;
-function xhtmlstart2(var a:pnetwork;xhead:string;xshowtoolbar:boolean):string;
-function xhtmlstart3(var a:pnetwork;xhead:string;xshowtoolbar,xbare,xultrawide:boolean):string;
-function xhtmlstart4(var a:pnetwork;xhead0,xhead1:string;xshowtoolbar,xbare,xultrawide:boolean):string;
-function xhtmlstart5(var a:pnetwork;xhead0,xhead1:string;xshowtoolbar,xbare:boolean;xmaxwidth:longint):string;
-function xhtmlback:string;
-function xhtmlfinish:string;
-function xhtmlfinish2(xbare:boolean):string;
-function xsafewebname(var x:string):boolean;
+function  xh2(xlinkname,xname:string):string;
+function  xh2b(xlinkname,xname,xclass:string):string;
+function  xvsep:string;
+function  xvsepbig:string;
+function  xhtmlstart(var a:pnetwork;xshowtoolbar:boolean):string;
+function  xhtmlstart1(var a:pnetwork;xhead:string;xshowtoolbar:boolean;xmaxwidth:longint):string;
+function  xhtmlstart2(var a:pnetwork;xhead:string;xshowtoolbar:boolean):string;
+function  xhtmlstart3(var a:pnetwork;xhead:string;xshowtoolbar,xbare,xultrawide:boolean):string;
+function  xhtmlstart4(var a:pnetwork;xhead0,xhead1:string;xshowtoolbar,xbare,xultrawide:boolean):string;
+function  xhtmlstart5(var a:pnetwork;xhead0,xhead1:string;xshowtoolbar,xbare:boolean;xmaxwidth:longint):string;
+function  xhtmlback:string;
+function  xhtmlfinish:string;
+function  xhtmlfinish2(xbare:boolean):string;
+function  xsafewebname(var x:string):boolean;
 
 function  contact__html(var a:pnetwork):boolean;
 
@@ -565,20 +680,20 @@ function  subscribe__listFilename(const ddiskHost:string;const xdailyList:boolea
 function  subscribe__manageOne(const ddiskHost:string;var demail:string;const xdailyList,xaddEmail:boolean;var xoutmsg:string):boolean;//09oct2026
 function  subscribe__manageList(var xlistCount:longint32;const ddiskHost:string;const xreplaceListWithThisList:string;const xdailyList,xreplaceList,xdeleteList:boolean):string;//09oct2026
 
-function xcodeis__badrequest(xcode:longint):boolean;
-function xlogrequest_http(var a:pnetwork;xaltcode:longint):boolean;
-function xlogrequest_smtp(var a:pnetwork;xcode:longint):boolean;
-function xcodedes(xcode:longint):string;
-function xmimelist:string;
+function  xcodeis__badrequest(xcode:longint):boolean;
+function  xlogrequest_http(var a:pnetwork;xaltcode:longint):boolean;
+function  xlogrequest_smtp(var a:pnetwork;xcode:longint):boolean;
+function  xcodedes(xcode:longint):string;
+function  xmimelist:string;
 procedure xmime_fallback;
-function xmimetype(xext:string):string;//09apr2024: updated to allow minor modification to "html", includes common fallback defaults - 26dec2923
-function xcommonheaders(xext:string;xkeepalive,xcache,xacceptranges:boolean):string;
+function  xmimetype(xext:string):string;//09apr2024: updated to allow minor modification to "html", includes common fallback defaults - 26dec2923
+function  xcommonheaders(xext:string;xkeepalive,xcache,xacceptranges:boolean):string;
 procedure xinchit(xdiskhost:string);
 procedure xresolvehost(m:tnetbasic);//use mapping
 
-function html__checkbox(xlabel,xname:string;xchecked,xenabled,xdiv:boolean):string;
-function utf8__toplaintext7bitb(const x:string):string;//08oct2026
-function date__str(const x:tdatetime;const xtime,xmsec:boolean):string;//08oct2026
+function  html__checkbox(xlabel,xname:string;xchecked,xenabled,xdiv:boolean):string;
+function  utf8__toplaintext7bitb(const x:string):string;//08oct2026
+function  date__str(const x:tdatetime;const xtime,xmsec:boolean):string;//08oct2026
 
 function  png__makeHits(x:tstr8;xhits:longint64):boolean;//make "hits.png" image - 09oct2026
 procedure png__makeAll(const xforce:boolean);//make all "hits.png" for listed disk domains "idom"
@@ -589,12 +704,21 @@ function  cmdline__output(const xforcecmd:string):string;
 
 function  bytes__RAM:longint64;//09oct2026
 
-function email__valid(const xemailAddress:string):boolean;
-function email__filteraddress(const xemailAddress:string):string;
+function  email__valid(const xemailAddress:string):boolean;
+function  email__filteraddress(const xemailAddress:string):string;
 
-function domain__fromDiskSite(const xdisksite:string):string;
+function  domain__fromDiskSite(const xdisksite:string):string;
+
+
+//codes procs ------------------------------------------------------------------
+
+procedure codes__readFromFile(const xslot:longint32;const xfilename:string);
+procedure codes__read(const xslot:longint32;const xline:string);
+
 
 implementation
+
+uses gossdoc;
 
 
 //info procs -------------------------------------------------------------------
@@ -623,8 +747,8 @@ else if (xname='codepage')            then result:='1252'
 else if (xname='msix.tags')           then result:='-'//for Clyde - 31jan2026
 else if (xname='msstore.name')        then result:='Bubbles'//optional - overrides default name for Clyde
 
-else if (xname='ver')                 then result:='3.00.11252'
-else if (xname='date')                then result:='09oct2026'
+else if (xname='ver')                 then result:='3.00.11342'
+else if (xname='date')                then result:='18nov2026'
 else if (xname='name')                then result:='Bubbles'
 else if (xname='des')                 then result:='Multi-Function Server'
 else if (xname='infoline')            then result:='Bubbles Multi-Function Server v'+app__info('ver')+' (c) 1997-'+low__yearstr(2025)+' Blaiz Enterprises'
@@ -1375,7 +1499,7 @@ if (xfilename='') then
    end;
 
 //load sendlist file
-isendlist.text:=io__fromfilestrb(ifolder+xfilename+'.txt',e);
+isendlist.text:=io__fromfilestrb(ifolder+xfilename+'.txt');
 
 //file not found -> stop
 if not io__fromfile(ifolder+xfilename,@idata,e) then
@@ -2336,6 +2460,8 @@ iramfilecount                   :=0;
 iramdate                        :=date__now;
 iramgmt                         :='';
 iramid                          :=1;
+
+//.file slots
 inref1                          :=new__int;
 inref2                          :=new__int;
 iname                           :=new__str;
@@ -2345,6 +2471,7 @@ idate                           :=new__date;
 imode                           :=new__int;
 idomindex                       :=new__int;
 ihave                           :=new__byte;
+ispamGuardOK                    :=new__byte;
 
 idaily_bandwidth                :=0;
 idaily_bandwidth_quota          :=0;
@@ -2553,6 +2680,8 @@ freeobj(@inewvisitor);
 //.ram cache
 free__7(@inref1,@inref2,@iname,@idata,@isize,@idate,@imode);
 free__2(@ihave,@idomindex);
+
+freeobj(@ispamGuardOK);
 
 except;end;
 end;
@@ -4490,113 +4619,192 @@ end;
 
 function xaddfiletoram(var xfolder:string;var xrec:tsearchrec;var xsize:comp;var xdate:tdatetime;xisfile,xisfolder:boolean;xhelper:tobject):boolean;
 var
-   xoldmode,i:longint;
-   xname:string;
-   xnew,xmustreloadfile:boolean;
-   xsize8:comp;
+   xoldmode                     :longint32;
+   i                            :longint32;
+   xname                        :string;
+   xnew                         :boolean;
+   xmustreloadfile              :boolean;
+   xsize8                       :longint64;
+
 begin
-result:=true;
+
+//defaults
+result                          :=true;
 
 try
+
 if xisfile and (xrec.name<>'') then
    begin
+
    //xname
-   xname:=xforce_slash(strcopy1(xfolder,low__len32(ifastfolder__root)+1,low__len32(xfolder))+xrec.name);//e.g. "www_blaizenterprises_com/index.html"
+   xname                        :=xforce_slash( strcopy1(xfolder ,low__len32(ifastfolder__root)+1 ,low__len32(xfolder) ) + xrec.name );//e.g. "www_blaizenterprises_com/index.html"
+
    //set
-   if xramnewslot(xname,i,xnew) then
+   if xramnewslot( xname ,i ,xnew ) then
       begin
-      xoldmode:=imode.value[i];
-      xmustreloadfile:=xnew or (isize.value[i]<>xsize) or (idate.value[i]<>xdate);
-      isize.value[i]:=xsize;
-      idate.value[i]:=xdate;
+
+      //size slot vars ---------------------------------------------------------
+
+      xoldmode                  :=imode.value[i];
+      xmustreloadfile           :=xnew or (isize.value[i]<>xsize) or (idate.value[i]<>xdate);
+      isize.value[i]            :=xsize;
+      idate.value[i]            :=xdate;
+
+      if (i>=ispamGuardOK.count) then
+         begin
+
+         ispamGuardOK.value[i]  :=0;
+
+         end;
+
 
       //.data
-      if (i>=idata.count) then idata.value[i]:=nil;//creates slot but does not create a tstr9 object
+      if (i>=idata.count) then
+         begin
+
+         idata.value[i]         :=nil;//creates slot but does not create a tstr9 object
+
+         end;
 
       //.predict memory usage (more than file size as we're bounded by memory blocks)
-      xsize8:=idata.value[i].mem_predict(xsize);
+      xsize8                    :=idata.value[i].mem_predict(xsize);
 
       //.mode
-      imode.value[i]:=low__aorb(wsmRAM,wsmDisk, (xsize>ithreshold) or (add64(xsize8,ireload_rambytes)>ireload_ramlimit) );
-      idomindex.value[i]:=ireload_domindex;
+      imode.value[i]            :=low__aorb(wsmRAM,wsmDisk, (xsize>ithreshold) or (add64(xsize8,ireload_rambytes)>ireload_ramlimit) );
+      idomindex.value[i]        :=ireload_domindex;
 
       //.inc file counters
       inc(iramfilecount);
+
       if (imode.value[i]=wsmRAM) then
          begin
-         ihave.value[i]:=low__aorb(1,2, xmustreloadfile or (xoldmode<>wsmRAM) );
+
+         ihave.value[i]         :=low__aorb(1,2, xmustreloadfile or (xoldmode<>wsmRAM) );
+
          inc(iramfilescached);
-         ireload_rambytes:=add64(ireload_rambytes,xsize8);
+
+         ireload_rambytes     :=add64(ireload_rambytes,xsize8);
+
          end
-      else
-         begin
-         ihave.value[i]:=1;
+
+      else begin
+
+         ihave.value[i]       :=1;
+
          if (idata.value[i]<>nil) then idata.value[i].clear;//remove existing data from RAM cache
+
          end;
+
       end;
+
    end;
+
 except;end;
 end;
 
-function xreload(xboot:boolean):boolean;//01may2024: optimised for fast reload
+function xreload(const xboot:boolean):boolean;//01may2024: optimised for fast reload
 label
    skipend;
+
 var
-   int1,xstyle,xtep,xcount,p:longint;
-   xsize:comp;
-   xnav:tstr8;
-   str1,xname,xlabel,xroot,e:string;
-   xref,c:comp;
+   int1                         :longint32;
+   xstyle                       :longint32;
+   xtep                         :longint32;
+   xcount                       :longint32;
+   p                            :longint32;
+   xsize                        :longint64;
+   xnav                         :tstr8;
+   str1                         :string;
+   xname                        :string;
+   xlabel                       :string;
+   xroot                        :string;
+   e                            :string;
+   xref                         :longint64;
+   c                            :longint64;
+   dfilename                    :string;
+
 begin
+
 //defaults
-result:=false;
-ireload_rambytes:=0;
-ireload_ramlimit:=mult64(iramlimit,1024000);
-irambytes:=0;
-iramfilescached:=0;
-iramfilecount:=0;
+result                          :=false;
+ireload_rambytes                :=0;
+ireload_ramlimit                :=mult64(iramlimit,1024000);
+irambytes                       :=0;
+iramfilescached                 :=0;
+iramfilecount                   :=0;
+
 nil__1(@xnav);
 
 try
+
 //init
 low__iroll(iramid,1);
-iramdate:=date__now;
-iramgmt:=igmtstr;
-imustcloseall:=true;//flush all connections -> files might be of a different size etc
+
+iramdate                        :=date__now;
+iramgmt                         :=igmtstr;
+imustcloseall                   :=true;//flush all connections -> files might be of a different size etc
+
 if not ilivestats then scn__writeln('Loading files...');
-xnav:=str__new8;
+
+xnav                            :=str__new8;
 
 //clear
 idom.clear;
 idominfo.clear;
-if (ihave.count>=1) then for p:=(ihave.count-1) downto 0 do ihave.items[p]:=0;
+
+if (ihave.count>=1) then
+   begin
+
+   for p:=(ihave.count-1) downto 0 do
+   begin
+
+   ihave.items[p]               :=0;
+
+   end;//p
+
+   end;
 
 //ensure default folder "www_" exists -> this is the "catch all" disk domain -> a request maps to this when a domain can't be found
-xroot:=app__subfolder2('',ialongsideexe);
+xroot                           :=app__subfolder2('',ialongsideexe);
+
 app__subfolder2(idefaultdisksite,ialongsideexe);
-idom.b[idefaultdisksite]:=true;//include the default even if folder fails to create
+
+idom.b[idefaultdisksite]        :=true;//include the default even if folder fails to create
 
 
 //fast folder references
-ifastfolder__root          :=xroot;
-ifastfolder__logs          :=app__subfolder2('logs',ialongsideexe);
-ifastfolder__inbox         :=app__subfolder2('inbox',ialongsideexe);
-ifastfolder__inbox_read    :=app__subfolder2('inbox\read',ialongsideexe);
-ifastfolder__trash         :=app__subfolder2('trash',ialongsideexe);
-ifastfolder__trash_read    :=app__subfolder2('trash\read',ialongsideexe);
-imail_sender.folder        :=app__subfolder2('outbox',ialongsideexe);
+ifastfolder__root               :=xroot;
+ifastfolder__logs               :=app__subfolder2('logs',ialongsideexe);
+ifastfolder__inbox              :=app__subfolder2('inbox',ialongsideexe);
+ifastfolder__inbox_read         :=app__subfolder2('inbox\read',ialongsideexe);
+ifastfolder__trash              :=app__subfolder2('trash',ialongsideexe);
+ifastfolder__trash_read         :=app__subfolder2('trash\read',ialongsideexe);
+imail_sender.folder             :=app__subfolder2('outbox',ialongsideexe);
 
 
 //get list of disk domains (folders in root folder starting with "www_", e.g. "www_blaizenterprise_com"
+
 if not nav__init(xnav) then goto skipend;
+
 if not nav__list(xnav,nlName,xroot,idefaultdisksite+'*','',false,true,false) then goto skipend;
-xcount:=nav__count(xnav);
+
+xcount                          :=nav__count(xnav);
+
 if (xcount>=1) then
    begin
+
    for p:=0 to (xcount-1) do
    begin
-   if nav__get(xnav,p,xstyle,xtep,xsize,xname,xlabel) and strmatch(strcopy1(xname,1,low__len32(idefaultdisksite)),idefaultdisksite) then idom.b[xname]:=true;
+
+   if nav__get(xnav,p,xstyle,xtep,xsize,xname,xlabel) and strmatch(strcopy1(xname,1,low__len32(idefaultdisksite)),idefaultdisksite) then
+      begin
+
+      idom.b[xname]             :=true;
+
+      end;
+
    end;//p
+
    end;
 
 
@@ -4605,77 +4813,149 @@ xredirect__clean('');
 
 
 //load file structure of each dom entry (e.g. rootfolder\www_ and rootfolder\www_blaizenterprises_com\) BUT load actual file contents into RAM later on - 01may2024
+
 msset(xref,500);
+
 for p:=0 to (idom.count-1) do
 begin
-ireload_domindex:=p;
-int1:=iramfilecount;
-io__filelist3(io__asfolder(xroot+idom.n[p]),'*','',true,false,true,nil,xaddfiletoram,nil);//proc "xaddfiletoram()" does the actual file loading into RAM - 23feb2024
-idominfo.i['files.'+idom.n[p]]:=iramfilecount-int1;
+
+ireload_domindex                :=p;
+int1                            :=iramfilecount;
+
+io__filelist3( io__asfolder(xroot+idom.n[p]) ,mask_includeList ,mask_excludeList ,true ,false ,true ,nil ,xaddfiletoram ,nil );//proc "xaddfiletoram()" does the actual file loading into RAM - 23feb2024
+
+idominfo.i['files.'+idom.n[p]]  :=iramfilecount-int1;
+
 end;//p
 
 
-//delete unused/non-existent files
+//delete unused/non-existent files ---------------------------------------------
+
 if (iramcount>=1) then
    begin
-   for p:=(iramcount-1) downto 0 do if (ihave.items[p]=0) then
+
+   for p:=pred(iramcount) downto 0 do if (ihave.items[p]=0) then
       begin
-      inref1.items[p]:=0;//nref1=0 and nref2=0 marks the entry as FREE (not used)
-      inref2.items[p]:=0;
-      iname.items[p]^:='';
-      if (idata.value[p]<>nil) then idata.value[p].clear;
-      isize.items[p]:=0;
-      idate.items[p]:=0;
-      imode.items[p]:=wsmDisk;
-      idomindex.items[p]:=0;
+
+      inref1.items[p]           :=0;//nref1=0 and nref2=0 marks the entry as FREE (not used)
+      inref2.items[p]           :=0;
+      iname.items[p]^           :='';
+
+      if (idata.value[p]<>nil) then
+         begin
+
+         idata.value[p].clear;
+
+         end;
+
+      isize.items[p]            :=0;
+      idate.items[p]            :=0;
+      imode.items[p]            :=wsmDisk;
+      idomindex.items[p]        :=0;
+
+      ispamGuardOK.items[p]     :=0;//18nov2026
+
       end;//p
+
    end;
 
 
-//load file contents
+//load file contents into RAM / load ".codes" ----------------------------------
+
 msset(xref,500);
+
 if (iramcount>=1) then
    begin
-   for p:=0 to (iramcount-1) do if ((inref1.items[p]<>0) or (inref2.items[p]<>0)) and (imode.items[p]=wsmRAM) then
+
+   for p:=0 to pred(iramcount) do
+   begin
+
+   if ((inref1.items[p]<>0) or (inref2.items[p]<>0)) then
       begin
-      //reload file contents into RAM cache
-      if (ihave.items[p]>=2) and (not io__fromfile64(ifastfolder__root+swapcharsb(iname.items[p]^,'/','\'),cache__ptr(idata.value[p]),e)) then
+
+      //init
+      dfilename                 :=ifastfolder__root + swapcharsb( iname.items[p]^ ,'/' ,'\' );
+
+
+      //read codes - 18nov2026 -------------------------------------------------
+
+      //defaults
+      ispamGuardOK.items[p]     :=0;//off
+
+      //read codes from file (html/htm)
+      codes__readFromFile( p ,dfilename );
+
+
+      //read files into RAM ----------------------------------------------------
+
+      if (imode.items[p]=wsmRAM) then
          begin
-         if (idata.value[p]<>nil) then idata.value[p].clear;
-         isize.value[p]:=0;
-         end;
-      //get
-      c:=idata.value[p].mem;
-      irambytes:=add64(irambytes,c);
-      idominfo.c['bytes.'+idom.n[idomindex.items[p]]]:=add64(idominfo.c['bytes.'+idom.n[idomindex.items[p]]],c);
-      //show status
-      if msok(xref) then
-         begin
-         app__paintnow;
-         msset(xref,500);
-         end;
-      end;//p
+
+         //reload file contents into RAM cache
+         if (ihave.items[p]>=2) and (not io__fromfile64( dfilename ,cache__ptr(idata.value[p]) ,e )) then
+            begin
+
+            if (idata.value[p]<>nil) then
+               begin
+
+               idata.value[p].clear;
+
+               end;
+
+            isize.value[p]         :=0;
+
+            end;
+
+         //get
+         c                         :=idata.value[p].mem;
+         irambytes                 :=add64(irambytes,c);
+
+         idominfo.c['bytes.'+idom.n[idomindex.items[p]]]:=add64(idominfo.c['bytes.'+idom.n[idomindex.items[p]]],c);
+
+         //show status
+         if msok(xref) then
+            begin
+
+            app__paintnow;
+            msset(xref,500);
+
+            end;
+
+         end;//ram
+
+      end;//if
+
+   end;//p
+
    end;//if
 
 //.total
-idominfo.i['files.total']:=iramfilecount;
-idominfo.c['bytes.total']:=irambytes;
+idominfo.i['files.total']       :=iramfilecount;
+idominfo.c['bytes.total']       :=irambytes;
 
 //successful
-result:=true;
+result                          :=true;
+
 skipend:
+
 if not ilivestats then scn__writeln(low__aorbstr('Failed','Loading done.',result));
+
 except;end;
 try
 
 //.write msg to inbox
 if ireloadnotice then
    begin
-   str1:=#10+#10+'This is a security notice sent by Bubbles.';
+
+   str1                         :=#10+#10+'This is a security notice sent by Bubbles.';
+
    case xboot of
-   false:xwritemsg('Bubbles - Reload Notice','Disk sites reloaded due to admin panel request.'+str1);
+
    true:xwritemsg('Bubbles - Boot Notice','Disk sites loaded due to boot/reboot.'+str1);
+   else xwritemsg('Bubbles - Reload Notice','Disk sites reloaded due to admin panel request.'+str1);
+
    end;//case
+
    end;
 
 //.free
@@ -4712,101 +4992,166 @@ str__free(@d);
 except;end;
 end;
 
-function xramnewslot(xname:string;var xslot:longint;var xnew:boolean):boolean;
+function xramnewslot(const xname:string;var xslot:longint;var xnew:boolean):boolean;
 var
-   p:longint;
-   c:tcmp8;
+   p                            :longint32;
+   c                            :tcmp8;
+
 begin
+
 //defaults
-result:=false;
-xslot:=0;
-xnew:=false;
+result                          :=false;
+xslot                           :=0;
+xnew                            :=false;
 
 //check
 if (xname='') then exit;
 
 //init
-c.val:=low__ref256U(xname);
+c.val                           :=low__ref256U(xname);
 
 try
+
 //find existing
 if (not result) and (iramcount>=1) then
    begin
-   for p:=0 to (iramcount-1) do if (inref1.items[p]=c.ints[0]) and (inref2.items[p]=c.ints[1]) and strmatch(iname.items[p]^,xname) then
+
+   for p:=0 to pred(iramcount) do
+   begin
+
+   if (inref1.items[p]=c.ints[0]) and (inref2.items[p]=c.ints[1]) and strmatch(iname.items[p]^,xname) then
       begin
-      xslot:=p;
-      result:=true;
+
+      xslot                     :=p;
+      result                    :=true;
+
       break;
-      end;//p
+
+      end;
+
+   end;//p
+
    end;
 
 //find free
 if (not result) and (iramcount>=1) then
    begin
-   for p:=0 to (iramcount-1) do if (inref1.items[p]=0) and (inref2.items[p]=0) then
+
+   for p:=0 to pred(iramcount) do
+   begin
+
+   if (inref1.items[p]=0) and (inref2.items[p]=0) then
       begin
-      xslot:=p;
-      inref1.value[xslot]:=c.ints[0];
-      inref2.value[xslot]:=c.ints[1];
-      iname.value[xslot]:=xname;
-      xnew:=true;
-      result:=true;
+
+      xslot                     :=p;
+      inref1.value[xslot]       :=c.ints[0];
+      inref2.value[xslot]       :=c.ints[1];
+      iname.value[xslot]        :=xname;
+      xnew                      :=true;
+      result                    :=true;
+
       break;
-      end;//p
+
+      end;
+
+   end;//p
+
    end;
 
 //create new
 if (not result) then
    begin
-   xslot:=iramcount;
-   inref1.value[xslot]:=c.ints[0];
-   inref2.value[xslot]:=c.ints[1];
-   iname.value[xslot]:=xname;
-   xnew:=true;
-   result:=true;
+
+   xslot                        :=iramcount;
+   inref1.value[xslot]          :=c.ints[0];
+   inref2.value[xslot]          :=c.ints[1];
+   iname.value[xslot]           :=xname;
+
+   xnew                         :=true;
+   result                       :=true;
+
    inc(iramcount);
+
    end;
+
 except;end;
 end;
 
-function xramfind(m:tnetbasic):boolean;
+function ram__findSlot(var m:tnetbasic;var xslot:longint32):boolean;//18nov2026
 var
-   c:tcmp8;
-   p:longint;
-begin
-//defaults
-result:=false;
+   c                            :tcmp8;
+   p                            :longint32;
 
-try
-//check
-if (m=nil) or (iramcount<=0) or (m.wfilename='') then exit;
-//get
-c.val:=low__ref256U(m.wfilename);
-for p:=0 to (iramcount-1) do
 begin
+
+//defaults
+result                          :=false;
+xslot                           :=0;
+
+//check
+if (m=nil) or (iramcount<=0) or (m.wfilename='') then
+   begin
+
+   exit;
+
+   end;
+
+//get
+c.val                           :=low__ref256U(m.wfilename);
+
+for p:=0 to pred(iramcount) do
+begin
+
 if (inref1.items[p]=c.ints[0]) and (inref2.items[p]=c.ints[1]) and strmatch(m.wfilename,iname.items[p]^) then
    begin
+
    //get
-   m.wramindex:=p;
-   //mode change -> this file is listed in RAM but not cached in RAM, so we need to switch to disk streaming - 31dec2023
-   if (imode.value[p]=wsmDisk) then
-      begin
-      m.wfilename:=ifastfolder__root+xforce_backslash(m.wfilename);//convert webname to diskname "/..../..." to "\....\..." - 26feb2024
-      m.wmode:=wsmDisk;
-      end;
-   //successful
-   result:=true;
+   xslot                        :=p;
+   result                       :=true;
+
    break;
+
    end;
+
 end;//p
-except;end;
+
+end;
+
+function ram__findandSet(var m:tnetbasic):boolean;
+var
+   xslot                        :longint32;
+
+begin
+
+//get
+result                          :=ram__findSlot( m ,xslot );
+
+if result then
+   begin
+
+   //get
+   m.wramindex                  :=xslot;
+
+   //mode change -> this file is listed in RAM but not cached in RAM, so we need to switch to disk streaming - 31dec2023
+   if (imode.value[ xslot ]=wsmDisk) then
+      begin
+
+      m.wfilename               :=ifastfolder__root + xforce_backslash(m.wfilename);//convert webname to diskname "/..../..." to "\....\..." - 26feb2024
+      m.wmode                   :=wsmDisk;
+
+      end;
+
+   end;
+
 end;
 
 function xfileinram(xfilename:string):boolean;
 var
    c:tcmp8;
    p:longint;
+
 begin
+
 //defaults
 result:=false;
 
@@ -4820,62 +5165,90 @@ xfilename:=xforce_slash(xfilename);
 
 //get
 c.val:=low__ref256U(xfilename);
-for p:=0 to (iramcount-1) do
+
+for p:=0 to pred(iramcount) do
 begin
+
 if (inref1.items[p]=c.ints[0]) and (inref2.items[p]=c.ints[1]) and strmatch(xfilename,iname.items[p]^) then
    begin
+
    result:=(imode.items[p]=wsmRAM);
    break;
+
    end;
+
 end;//p
+
 except;end;
 end;
 
 function xfromfile64(m:tnetbasic;xfrom:comp;var xfilesize:comp;var xfiledate:tdatetime;xchunksize:longint;xfirst,xmustbuffer:boolean):boolean;
 label
-   redo,skipend;
+   redo ,skipend;
+
 var
-   e:string;
+   e                            :string;
+
 begin
+
 //defaults
-result:=false;
+result                          :=false;
 
 try
-xfilesize:=0;
-xfiledate:=0;
+
+//init
+xfilesize                       :=0;
+xfiledate                       :=0;
 
 //check
 if (m=nil) or (xfirst and (m.wfilename='')) or (xfrom<0) then goto skipend;
 
 //get
 redo:
+
 case m.wmode of
+
 wsmDisk:begin//append to existing stream buffer
-   if (m.buf<>nil) then result:=io__fromfile64c(m.wfilename,@m.buf,true,e,xfilesize,xfrom,xchunksize,xfiledate) else result:=true;
+
+   if (m.buf<>nil) then result  :=io__fromfile64c(m.wfilename,@m.buf,true,e,xfilesize,xfrom,xchunksize,xfiledate)
+   else                 result  :=true;
+
    end;
+
 wsmRAM:begin
+
    //find
-   if xfirst and (not xramfind(m)) then goto skipend;
+   if xfirst and (not ram__findandSet(m)) then goto skipend;
+
    //mode change
    if (m.wmode=wsmDisk) then goto redo;
+
    //set
-   xfilesize:=isize.value[m.wramindex];
-   xfiledate:=idate.value[m.wramindex];
+   xfilesize                    :=isize.value[m.wramindex];
+   xfiledate                    :=idate.value[m.wramindex];
+
    if (xchunksize>=1) then
       begin
+
       if str__splice32(cache__ptr(idata.value[m.wramindex]),restrict32(xfrom),restrict32(xchunksize),m.splicemem,m.splicelen) then result:=(m.splicelen>=1);
       if xmustbuffer and (m.buf<>nil) then str__add3(@m.buf,cache__ptr(idata.value[m.wramindex]),restrict32(xfrom),restrict32(xchunksize));
+
       end
-   else
-      begin
-      m.splicelen:=0;
-      m.splicemem:=nil;
-      result:=true;
+
+   else begin
+
+      m.splicelen               :=0;
+      m.splicemem               :=nil;
+      result                    :=true;
+
       end;
-   end;
-end;
+
+   end;//begin
+
+end;//case
 
 skipend:
+
 except;end;
 end;
 
@@ -4899,7 +5272,9 @@ var
    xcontactok         :boolean;
    xsubscribeok       :boolean;
    xunsubscribeok     :boolean;
+   xspamguardok       :boolean;
    xrangeok           :boolean;
+   xramslot           :longint32;
 
 begin
 
@@ -4917,10 +5292,21 @@ if not net__recinfo(a,m,buf) then exit;
 xcode                 :=200;
 m.wmode               :=wmode;
 m.wfilename           :=xfilename;
+
+//.find slot -> but don't set any mode yet
+if not ram__findSlot( m ,xramslot ) then
+   begin
+
+   xramslot           :=-1;
+
+   end;
+
 xcontactok            :=strmatch(m.hname,'contact.html');
 xsubscribeok          :=strmatch(m.hname,'subscribe.html');
 xunsubscribeok        :=strmatch(m.hname,'unsubscribe.html');
-xmoduleok             :=(not xcontactok) and (not xsubscribeok) and (not xunsubscribeok) and (m.hmodule_index>=0);
+xspamguardok          :=xcontactok or xsubscribeok or xunsubscribeok or (  ( xramslot >= 0 ) and (ispamGuardOK.items[ xramslot ]<>0)  );
+xmoduleok             :=(not xspamguardok) and (not xcontactok) and (not xsubscribeok) and (not xunsubscribeok) and (m.hmodule_index>=0);
+
 
 //.reset the buffer
 str__softclear2(buf,ibufferlimit);
@@ -5052,11 +5438,27 @@ else if xsubscribeok or xunsubscribeok then
 
    end
 
+else if xspamguardok then//only inserts the question into the page, upto the form to post to the correct dynamic page handler: contact.html / subscribe.html / unsubscribe.html - 18nov2026
+   begin
+
+   xfromfile64(m,0,xsize,xdate,maxint,true,true);//must buffer "subscribe.html/unsubscribe.html" so we can edit it on-the-fly
+
+   spamGuard__html( a ,true );
+
+   str__clear(@ibuf2);
+   str__add(@ibuf2,buf);
+   str__clear(buf);
+   xsize              :=str__len(@ibuf2);
+   xdate              :=date__now;
+   xcancache          :=false;
+
+   end
+
 else if xmoduleok then
    begin
 
    xfromfile64(m,0,xsize,xdate,maxint,true,true);
-   
+
    tools__makepage2(m.hmodule_index,false,m.hname,ivars,buf,bol1);//don't search for it again, use "xmoduleindex" for direct access to the module in question
 
    str__clear(@ibuf2);
@@ -5077,7 +5479,7 @@ header__make3(a,xcode,true,xsize,xdate,xcancache,false,'');
 m.writing             :=true;
 
 //dynamic page part 2: append data to buf which already has the header
-if xcontactok or xsubscribeok or xunsubscribeok or xmoduleok then
+if xcontactok or xsubscribeok or xunsubscribeok or xspamguardok or xmoduleok then
    begin
 
    str__add(buf,@ibuf2);
@@ -5825,7 +6227,7 @@ var
          nn0..nn9,llA..llZ,uuA..uuZ:begin
             case vtmp2 of
             nn0..nn9,llA..llZ,uuA..uuZ:begin
-               vadd1(low__hexint2(char(vtmp)+char(vtmp2)));
+               vadd1(hex2__int1(char(vtmp)+char(vtmp2)));
                inc(p,2);
                goto skipone1;
                end;
@@ -8466,6 +8868,80 @@ skipend:
 except;end;
 end;
 
+function spamGuard__html(var a:pnetwork;const xenable:boolean):boolean;//18nov2026
+label//Important: Inserts the question only, does not respond to an answer
+   skipend;
+
+var
+   m                            :tnetbasic;//ptr only
+   buf                          :pobject;//ptr only
+   x                            :string;
+   xlen                         :longint32;
+   p                            :longint32;
+   xmustspamguardreply          :boolean;
+   xquestion                    :string;
+
+begin
+
+//defaults
+result                          :=true;//pass-thru
+xlen                            :=0;
+xmustspamguardreply             :=false;
+
+try
+
+//check
+if (ivars=nil) or (not net__recinfo(a,m,buf)) then exit;
+
+//init
+x                               :=str__text(buf);
+xlen                            :=low__len32(x);
+
+//make question
+if    xenable then xquestion    :=spamGuard__code( spamGuard__makeQuestionb )
+else               xquestion    :='';
+
+//insert SpamGuard at the "((spamguard))"
+for p:=1 to xlen do if (x[p-1+stroffset]='(') and strmatch(strcopy1(x,p,13),'((spamguard))') then
+   begin
+
+   x                            :=strcopy1(x,1,p-1) + xquestion + strcopy1(x,p+13,xlen);
+   xlen                         :=low__len32(x);
+   xmustspamguardreply          :=true;
+
+   break;
+
+   end;//p
+
+//fallback: tag "((spamguard))" not found -> insert the SpamGuard code at the bottom of the form - 04apr2024
+if (not xmustspamguardreply) and (xquestion<>'') then
+   begin
+
+   for p:=1 to xlen do
+   begin
+
+   if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,7),'</form>') then
+      begin
+
+      //insert Spam Guard
+      x                         :=strcopy1(x,1,p-1) + xquestion + strcopy1(x,p,xlen);
+      xlen                      :=low__len32(x);
+      xmustspamguardreply       :=true;
+
+      break;
+
+      end;
+
+   end;//p
+
+   end;
+
+//set
+if xmustspamguardreply then str__settext(buf,x);
+
+except;end;
+end;
+
 function contact__html(var a:pnetwork):boolean;
 label//Important: Uses values from global "ivars" handler
    skipend;
@@ -8488,84 +8964,8 @@ var
    int2               :longint32;
    xcontact_question  :boolean;
    xhaveinput         :boolean;
-   xmustspamguardreply:boolean;
    xmustreply         :boolean;
    ok                 :boolean;
-
-   procedure xspamguard;
-   var
-      p               :longint32;
-      xquestion       :string;
-
-      function xspamguard_code(xfull:boolean):string;
-      begin
-
-      case xfull of
-
-      true:begin
-         result:=
-         '<div style="display:inline-block;background-color:#eeeeee61;color:#777;margin:1em 0;;padding:0.5em;border:#ddd 1px solid;border-radius:10px;">'+
-         '<div style="display:block;font-weight:bold;font-size:140%;">Spam Guard</div>'+
-         '<div style="display:inline-block;padding:0 .5em 0 0;">'+xquestion+'</div>'+
-         '<input style="padding:.2em .5em;border:#ddd 1px solid;border-radius:10px;" name="answer" value="">'+
-         '</div>'+
-         '';
-         end;
-
-      false:result:=xquestion;
-
-      end;//case
-
-      end;
-   begin
-   try
-
-   if (x<>'') then
-      begin
-
-      //.question value
-      if xcontact_question and (not xhaveinput) then spamGuard__makeQuestion(xquestion)
-      else                                           xquestion:='';
-
-      //insert SpamGuard at the "((spamguard))"
-      for p:=1 to xlen do if (x[p-1+stroffset]='(') and strmatch(strcopy1(x,p,13),'((spamguard))') then
-         begin
-
-         x            :=strcopy1(x,1,p-1)+xspamguard_code(xquestion<>'')+strcopy1(x,p+13,xlen);
-         xlen         :=low__len32(x);
-         xmustspamguardreply:=true;
-
-         break;
-
-         end;//p
-
-      //fallback: tag "((spamguard))" not found -> insert the SpamGuard code at the bottom of the form - 04apr2024
-      if (not xmustspamguardreply) and (xquestion<>'') then
-         begin
-
-         for p:=1 to xlen do
-         begin
-
-         if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,7),'</form>') then
-            begin
-
-            //insert Spam Guard
-            x         :=strcopy1(x,1,p-1)+xspamguard_code(true)+strcopy1(x,p,xlen);
-            xlen      :=low__len32(x);
-            xmustspamguardreply:=true;
-
-            break;
-
-            end;
-
-         end;//p
-
-         end;
-
-      end;
-
-   except;end;
-   end;
 
 begin
 
@@ -8573,7 +8973,6 @@ begin
 result                :=true;//pass-thru
 xlen                  :=0;
 xmustreply            :=false;
-xmustspamguardreply   :=false;
 xmsg                  :=nil;
 xemail                :=nil;
 ok                    :=false;
@@ -8588,11 +8987,13 @@ if (ivars=nil) or (not net__recinfo(a,m,buf)) then exit;
 //init
 xhaveinput            :=(ivars.count>=1);//inbound data
 xmustreply            :=xhaveinput;
-x                     :=str__text(buf);
-xlen                  :=low__len32(x);
 
 //SpamGuard
-xSpamGuard;
+spamGuard__html( a , xcontact_question );
+
+//buffer
+x                     :=str__text(buf);
+xlen                  :=low__len32(x);
 
 //contact form submissions have been disabled
 if not icontact_allow then
@@ -8663,7 +9064,7 @@ if xmustreply then
    begin
    //decide
    if not icontact_allow     then xreplymessage:=strdefb(icontact_off,icontact_def_off)
-   else if not dspamCheck_ok then xreplymessage:='The supplied Spam Guard answer is wrong.'//08oct2026
+   else if not dspamCheck_ok then xreplymessage:='The answer is incorrect.'//17nov2026, 08oct2026
    else if ok                then xreplymessage:=strdefb(icontact_ok,icontact_def_ok)
    else                           xreplymessage:=strdefb(icontact_fail,icontact_def_fail);
 
@@ -8755,9 +9156,7 @@ if xmustreply then
    //set
    str__settext(buf,x);
 
-   end
-
-else if xmustspamguardreply then str__settext(buf,x);
+   end;
 
 except;end;
 
@@ -8777,7 +9176,6 @@ var
    xmsg               :tstr9;
    dsubject           :string;
    demail             :string;
-   dspamCheck_ok      :boolean;
    dlistMsg           :string;
    xreplymessage      :string;
    x                  :string;
@@ -8790,97 +9188,20 @@ var
    int2               :longint32;
    xsubscribe_question:boolean;
    xhaveinput         :boolean;
-   xmustspamguardreply:boolean;
    xmustreply         :boolean;
    xnotused           :string;
-
-   procedure xspamguard;
-   var
-      p               :longint32;
-      xquestion       :string;
-
-      function xspamguard_code(xfull:boolean):string;
-      begin
-
-      case xfull of
-
-      true:begin
-         result:=
-         '<div style="display:inline-block;background-color:#eeeeee61;color:#777;margin:1em 0;;padding:0.5em;border:#ddd 1px solid;border-radius:10px;">'+
-         '<div style="display:block;font-weight:bold;font-size:140%;">Spam Guard</div>'+
-         '<div style="display:inline-block;padding:0 .5em 0 0;">'+xquestion+'</div>'+
-         '<input style="padding:.2em .5em;border:#ddd 1px solid;border-radius:10px;" name="answer" value="">'+
-         '</div>'+
-         '';
-         end;
-
-      false:result:=xquestion;
-
-      end;//case
-
-      end;
-   begin
-   try
-
-   if (x<>'') then
-      begin
-
-      //.question value
-      if xsubscribe_question and (not xhaveinput) then spamGuard__makeQuestion(xquestion)
-      else                                             xquestion:='';
-
-      //insert SpamGuard at the "((spamguard))"
-      for p:=1 to xlen do if (x[p-1+stroffset]='(') and strmatch(strcopy1(x,p,13),'((spamguard))') then
-         begin
-
-         x            :=strcopy1(x,1,p-1)+xspamguard_code(xquestion<>'')+strcopy1(x,p+13,xlen);
-         xlen         :=low__len32(x);
-         xmustspamguardreply:=true;
-
-         break;
-
-         end;//p
-
-      //fallback: tag "((spamguard))" not found -> insert the SpamGuard code at the bottom of the form - 04apr2024
-      if (not xmustspamguardreply) and (xquestion<>'') then
-         begin
-
-         for p:=1 to xlen do
-         begin
-
-         if (x[p-1+stroffset]='<') and strmatch(strcopy1(x,p,7),'</form>') then
-            begin
-
-            //insert Spam Guard
-            x         :=strcopy1(x,1,p-1)+xspamguard_code(true)+strcopy1(x,p,xlen);
-            xlen      :=low__len32(x);
-            xmustspamguardreply:=true;
-
-            break;
-
-            end;
-
-         end;//p
-
-         end;
-
-      end;
-
-   except;end;
-   end;
-
+   dspamCheck_ok      :boolean;
 begin
 
 //defaults
 result                :=true;//pass-thru
 xlen                  :=0;
 xmustreply            :=false;
-xmustspamguardreply   :=false;
 xmsg                  :=nil;
 xreplymessage         :='';
 xsubscribe_question   :=isubscribe_question and xsubscribe;//not required for "unsubscribe" requests - 08oct2026
-dspamCheck_ok         :=true;
 dlistMsg              :='';
+dspamCheck_ok         :=false;
 
 try
 
@@ -8890,13 +9211,15 @@ if (ivars=nil) or (not net__recinfo(a,m,buf)) then exit;
 //init
 xhaveinput            :=(ivars.count>=1);//inbound data
 xmustreply            :=xhaveinput;
+
+//SpamGuard
+spamGuard__html( a , xsubscribe_question );
+
+//buffer
 x                     :=str__text(buf);
 xlen                  :=low__len32(x);
 
-//SpamGuard
-xSpamGuard;
-
-//contact form submissions have been disabled
+//subscrive form submissions have been disabled
 if not isubscribe_allow then
    begin
 
@@ -9083,9 +9406,7 @@ if xmustreply then
    //set
    str__settext(buf,x);
 
-   end
-
-else if xmustspamguardreply then str__settext(buf,x);
+   end;
 
 except;end;
 
@@ -11457,6 +11778,7 @@ if strmatch(strcopy1(m.hpath,1,low__len32(iadminpath)),iadminpath) then
 //public access area (front facing file system) --------------------------------
 //decode path and filename
 str1                  :=m.hpath+m.hname;
+
 if (hname_low='contact.html') or (hname_low='subscribe.html')  or (hname_low='unsubscribe.html') or (m.hmodule_index>=0) then xreadpost;
 
 //path+name check -> ensure path+name is safe -> no directory escapement "/../" or bad characters
@@ -11560,28 +11882,48 @@ var
    end;
 begin
 try
+
 //check
 if not net__recinfo(a,m,buf) then exit;
-blen:=str__len32(buf);
-xramstage2:=false;
-xcount:=8;
+
+blen                            :=str__len32(buf);
+xramstage2                      :=false;
+xcount                          :=8;
 
 //stream more -> "wsmDisk" and "wsmRAM"
 more:
 if (m.wbufsent>=blen) and (m.wmode<>wsmBuf) and m.hwantdata then
    begin
+
    xstreammore(a,xdataproblem,xdone);
+
    //.done -> finished streaming data -> OK to reset
-   if xdone and xreset(false) then goto skipend
+   if xdone and xreset(false) then
+      begin
+
+      goto skipend
+
+      end
+
    //.data problem with streaming -> must close the connection to resolve
-   else if xdataproblem and xreset(true) then goto skipend;
+   else if xdataproblem and xreset(true) then
+        begin
+
+        goto skipend;
+
+        end;
+
    //.continue
-   blen:=str__len32(buf);
+   blen                         :=str__len32(buf);
+
    if (m.wmode=wsmRAM) and (m.wsent>=blen) then
       begin
-      blen:=m.splicelen;
-      xramstage2:=true;
+
+      blen                      :=m.splicelen;
+      xramstage2                :=true;
+
       end;
+
    end;
 
 //get
@@ -12019,6 +12361,13 @@ skipend:
 except;end;
 end;
 
+function spamGuard__makeQuestionb:string;
+begin
+
+spamGuard__makeQuestion( result );
+
+end;
+
 function spamGuard__makeQuestion(var xquestion:string):boolean;
 var
    xindex                       :longint32;
@@ -12042,9 +12391,9 @@ if (ispamGuard_index>high(ispamGuard_answer)) then
 
    end;
 
-//make question
-v1                              :=1 + random(100001);//1..100,000
-v2                              :=1 + random(10);//1..10
+//make the question easy to solve: (n * 10) + 1..9 -> no heavy lifting
+v1                              :=0 + ((random(100001) div 10)*10);//1..100,000 -> in steps of 10
+v2                              :=1 + random(9);//1..9
 xquestion                       :='What is '+k64(v1)+' + '+k64(v2)+'?';
 ispamGuard_answer[xindex]       :=v1 + v2;//important: answer is always 1 or more
 
@@ -12086,6 +12435,18 @@ if (xanswer>=1) then
    end;//p
 
    end;
+
+end;
+
+function  spamGuard__code(const xquestion:string):string;
+begin
+
+result:=
+'<div style="display:inline-block;background-color:#5555;color:inherit;margin:0.5em 0;padding:0.5em;border:0;border-radius:10px;" class="spam.background">'+
+'<div style="display:inline-block;padding:0 0.5em 0 0;" class="spam.question">'+xquestion+'</div>'+
+'<input style="padding:0.2em 0.5em;border:0;border-radius:10px;font-size:inherit;outline:none;background-color:#0003;color:inherit;" class="spam.answer" name="answer" value="">'+
+'</div>'+
+'';
 
 end;
 
@@ -13482,7 +13843,7 @@ end;
 function utf8__toplaintext7bitb(const x:string):string;//08oct2026
 begin
 
-result:=utf8__to7bitTextb( x ,false ,true );
+result:=u8__to7strb( x );
 
 end;
 
@@ -13597,6 +13958,98 @@ if (result[p-1+stroffset]='_') then
    begin
 
    result[p-1+stroffset]:='.';
+
+   end;
+
+end;//p
+
+end;
+
+
+//codes procs ------------------------------------------------------------------
+
+procedure codes__defaults(const xslot:longint32);
+begin
+
+//check
+if (xslot<0) or (xslot>=iramcount) then exit;
+
+//get
+ispamguardOK.items[ xslot ]     :=0;//off
+
+end;
+
+procedure codes__readFromFile(const xslot:longint32;const xfilename:string);
+var//Note: assumes defaults have already been applied
+   dext                         :string;
+
+begin
+
+//check
+if (xslot<0) or (xslot>=iramcount) then exit;
+
+//filter -> only works for "html" and "htm" files
+dext                            :=io__readfileext_low(xfilename);
+
+if (dext<>fehtml) and (dext<>fehtm) then
+   begin
+
+   exit;
+
+   end;
+
+codes__read(  xslot ,io__fromfilestr2b( xfilename + '.' + fecodes ,500 )  );
+
+end;
+
+procedure codes__read(const xslot:longint32;const xline:string);
+var//Note: assumes defaults have already been applied
+   p                            :longint32;
+   lp                           :longint32;
+   n                            :string;
+   dline                        :string;
+
+   function m(const v:string):boolean;
+   begin
+
+   result                       :=( v = n );
+
+   end;
+
+begin
+
+//check
+if (xslot<0) or (xslot>=iramcount) or (xline='') then exit;
+
+//init
+lp                    :=1;
+dline                 :=strlow(xline) + codes_sep1;
+
+//filter
+swapchars( dline, #10 ,codes_sep1 );
+swapchars( dline, #13 ,codes_sep1 );
+swapchars( dline, #9  ,codes_sep1 );
+
+//get
+for p:=1 to low__len32(dline) do
+begin
+
+if (dline[pred(p)+stroffset]=codes_sep1) or (dline[pred(p)+stroffset]=codes_sep2) then
+   begin
+
+   n                  :=strlow(strcopy1( dline ,lp ,p-lp ));
+
+   //apply codes
+   if m( codes_spamGuard ) then ispamGuardOK.items[ xslot ]   :=1
+
+   else begin
+
+      //nil
+
+      end;
+
+   //lp
+   lp                 :=succ(p);
 
    end;
 

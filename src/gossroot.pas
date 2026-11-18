@@ -32,22 +32,26 @@ uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossteps;
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. Root (gossroot.pas)
-//## Version.................. 4.00.7080 (+921)
-//## Items.................... 50
-//## Last Updated ............ 09oct2026, 08oct2026, 10aug2026, 08aug2026, 04aug2026, 23jul2026, 01jul2026, 19jun2026, 14jun2026, 04jun2026, 29may2026, 27may2026, 26may2026, 24may2026, 09may2026, 06may2026, 04may2026,
+//## Version.................. 4.00.7210 (+957)
+//## Items.................... 48
+//## Last Updated ............ 18nov2026, 14nov2026, 06nov2026, 29oct2026, 25oct2025, 20oct2026, 09oct2026, 08oct2026, 10aug2026, 08aug2026, 04aug2026, 23jul2026, 01jul2026, 19jun2026, 14jun2026, 04jun2026, 29may2026, 27may2026, 26may2026, 24may2026, 09may2026, 06may2026, 04may2026,
 //##                           03may2026, 20apr2026, 11apr2026, 09apr2026, 02apr2026, 26mar2026, 18mar2026, 10mar2026, 07mar2026, 20feb2026, 17feb2026, 05feb2026, 01feb2026, 31jan2026, 05jan2026, 23dec2025, 19dec2025, 18dec2025, 15dec2025, 13dec2025, 10dec2025, 08dec2025, 04dec2025, 06nov2025, 02nov2025, 24oct2025, 10oct2025, 08oct2025, 03oct2025, 29sep2025, 26sep2025, 18sep2025, 14sep2025, 13sep2025, 07sep2025, 10aug2025, 09aug2025, 29jul2025, 19jul2025, 15jul2025, 07jul2025, 03jul2025, 19jun2025, 11jun2025, 28may2025, 26apr2025, 11apr2025, 31mar2025, 21mar2025, 08mar2025, 20feb2025, 29jan2025, 11jan2025, 17dec2024, 06dec2024, 27nov2024, 15nov2024, 11nov2024, 01nov2024, 31oct2024, 12oct2024, 24aug2024: images extensions fix, 26jul2024: str__write, 20jul2024: zip_* procs updated, 18jun2024: GUI support added, 02may2024: low__ref256/U, 28apr2024: low__uptime(), 17apr2024
-//## Lines of Code............ 35,300+
+//## Lines of Code............ 35,000+
 //## Origin .................. Human generated and maintained
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -64,16 +68,14 @@ uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossteps;
 //## | dialog__*              | family of procs   | 1.00.070  | 10oct2025   | MS Dialogs
 //## | printer__*             | family of procs   | 1.00.050  | 26apr2025   | Printer related procs
 //## | font__*                | family of procs   | 1.00.070  | 26apr2025   | Font related procs
-//## | mail__*                | family of procs   | 1.00.172  | 07apr2025   | Mail related procs (email) - 21nov2024
 //## | new__*                 | family of procs   | 1.00.010  | 30apr2024   | Creation procs -> create objects using less source code
 //## | track__*               | family of procs   | 1.00.025  | 20feb2026   | Type instance tracking - 07sep2025, 28aug2025, 17apr2024
 //## | monitors__*            | family of procs   | 1.00.432  | 26sep2025   | Multi-monitor support - 18feb2025, 06jan2025, 05dec2024
 //## | low__*                 | low level procs   | 1.00.190  | 03may2026   | Support procs - 04dec2025, 29sep2025, 03sep2025, 25jul2025, 01apr2025, 06jan2025, 01may2024
 //## | float__*, int__*       | family of procs   | 1.00.054  | 19jun2026   | Float and longint32 string-to-number and number-to-string conversion routines - 12dec2024, 12dec2024: float__tostr_divby(),  01nov2024
 //## | block64__*             | family of procs   | 1.00.095  | 17apr2024   | Block based memory management procs
-//## | str__*                 | family of procs   | 1.00.284  | 08oct2026   | Procs for working with both tstr8 and tstr9 objects - 19jun2026, 18mar2026, 30aug2025, 04may2025, 17apr2025, 16mar2025, 22nov2024, 11aug2024: str__pbytes0 and str__setpbytes0, 25jul2024: str__tob64/fromb64, 17apr2024
+//## | str__*                 | family of procs   | 1.00.297  | 06nov2026   | Procs for working with both tstr8 and tstr9 objects - 29oct2026, 26oct2026, 08oct2026, 19jun2026, 18mar2026, 30aug2025, 04may2025, 17apr2025, 16mar2025, 22nov2024, 11aug2024: str__pbytes0 and str__setpbytes0, 25jul2024: str__tob64/fromb64, 17apr2024
 //## | mem__*                 | family of procs   | 1.00.052  | 01sep2025   | Heap based management procs - 27aug2025, 27aug2025, 17apr2024
-//## | utf8__*                | family of procs   | 1.00.117  | 16feb2026   | UTF-8 decoding support, 21apr2025, 16mar2025, 15apr2024: created
 //## | mundo__*               | family of procs   | 1.00.075  | 28jun2024   | Data stream based multi-undo redo/undo slot tracking and management for simple and reliable multi-undo implementation
 //## | res__*                 | family of procs   | 1.00.020  | 14sep2025   | resource support procs - 26aug2026
 //## | zip__*                 | family of procs   | 1.00.072  | 24aug2025   | ZIP archive creation procs - 18apr2025, 19jul2024
@@ -84,11 +86,11 @@ uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossteps;
 //## | tbasictimer            | tbasicthread      | 1.00.021  | 15aug2025   | High speed timer
 //## | tbasictimer2           | tbasicthread      | 1.00.011  | 15aug2025   | High speed timer with integrated thread level oncreate/ontimer/ondestroy events
 //## | twproc                 | tobject           | 1.00.022  | 18dec2025   | Window based window message handler - 18dec2025: 32/64 bit support, 04may2024, 09feb2024: fixed destroy(), 23dec2023
-//## | tstr8                  | tobjectex         | 1.00.855  | 04jun2026   | 8bit binary memory handler - memory as one chunk - 26may2026, 23oct2025, 29aug2025, 28may2025, 15may2025, 25feb2024: splice() proc, 26dec2023, 27dec2022, 20mar2022, 27dec2021, 28jul2021, 30apr2021, 14feb2021, 28jan2021, 21aug2020
+//## | tstr8                  | tobjectex         | 1.00.865  | 29oct2026   | 8bit binary memory handler - memory as one chunk - 04jun2026, 26may2026, 23oct2025, 29aug2025, 28may2025, 15may2025, 25feb2024: splice() proc, 26dec2023, 27dec2022, 20mar2022, 27dec2021, 28jul2021, 30apr2021, 14feb2021, 28jan2021, 21aug2020
 //## | tstr9                  | tobjectex         | 1.00.268  | 15mar2025   | 8bit binary memory handler - memory as a stream of randomly allocated memory blocks - 07mar2024: softclear2(), 25feb2024: splice() proc, 07feb2024: Optimised for speed, 04feb2024: Created
 //## | tvars8                 | tobject           | 1.00.245  | 12may2025   | 8bit binary replacement for "tdynamicvars" and "tdynamictext" -> simple, fast, and lighter with full binary support (no string used) - 28jun2024, 26jun2024: updated, 15jan2024, 31jan2022, 02jan2022, 16aug2020
 //## | tfastvars              | tobject           | 1.00.115  | 03may2026   | Faster version of tvars8 (10x faster) and simpler - 19aug2025, 12oct2024, 12oct2024: dedicated getdata/setdata procs for IN ORDER processing of items, 24aug2024, 24mar2024: fixed ilimit (was: max-1 => now: max+1) 07feb2024: updated, 12jan2024: support for tstr9 in sfoundB() proc, 25dec2023
-//## | tfastvars2             | tobject           | 1.00.022  | 03may2026   | Faster version of tvars8 (10x faster) and simpler with dynamic limit - 20apr2026
+//## | tfastvars2             | tobject           | 1.00.030  | 14nov2026   | Faster version of tvars8 (10x faster) and simpler with dynamic limit - 03may2026, 20apr2026
 //## | tmask8                 | tobject           | 1.00.360  | 07jul2021   | 10may2020, Rapid 8bit graphic mask for tracking onscreen window areas (square and rounded) at speed: WRITE: 101x[1920x1080] mask redraws in under 500ms ~ 5ms/mask and READ: 101x[1920x1080] mask scans in under 1,100ms ~11ms/mask on Intel Atom 1.1Ghz
 //## | tdynamiclist           | tobject           | 1.00.120  | 25jul2024   | Base class for dynamic arrays/lists of differing structures: byte, word, longint, currency, pointer etc. - 25jul2024: forcesize() proc, 09feb2024: removed "protected" for "public", 08aug2017
 //## | tdynamicbyte           | tdynamiclist      | 1.00.010  | 09feb2024   | Dynamic array of byte (1b/item) - 09feb2024: removed "protected" for "public", 21jun2006
@@ -278,6 +280,13 @@ const
    max64                = 999999999999999999;
    {$endif}
 
+   //.auto max range
+   {$ifdef 64bit}
+   iautomax                     =max64;
+   {$else}
+   iautomax                     =max32;
+   {$endif}
+
    //.misc slot ranges
    maxport              =max16;
    maxrow               =max16 * 10;//safe range (0..655,350) - 28dec2023
@@ -425,7 +434,7 @@ const
    track_limit           =200;
 
    track_Overview_start   =1;
-   track_Overview_finish  =38+track_Overview_start;//10dec2025
+   track_Overview_finish  =32+track_Overview_start;//10dec2025
 
    track_Core_start       =track_Overview_finish+3;//allow for blank line and title
    track_Core_finish      =59+track_Core_start;
@@ -442,43 +451,44 @@ const
    satVer                =1+track_Overview_start;
    satCodebase           =2+track_Overview_start;
    satAccessibility      =3+track_Overview_start;
+{//????????????????
    satAccessibilitySC    =4+track_Overview_start;//slot count
    satAccessibilityMC    =5+track_Overview_start;//message count
    satAccessibilityQC    =6+track_Overview_start;//count number of calls to "query interface"
    satAccessibilityUC    =7+track_Overview_start;//count number of proc calls to iunknown
    satAccessibilityDC    =8+track_Overview_start;//count number of proc calls to idispatch
    satAccessibilityAC    =9+track_Overview_start;//count number of proc calls to iaccessible
+{}//????????????????????
+   satScale              =4+track_Overview_start;
+   satDPIawareV2         =5+track_Overview_start;
+   satMSIXmode           =6+track_Overview_start;
+   satMSIXtags           =7+track_Overview_start;
+   satGUIresources       =8+track_Overview_start;
+   satDLLload            =9+track_Overview_start;
+   satAPIload            =10+track_Overview_start;
+   satAPIcalls           =11+track_Overview_start;
+   satResourceLoad       =12+track_Overview_start;//20feb2026
+   satRenderRate         =13+track_Overview_start;
+   satFrameRate          =14+track_Overview_start;
+   satMemory             =15+track_Overview_start;
+   satMemoryCount        =16+track_Overview_start;
+   satMemoryCreateCount  =17+track_Overview_start;
+   satMemoryFreeCount    =18+track_Overview_start;
 
-   satScale              =10+track_Overview_start;
-   satDPIawareV2         =11+track_Overview_start;
-   satMSIXmode           =12+track_Overview_start;
-   satMSIXtags           =13+track_Overview_start;
-   satGUIresources       =14+track_Overview_start;
-   satDLLload            =15+track_Overview_start;
-   satAPIload            =16+track_Overview_start;
-   satAPIcalls           =17+track_Overview_start;
-   satResourceLoad       =18+track_Overview_start;//20feb2026
-   satRenderRate         =19+track_Overview_start;
-   satFrameRate          =20+track_Overview_start;
-   satMemory             =21+track_Overview_start;
-   satMemoryCount        =22+track_Overview_start;
-   satMemoryCreateCount  =23+track_Overview_start;
-   satMemoryFreeCount    =24+track_Overview_start;
-
-   satErrors             =25+track_Overview_start;
-   satThreadFixes        =26+track_Overview_start;//02nov2025
-   satMaskcapture        =27+track_Overview_start;
-   satPartpaint          =28+track_Overview_start;
-   satFullpaint          =29+track_Overview_start;
-   satPartalign          =30+track_Overview_start;
-   satFullalign          =31+track_Overview_start;
-   satDragcount          =32+track_Overview_start;
-   satDragcapture        =33+track_Overview_start;
-   satDragpaint          =34+track_Overview_start;
-   satSizecount          =35+track_Overview_start;
-   satSysFont            =36+track_Overview_start;
-   satTotalCore          =37+track_Overview_start;//sources value from "satCoreTotal"
-   satTotalGUI           =38+track_Overview_start;//sources value from "satGUITotal"
+   satErrors             =19+track_Overview_start;
+   satThreadFixes        =20+track_Overview_start;//02nov2025
+   satMaskcapture        =21+track_Overview_start;
+   satPartpaint          =22+track_Overview_start;
+   satFullpaint          =23+track_Overview_start;
+   satPartalign          =24+track_Overview_start;
+   satFullalign          =25+track_Overview_start;
+   satDragcount          =26+track_Overview_start;
+   satDragcapture        =27+track_Overview_start;
+   satDragpaint          =28+track_Overview_start;
+   satSizecount          =29+track_Overview_start;
+   satSysFont            =30+track_Overview_start;
+   satTotalCore          =31+track_Overview_start;//sources value from "satCoreTotal"
+   satTotalGUI           =32+track_Overview_start;//sources value from "satGUITotal"
 
    //.core
    satCoreTotal          =0+track_Core_start;
@@ -908,14 +918,20 @@ const
    fec2v          ='c2v';//Claude 2 values - 24jan2022
    feini          ='ini';//24jan2022
    fetxt          ='txt';
+
+   feepub         ='epub';//15oct2026
+   fetpub         ='tpub';//15oct2026
+
    fertf          ='rtf';//17feb2026
    fedic          ='dic';//17feb2026
    febwd          ='bwd';
    febwp          ='bwp';
+   feudoc         ='udoc';//06nov2026
    fesfef         ='sfef';//small file encrypter file
    fehtm          ='htm';//20aug2024
    fehtml         ='html';
    fexml          ='xml';
+   fecodes        ='codes';//18nov2026
    fetep          ='tep';
    fetea          ='tea';
    febmp          ='bmp';
@@ -934,6 +950,8 @@ const
    fepbm          ='pbm';//02jan2025
    fepnm          ='pnm';//02jan2025
    fexbm          ='xbm';//02jan2025
+   fewmf          ='wmf';//29oct2026
+   feemf          ='emf';//29oct2026
    fejpg          ='jpg';
    fejif          ='jif';
    fejpeg         ='jpeg';
@@ -979,12 +997,13 @@ const
 
    //.combinations
    feallfiles     =feany;
-   fealldocs      =fetxt+fesepX+febwd+fesepX+febwp+fesepX+fertf+fesepX+fedic;
+   fealldocs      =fetxt+fesepX+febwd+fesepX+febwp+fesepX+feudoc+fesepX+fertf+fesepX+fedic;
    feallimgs      =fepng+fesepX+
                    fegif+fesepX+
                    {$ifdef jpeg}fejpg+fesepX+fejif+fesepX+fejpeg+fesepX+{$endif}
                    febmp+fesepX+
                    fedib+fesepX+
+                   feemf+fesepX+//29oct2026
                    feico+fesepX+fecur+fesepX+feani+fesepX+
                    fetga+fesepX+
                    feppm+fesepX+
@@ -999,6 +1018,7 @@ const
                    ferle6+fesepX+
                    ferle8+fesepX+
                    ferle32+fesepX+
+                   fewmf+fesepX+//29oct2026
                    {$ifdef jpeg}fetj32+{$endif} '';
    feallcurs      =fecur+fesepX+feani;
    feallcurs2     =fecur+fesepX+feani+fesepX+feico+fesepX+fepng+fesepX+fegif+fesepX+fesan+fesepX+fetea+fesepX+feimg32{$ifdef gamecore}+fesepX+fepic8{$endif};//29may2025, 22may2022
@@ -1033,12 +1053,18 @@ const
    peini          =feini+fesep;
    petxt          =fetxt+fesep;
    pedic          =fedic+fesep;
+
+   peepub         =feepub+fesep;
+   petpub         =fetpub+fesep;
+
    pertf          =fertf+fesep;
    pebwd          =febwd+fesep;
    pebwp          =febwp+fesep;
+   peudoc         =feudoc+fesep;
    pesfef         =fesfef+fesep;
    pexml          =fexml+fesep;
    pehtml         =fehtml+fesep;
+   pecodes        =fecodes+fesep;
    petep          =fetep+fesep;
    petea          =fetea+fesep;
    pebmp          =febmp+fesep;
@@ -1057,6 +1083,8 @@ const
    pepbm          =fepbm+fesep;
    pepnm          =fepnm+fesep;
    pexbm          =fexbm+fesep;
+   pewmf          =fewmf+fesep;
+   peemf          =feemf+fesep;
    pejpg          =fejpg+fesep;
    pejif          =fejif+fesep;
    pejpeg         =fejpeg+fesep;
@@ -1197,54 +1225,69 @@ const
    llz = 122;
 
    //special values
-   vvUppertolower = llA-uuA;//difference to shift an uppercase char to a lowercase one
+   vvUppertolower     = llA-uuA;//difference to shift an uppercase char to a lowercase one
 
    //common symbols
-   ssdollar = 36;//"$" - 10jan2023
-   sspipe = 124;//"|"
-   sshash = 35;
-   sspert = 37;//"%" - 01apr2024
-   ssasterisk = 42;
-   ssdash =45;
-   ssslash = 47;
-   ssbackslash = 92;
-   sscolon = 58;
-   sssemicolon = 59;
-   ssplus = 43;
-   sscomma = 44;
-   ssminus = 45;//06jul2022
-   ssat = 64;
-   ssdot = 46;
-   ssexclaim = 33;
-   ssmorethan = 62;
-   sslessthan = 60;
-   ssequal    = 61;
-   ssquestion = 63;
-   ssunderscore =  95;
-   ssspace = 32;
-   ssspace2 = 160;//05feb2023
-   ss10 = 10;
-   ss13 = 13;
-   ss9 = 9;
-   ssTab = 9;
-   sspower=94;//"^"
-   ssdoublequote=34;
-   sspercentage=37;//"%"
-   ssampersand=38;//"&"
-   sssinglequote=39;
-   sssinglequotefancy=96;
-   ssLSquarebracket=91;//"["
-   ssRSquarebracket=93;//"]"
-   ssLRoundbracket=40;//"("
-   ssRRoundbracket=41;//")"
-   ssLCurlyBracket=123;//"{"
-   ssRCurlyBracket=125;//"}"
-   ssSquiggle=126;//"~"
-   ssCopyright=169;
-   ssRegistered=174;
+   ssdollar           =36;//"$" - 10jan2023
+   sspipe             =124;//"|"
+   ssbullet           =149;
+   sshash             =35;
+   sspert             =37;//"%" - 01apr2024
+   ssasterisk         =42;
+   ssdash             =45;
+   ssslash            =47;
+   ssbackslash        =92;
+   sscolon            =58;
+   sssemicolon        =59;
+   ssplus             =43;
+   sscomma            =44;
+   ssminus            =45;//06jul2022
+   ssat               =64;
+   ssdot              =46;
+   ssexclaim          =33;
+   ssmorethan         =62;
+   sslessthan         =60;
+   ssequal            =61;
+   ssquestion         =63;
+   ssunderscore       =95;
+   ssspace            =32;
+   ssspace2           =160;//aka non-breaking space - 05feb2023
+   ss10               =10;
+   ss13               =13;
+   ss9                =9;
+   ssTab              =9;
+   sspower            =94;//"^" aka hat
+   ssdoublequote      =34;
+   sspercentage       =37;//"%"
+   ssampersand        =38;//"&"
+   sssinglequote      =39;
+   sssinglequotefancy =96;
+   ssLSquarebracket   =91;//"["
+   ssRSquarebracket   =93;//"]"
+   ssLRoundbracket    =40;//"("
+   ssRRoundbracket    =41;//")"
+   ssLCurlyBracket    =123;//"{"
+   ssRCurlyBracket    =125;//"}"
+   ssSquiggle         =126;//"~"
+   ssCopyright        =169;
+   ssRegistered       =174;
+
+   //unicode character
+   u_leftSingleQuote            =8216;
+   u_rightSingleQuote           =8217;
+   u_leftDoubleQuote            =8220;
+   u_rightDoubleQuote           =8221;
+   u_bullet                     =8226;
+
+
+   //character used for unsupported characters during ascii/unicode conversion - 11nov2026
+   bad_char                     =ssQuestion;//10nov2026
+   short_string_len             =200;//for dual mode procs
+
+
 
    //G.E.C. -->> General Error Codes v1.00.028, 22jun2005
-   gecFeaturedisabled        ='Feature disabled';  
+   gecFeaturedisabled        ='Feature disabled';
    gecFailedtoencrypt        ='Failed to encrypt';//20jun2016
    gecFileInUse              ='File in use / access denied';//translate('File in use / access denied')
    gecFolderInUse            ='Folder in use / access denied';//translate('Folder in use / access denied');//20par2025
@@ -2585,8 +2628,8 @@ type
     procedure setc32(xpos:longint64;xval:tcolor32);
     procedure setc40(xpos:longint64;xval:tcolor40);
     procedure setcmp8(xpos:longint64;xval:comp);
-    procedure setcur8(xpos:longint64;xval:currency);
-    procedure setint4(xpos:longint64;xval:longint);
+    procedure setcur8(xpos:longint64;xval:currency);//10nov2026
+    procedure setint4(xpos:longint64;xval:longint32);//10nov2026
     procedure setint4i(xindex:longint64;xval:longint);
     procedure setint4R(xpos:longint64;xval:longint);
     procedure setint3(xpos:longint64;xval:longint);
@@ -2657,6 +2700,13 @@ type
     property len:longint64              read icount;
     property len64:longint64            read icount;
     property len32:longint32            read getcount32;
+
+    {$ifdef 64bit}
+    property lenAuto:longint64          read icount;
+    {$else}
+    property lenAuto:longint32          read getcount32;
+    {$endif}
+
     property count:longint64            read icount;
     property count32:longint32          read getcount32;
 
@@ -2667,7 +2717,7 @@ type
     function scanline(xfrom:longint64):pauto;
 
     //.rapid access -> no range checking
-    property pbytes:pdlbyte             read ibytes;
+    property pbytes :pdlbyte            read ibytes;
     property pints4 :pdllongint         read iints4;
     property prows8 :pcolorrows8        read irows8;
     property prows16:pcolorrows16       read irows16;
@@ -2691,7 +2741,7 @@ type
     function ejectcore:boolean;
 
     //.object support
-    function addfast32(const s:tstr8):boolean;//04jun2026, 24may2026
+    function addfast(const s:tstr8):boolean;//04jun2026, 24may2026
     function add(const x:tstr8):boolean;
     function add2(const x:tstr8;const xfrom,xto:longint64):boolean;
     function add3(const x:tstr8;const xfrom,xlen:longint64):boolean;
@@ -3284,79 +3334,81 @@ type
     vs                :pdlstring;
     vm                :pdlbyte;
 
-    function xmakename(xname:string;var xindex:longint):boolean;
-    function getb(xname:string):boolean;
-    function geti(xname:string):longint;
-    function getc(xname:string):comp;
-    function gets(xname:string):string;
-    function getdt(xname:string):tdatetime;
-    procedure setb(xname:string;x:boolean);
-    procedure seti(xname:string;x:longint);
-    procedure setc(xname:string;x:comp);
-    procedure sets(xname:string;x:string);
-    procedure setdt(xname:string;xval:tdatetime);//20aug2024
-    function getchecked(xname:string):boolean;//12jan2024
-    procedure setchecked(xname:string;x:boolean);
-    function getn(xindex:longint):string;
-    procedure setdata(xdata:tstr8);//20aug2024: upgraded to handle more data variations, e.g. "name: value" or "name:value" or "name   " -> originally only the first instance was accepted, now all 3 are
-    function getdata:tstr8;
-    procedure settext(const x:string);
-    function gettext:string;
-    procedure setnettext(x:string);
-    function getv(xindex:longint):string;
-    procedure setv(xindex:longint;x:string);//22aug2024
-    procedure setlimit(x:longint32);
+    function  xmakename         (xname:string;var xindex:longint32):boolean;
+    function  getb              (xname:string):boolean;
+    function  geti              (xname:string):longint32;
+    function  getc              (xname:string):comp;
+    function  gets              (xname:string):string;
+    function  getdt             (xname:string):tdatetime;
+    procedure setb              (xname:string;x:boolean);
+    procedure seti              (xname:string;x:longint32);
+    procedure setc              (xname:string;x:longint64);
+    procedure sets              (xname:string;x:string);//14nov2026
+    procedure setdt             (xname:string;xval:tdatetime);//20aug2024
+    function  getchecked        (xname:string):boolean;//12jan2024
+    procedure setchecked        (xname:string;x:boolean);
+    function  getn              (xindex:longint32):string;
+    procedure setdata           (xdata:tstr8);//14nov2026, 20aug2024: upgraded to handle more data variations, e.g. "name: value" or "name:value" or "name   " -> originally only the first instance was accepted, now all 3 are
+    function  getdata           :tstr8;
+    procedure settext           (const x:string);
+    function  gettext           :string;
+    procedure setnettext        (x:string);
+    function  getv              (xindex:longint32):string;
+    procedure setv              (xindex:longint32;x:string);//22aug2024
+    procedure setlimit          (x:longint32);
 
    public
 
     //options
-    ofullcompatibility:boolean;//defaults=true
-    oincludecomments:boolean;//defaults=true
+    ofullcompatibility          :boolean;//defaults=true
+    oincludecomments            :boolean;//defaults=true
+    oremovewhitespaceSLOW       :boolean;//default=false - reads lines of "name:value" pairs where white space may be present on the left and/or right side of the colon and auto removes it - 14nov2026
 
     //create
-    constructor create2(const xlimit:longint32); virtual;
-    constructor create; virtual;
-    destructor destroy; override;
+    constructor create2         (const xlimit:longint32); virtual;
+    constructor create;         virtual;
+    destructor  destroy;        override;
 
     //information
-    property limit:longint read ilimit;
-    property count:longint read icount;
+    property limit              :longint32 read ilimit;
+    property count              :longint32 read icount;
 
     //workers
     procedure clear;
-    function find(xname:string;var xindex:longint):boolean;
+    function find               (xname:string;var xindex:longint):boolean;
 
     //found
-    function found(xname:string):boolean;
-    function sfound(xname:string;var x:string):boolean;
-    function sfound8(xname:string;x:pobject;xappend:boolean;var xlen:longint):boolean;
+    function found              (xname:string):boolean;
+    function sfound             (xname:string;var x:string):boolean;
+    function sfound8            (xname:string;x:pobject;xappend:boolean;var xlen:longint):boolean;
 
     //values
-    property b[x:string]:boolean read getb write setb;
-    property i[x:string]:longint read geti write seti;
-    property c[x:string]:comp read getc write setc;
-    property s[x:string]:string read gets write sets;
-    property dt[xname:string]:tdatetime read getdt write setdt;//20aug2024
-    property n[x:longint]:string read getn;//name
-    property v[x:longint]:string read getv write setv;//value
+    property b                  [x:string]:boolean            read getb write setb;
+    property i                  [x:string]:longint32          read geti write seti;
+    property c                  [x:string]:longint64          read getc write setc;
+    property s                  [x:string]:string             read gets write sets;
+    property dt                 [xname:string]:tdatetime      read getdt write setdt;//20aug2024
+    property n                  [x:longint32]:string          read getn;//name
+    property v                  [x:longint32]:string          read getv write setv;//value
 
     //.html support
-    property checked[x:string]:boolean read getchecked write setchecked;//uses string storage "s[x]"
+    property checked            [x:string]:boolean            read getchecked write setchecked;//uses string storage "s[x]"
 
     //inc
     //.32bit longint
     procedure iinc(xname:string);
-    procedure iinc2(xname:string;xval:longint);
+    procedure iinc2(xname:string;xval:longint32);
+
     //.64bit comp
     procedure cinc(xname:string);
-    procedure cinc2(xname:string;xval:comp);
+    procedure cinc2(xname:string;xval:longint64);
 
     //io
-    property nettext:string write setnettext;//reads in POST data from a web stream
-    property text:string read gettext write settext;
-    property data:tstr8 read getdata write setdata;
-    function tofile(x:string;var e:string):boolean;
-    function fromfile(x:string;var e:string):boolean;
+    property nettext            :string                       write setnettext;//reads in POST data from a web stream
+    property text               :string                       read gettext write settext;
+    property data               :tstr8                        read getdata write setdata;
+    function tofile             (x:string;var e:string):boolean;
+    function fromfile           (x:string;var e:string):boolean;
 
    end;
 
@@ -3510,8 +3562,8 @@ var
    sys_initcrc32         :boolean=false;
 
    //.ref support
-   p4INT32               :array[0..32] of longint;
-   p8CMP256              :array[0..256] of comp;
+   p4INT32               :array[0.. 32] of longint32;
+   p8CMP256              :array[0..256] of longint64;
 
    //.system values
    system_newnameid    :longint=0;//unique system wide -> general purpose NAME BASED id -> range: 0..N -> used with "io__tempfile__nameid()" proc - 25jun2022
@@ -3661,14 +3713,14 @@ procedure gossroot__stop;
 
 
 //info procs -------------------------------------------------------------------
-function app__info(xname:string):string;
-function app__bol(xname:string):boolean;
-function app____netmore:tobject;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
-function info__root(xname:string):string;//information specific to this unit of code
-function info__rootfind(xname:string):string;//central point from which to find the requested information - 05feb2026, 08aug2025, 09apr2024
-function info__mode:longint;
-function splash__findvalue(const x:longint;var xname,xvalue:string):boolean;//14jul2025
-function splash__findvalue2(const x:longint;const xnameORvalue:boolean):string;//17dec2025
+function  app__info(const xname:string):string;
+function  app__bol(const xname:string):boolean;
+function  app____netmore:tobject;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
+function  info__root(xname:string):string;//information specific to this unit of code
+function  info__rootfind(xname:string):string;//central point from which to find the requested information - 05feb2026, 08aug2025, 09apr2024
+function  info__mode:longint32;
+function  splash__findvalue(const x:longint;var xname,xvalue:string):boolean;//14jul2025
+function  splash__findvalue2(const x:longint;const xnameORvalue:boolean):string;//17dec2025
 
 
 //msix procs -------------------------------------------------------------------
@@ -3780,34 +3832,6 @@ function track__findvalue(xindex:longint;xnumber:boolean;var xcount:longint;var 
 //detects controls being created but not being destroyed/memory leakage
 procedure leak__hunt(x:longint;xlabel:string);
 function leak__info(x:longint;var xdata:string):boolean;
-
-//utf-8 procs ------------------------------------------------------------------
-function utf8__charlen(x:byte):longint;
-function utf8__charpoint0(x:pobject;var xpos:longint):longint;
-function utf8__encodetohtml(s,d:pobject;dappend,dasfilename,dnoslashes:boolean):boolean;
-function utf8__encodetohtmlstr(x:string;xasfilename,xnoslashes:boolean):string;
-
-function utf8__toascii(s,d:pobject;const xhaltonunsupportedchar:boolean):boolean;
-function utf8__toascii2(s,d:pobject;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):boolean;//16feb2026
-function utf8__toasciib(const xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):string;//31mar2025
-
-function utf8__to7bitText(s,d:pobject;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):boolean;//16feb2026
-function utf8__to7bitTextb(const xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):string;//16feb2026
-procedure utf8__to7bitTextb2(var xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean);//16feb2026
-procedure utf8__to7bitTextb3(var xtext:string);//16feb2026
-
-//mail procs -------------------------------------------------------------------
-function mail__date(x:tdatetime):string;
-function mail__fromqp(_s:string):string;//quoted-printable, 22mar2024: updated "_" as a space
-function mail__encodefield(x:string;xencode:boolean):string;//like subject etc
-function mail__extractaddress(x:string):string;//03apr2025
-function mail__filteraddresses(x:string;xaddressesonly,xwraponlines:boolean):string;//06apr2025
-function mail__diskname(xdate:tdatetime;xsubject:string;xtrycount:longint):string;//21nov2024: fixed ":" oversight
-function mail__makemsg(x:pobject;xsenderip,xfrom,xto,xsubject,xmsg:string;xdate:tdatetime;var e:string):boolean;//06apr2025, 09feb2024
-function mail__makemsg2(x:pobject;xserverdomain,xuseragent,xsenderip,xfrom,xto,xcc,xbcc,xsubject,xmsg:string;xdate:tdatetime;xattachments:tfastvars;var e:string):boolean;//07apr2025
-function mail__writemsg(x:pobject;xsubject,xdestfolder:string):boolean;
-function mail__findfield(x:pobject;const xfieldname:string;xoutput:pobject):boolean;
-function mail__findfield2(x:pobject;const xfieldname:string;xdecodelines:boolean;xoutput:pobject):boolean;
 
 
 //memory management procs ------------------------------------------------------
@@ -3932,7 +3956,7 @@ procedure str__free3(const x,x2,x3:pobject);
 function str__multipart_nextitem(x:pobject;var xpos:longint;var xboundary,xname,xfilename,xcontenttype:string;xoutdata:pobject):boolean;//03apr2025
 
 //.object support
-function str__add(const x,xadd:pobject):boolean;
+function str__add(const x,xadd:pobject):boolean;//29oct2026
 function str__add2(const x,xadd:pobject;const xfrom,xto:longint64):boolean;
 function str__add3(const x,xadd:pobject;const xfrom,xlen:longint64):boolean;
 function str__add31(const x,xadd:pobject;const xfrom1,xlen:longint64):boolean;
@@ -3944,6 +3968,7 @@ function str__del3(const x:pobject;const xfrom,xlen:longint64):boolean;//06feb20
 function str__del(const x:pobject;xfrom,xto:longint64):boolean;//06feb2024
 function str__is8(const x:pobject):boolean;//x is tstr8
 function str__is9(const x:pobject):boolean;//x is tstr9
+function str__as89(const s:pobject;var s8:tstr8;var s9:tstr9):boolean;//06nov2026
 function str__as8(const x:pobject):tstr8;//use with care
 function str__as9(const x:pobject):tstr9;//use with care
 function str__as8f(const x:pobject):tstr8;//uses fallback var instead of failure - 30aug2025
@@ -3954,12 +3979,12 @@ function str__asame2(const x:pobject;const xfrom:longint64;const xlist:array of 
 function str__asame3(const x:pobject;xfrom:longint64;const xlist:array of byte;const xcasesensitive:boolean):boolean;//20jul2024
 
 function str__aadd(x:pobject;const xlist:array of byte):boolean;//20jul2024
-function str__addbyt1(x:pobject;xval:longint):boolean;
-function str__addbol1(x:pobject;xval:boolean):boolean;
-function str__addchr1(x:pobject;xval:char):boolean;
-function str__addsmi2(x:pobject;xval:smallint):boolean;
-function str__addwrd2(x:pobject;xval:word):boolean;
-function str__addint4(x:pobject;xval:longint):boolean;
+function str__addbyt1(const x:pobject;const xval:longint):boolean;
+function str__addbol1(const x:pobject;const xval:boolean):boolean;
+function str__addchr1(const x:pobject;const xval:char):boolean;
+function str__addsmi2(const x:pobject;const xval:smallint):boolean;
+function str__addwrd2(const x:pobject;const xval:word):boolean;
+function str__addint4(const x:pobject;const xval:longint):boolean;
 
 //..pdl support -> direct memory support
 function str__padd(const s:pobject;const x:pdlbyte;const xsize:longint64):boolean;//15feb2024
@@ -4157,22 +4182,31 @@ function low__date0(xyear,xmonth,xday:longint;xformat:longint;xfullname:boolean)
 function low__time0(xhour,xminute:longint;xsep,xsep2:string;xuppercase,xshow24:boolean):string;
 function low__hour0(xhour:longint;xsep:string;xuppercase,xshowAMPM,xshow24:boolean):string;
 
-function date__date:tdatetime;
-function date__time:tdatetime;
-function date__now:tdatetime;
-function date__filedatetodatetime(xfiledate:longint):tdatetime;
-function date__isleapyear(year:word):boolean;
-function date__encodedate(xyear,xmonth,xday:longint):tdatetime;//05may2025
-function date__encodetime(xhour,xmin,xsec,xmsec:longint):tdatetime;
+function  date__date:tdatetime;
+function  date__time:tdatetime;
+function  date__now:tdatetime;
+function  date__filedatetodatetime(xfiledate:longint):tdatetime;
+function  date__isleapyear(year:word):boolean;
+function  date__encodedate(xyear,xmonth,xday:longint):tdatetime;//05may2025
+function  date__encodetime(xhour,xmin,xsec,xmsec:longint):tdatetime;
 procedure date__decodetime(time:tdatetime;var hour,min,sec,msec:word);
-function date__dayofweek(date:tdatetime):longint;
-function date__datetimetotimestamp(datetime:tdatetime):ttimestamp;
-function date__timestamptodatetime(const timestamp:ttimestamp):tdatetime;
+function  date__dayofweek(date:tdatetime):longint;
+function  date__datetimetotimestamp(datetime:tdatetime):ttimestamp;
+function  date__timestamptodatetime(const timestamp:ttimestamp):tdatetime;
 
 
 //string procs -----------------------------------------------------------------
+
 function low__lcolumn(const x:string;xmaxwidth:longint):string;//left aligned column - 09apr2024
 function low__rcolumn(const x:string;xmaxwidth:longint):string;//right aligned column - 09apr2024
+
+//.4bit
+function hex__char(const x:byte):char;//20oct2026
+function hex__charLow(const x:byte):char;//20oct2026
+
+//.8bit
+function int1__hex2(const x:longint32):string;//20oct2026
+function hex2__int1(const x:string):byte;//20oct2026
 
 //.16bit
 function hex4__int2(const x:string):word;//26aug2025
@@ -4192,17 +4226,12 @@ function hex16__int8(const x:string):comp;//26aug2025
 function int8__hex16RL(const x:comp):string;//26aug2025
 function hex16__int8RL(const x:string):comp;//26aug2025
 
-function low__hexchar(x:byte):char;
-function low__hex(x:byte):string;
-function low__hexchar_lowercase(x:byte):char;//02jan2025
-function low__hex_lowercase(x:byte):string;//02jan2025
-function low__hexint2(const x2:string):longint;//26dec2023
 function low__splitstr(const s:string;const ssplitval:byte;var dn,dv:string):boolean;//03may2026, 02mar2025
 function low__splitstrSAFE(s:string;const ssplitval:byte;var dn,dv:string):boolean;//03may2026, 02mar2025
 function low__splitto(s:string;d:tfastvars;ssep:string):boolean;//13jan2024
-function low__ref32u(const x:string):longint;//1..32 - 25dec2023, 04feb2023
-function low__ref256(const x:string):comp;//01may2025: never 0 for valid input, 28dec2023
-function low__ref256U(const x:string):comp;//01may2025: never 0 for valid input, 28dec2023
+function low__ref32u(const x:string):longint32;//1..32 - 23oct2026, 25dec2023, 04feb2023
+function low__ref256(const x:string):longint64;//23oct2026, 01may2025: never 0 for valid input, 28dec2023
+function low__ref256U(const x:string):longint64;//23oct2026, 01may2025: never 0 for valid input, 28dec2023
 function low__nextline0(xdata,xlineout:tstr8;var xpos:longint):boolean;//31mar2025, 17oct2018
 function low__nextline1(const xdata:string;var xlineout:string;xdatalen:longint;var xpos:longint):boolean;//31mar2025, 20mar2025, 17oct2018
 //.size
@@ -4236,6 +4265,10 @@ function low__fromb64str(x:string):string;
 //.hex procs
 function low__tohex(s,d:tstr8;xlinelength:longint):boolean;//16feb2026
 function low__fromhex(s,d:tstr8):boolean;//19feb2026
+
+function str__tohex(const s,d:pobject;const dlinelength:longint32;duppercase:boolean):boolean;//06nov2026
+function str__hex(const v:string;const dlineLength:longint32;const duppercase:boolean):string;//06nov2026
+function hex__str(const v:string):string;//06nov2026
 
 
 //general procs ----------------------------------------------------------------
@@ -4285,7 +4318,7 @@ function stripwhitespace_lt(const x:string):string;//strips leading and trailing
 function stripwhitespace(const x:string;xstriptrailing:boolean):string;
 procedure striptrailingrcodes(var x:string);
 function striptrailingrcodesb(const x:string):string;
-function freeobj(x:pobject):boolean;//01sep2025, 22jun2024: Updated for GUI support, 09feb2024: Added support for "._rtmp" & mustnil, 02feb2021, 05may2020, 05DEC2011, 14JAN2011, 15OCT2004
+function freeobj(const x:pobject):boolean;//01sep2025, 22jun2024: Updated for GUI support, 09feb2024: Added support for "._rtmp" & mustnil, 02feb2021, 05may2020, 05DEC2011, 14JAN2011, 15OCT2004
 
 function math__power32(xvalue:extended;xtothepowerof:longint):extended;
 function math_abs(const x:longint):longint;//05jan2026
@@ -4312,7 +4345,7 @@ function pert32(const xval,xlimit:comp):longint;
 
 function text__tooneline(const s:string;xreturncodeASchar:char):string;
 function text__fromoneline(const s:string;xreturncodeASchar:char):string;
-procedure text__filterText(x:tstr8);
+procedure text__filterText(var x:tstr8);
 function guid__make(xname:string;xcompact:boolean):string;//11apr2025
 function guid__short_date(x:tdatetime;xcompact:boolean):string;//11apr2025
 function insstr(const x:string;y:boolean):string;
@@ -4351,9 +4384,9 @@ function low__setlen0(var x:string;const xlen:longint64):boolean;//clears memory
 function low__len(const x:string):longint64;//05dec2024
 function low__len32(const x:string):longint32;
 function pchar__strlen(str:pchar):cardinal;//01may2025
-function floattostrex2(x:extended):string;//19DEC2007
-function floattostrex(x:extended;dig:byte):string;//07NOV20210
-function strtofloatex(x:string):extended;//triggers less errors (x=nil now covered)
+function floattostrex2(const x:extended):string;//19DEC2007
+function floattostrex(const x:extended;const dig:byte):string;//07NOV20210
+function strtofloatex(const x:string):extended;//triggers less errors (x=nil now covered)
 function restrict32(const x:longint64)                                            :longint32;//limit32 - 13jul2026, 14dec2025, 24jul2025, 24jan2016
 function restrict64(const x:longint64)                                            :longint64;//13jul2026, 24jan2016
 function fr64(x,xmin,xmax:extended):extended;
@@ -4629,13 +4662,21 @@ function low__rword(x:word):word;
 //.32bit
 function low__sum32(const x:array of longint):longint;
 procedure low__orderint(var x,y:longint);
+
+function frcmin(const x,min:iauto):iauto;//07nov2026
+function frcmax(const x,max:iauto):iauto;//07nov2026
+function frcrange(const x,min,max:iauto):iauto;//07nov2026
+function frcrange2(var x:iauto;const xmin,xmax:iauto):boolean;//07nov2026
+
 function frcmin32(const x,min:longint):longint;
 function frcmax32(const x,max:longint):longint;
 function frcrange32(const x,min,max:longint):longint;
 function frcrange322(var x:longint32;const xmin,xmax:longint32):boolean;//14dec2025, 20dec2023, 29apr2020
+
 function frcminD64(const x,min:double):double;//05jul2025
 function frcmaxD64(const x,max:double):double;
 function frcrangeD64(const x,min,max:double):double;
+
 function str__to32(const x:string):longint;//02oct2025, 21jun2024, 29AUG2007
 function str__from32(const x:longint):string;//02oct2025, 21jun2024, 29AUG2007
 function smallest32(const a,b:longint):longint;
@@ -4785,13 +4826,13 @@ procedure low__swapvars8(var x,y:tvars8);//07dec2023
 //logic helpers support -------------------------------------------------------
 //special note: low__true* and low__or* designed to execute ALL input values fully
 //note: force predictable logic and proc execution by forcing ALL supplied inbound values to be fully processed BEFORE a result is returned, thus allowing for muiltiple and combined dynamic value processing and yet yeilding stable and consistent output
-function low__true1(v1:boolean):boolean;
-function low__true2(v1,v2:boolean):boolean;//all must be TRUE to return TRUE
-function low__true3(v1,v2,v3:boolean):boolean;
-function low__true4(v1,v2,v3,v4:boolean):boolean;
-function low__true5(v1,v2,v3,v4,v5:boolean):boolean;
-function low__or2(v1,v2:boolean):boolean;//only one must be TRUE to return TRUE
-function low__or3(v1,v2,v3:boolean):boolean;//only one must be TRUE to return TRUE
+function low__true1(const v1:boolean):boolean;
+function low__true2(const v1,v2:boolean):boolean;//all must be TRUE to return TRUE
+function low__true3(const v1,v2,v3:boolean):boolean;
+function low__true4(const v1,v2,v3,v4:boolean):boolean;
+function low__true5(const v1,v2,v3,v4,v5:boolean):boolean;
+function low__or2(const v1,v2:boolean):boolean;//only one must be TRUE to return TRUE
+function low__or3(const v1,v2,v3:boolean):boolean;//only one must be TRUE to return TRUE
 
 
 //crc32 support ----------------------------------------------------------------
@@ -4879,27 +4920,31 @@ function low__cdmixb(x:tstr8):tstr8;//critical-decoder dual layer
 
 
 //multi-undo procs - 25jun2022 -------------------------------------------------
-function mundo__init(x:tstr8;xlimit:longint):boolean;
-function mundo__startsplit(x:tstr8;var u,r,f:tstr8):boolean;
+
+function mundo__slotLimit:longint32;
+function mundo__init(const x:tstr8;xlimit:longint32):boolean;
+function mundo__startsplit(const x:tstr8;var u,r,f:tstr8):boolean;
 function mundo__start(var u,r,f:tstr8):boolean;
 function mundo__finish(var x,u,r,f:tstr8):boolean;
-function mundo__make(x,u,r,f:tstr8):boolean;
-function mundo__split(x,u,r,f:tstr8):boolean;
+function mundo__make(const x,u,r,f:tstr8):boolean;
+function mundo__split(const x,u,r,f:tstr8):boolean;
 function mundo__clear(x:tstr8):boolean;
-function mundo__newslot(x:tstr8):longint;
-function mundo__insertslotREDO(x:tstr8):longint;//02jul2022
-function mundo__canundo(x:tstr8):boolean;
-function mundo__undo(x:tstr8;var xslot:longint):boolean;
-function mundo__canredo(x:tstr8):boolean;
+function mundo__newslot(x:tstr8):longint32;
+function mundo__insertslotREDO(x:tstr8):longint32;//02jul2022
+function mundo__canundo(const x:tstr8):boolean;
+function mundo__undo(x:tstr8;var xslot:longint32):boolean;
+function mundo__canredo(const x:tstr8):boolean;
 function mundo__redoflush(x:tstr8):boolean;//true=did something, false=nothing changed - 02may2023
-function mundo__redo(x:tstr8;var xslot:longint):boolean;
+function mundo__redo(x:tstr8;var xslot:longint32):boolean;
 function mundo__debug(x:tstr8):string;
+
 //.redo support
-function mundo__redocount(x:tstr8):longint;
-function mundo__redofind(x:tstr8;xindex:longint;var xslot:longint):boolean;//
+function mundo__redocount(x:tstr8):longint32;
+function mundo__redofind(x:tstr8;const xindex:longint32;var xslot:longint32):boolean;
+
 //.undo support
-function mundo__undocount(x:tstr8):longint;
-function mundo__undofind(x:tstr8;xindex:longint;var xslot:longint):boolean;//
+function mundo__undocount(x:tstr8):longint32;
+function mundo__undofind(x:tstr8;const xindex:longint32;var xslot:longint32):boolean;
 
 
 //background mask support -------------------------------------------------------
@@ -4933,7 +4978,7 @@ function dialog__updateFilterList(var xfilterlist:string;const dindex:longint):b
 
 implementation
 
-uses main, gossio {$ifdef gui},gossdat ,gossgui{$endif} {$ifdef snd},gosssnd{$endif} ,gossimg, gossnet,
+uses main, gossdoc, gossio {$ifdef gui},gossdat ,gossgui{$endif} {$ifdef snd},gosssnd{$endif} ,gossimg, gossnet,
      gossfast, gosszip{$ifdef jpeg},gossjpg{$endif} {$ifdef gamecore},gossgame{$endif}, gosstext;
 
 
@@ -6085,46 +6130,55 @@ end;
 
 
 //info procs -------------------------------------------------------------------
-function app__info(xname:string):string;
+
+function app__info(const xname:string):string;
 begin
-result:=info__rootfind(xname);
+
+result                :=info__rootfind(xname);
+
 end;
 
-function app__bol(xname:string):boolean;
+function app__bol(const xname:string):boolean;
 begin
-result:=strbol(app__info(xname));
+
+result                :=strbol(app__info(xname));
+
 end;
 
 function app____netmore:tobject;//optional - return a custom "tnetmore" object for a custom helper object for each network record -> once assigned to a network record, the object remains active and ".clear()" proc is used to reduce memory/clear state info when record is reset/reused
 begin
-result:=app__netmore;
+
+result                :=app__netmore;
+
 end;
 
 function info__root(xname:string):string;//information specific to this unit of code
 begin
-//defaults
-result:='';
 
-try
+//defaults
+result                :='';
+
 //init
-xname:=strlow(xname);
+xname                 :=strlow(xname);
 
 //check -> xname must be "gossroot.*"
 if (strcopy1(xname,1,9)='gossroot.') then strdel1(xname,1,9) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.7080'
-else if (xname='date')       then result:='09oct2026'
+if      (xname='ver')        then result:='4.00.7210'
+else if (xname='date')       then result:='18nov2026'
 else if (xname='name')       then result:='Root'
 else if (xname='mode.int')   then result:=intstr32(info__mode)
 else if (xname='mode')       then
    begin
 
    case info__mode of
-   1    :result:='Console App';
-   2    :result:='Windows Service';
-   3    :result:='GUI App';
-   else  result:='Unknown';
+
+   1    :result       :='Console App';
+   2    :result       :='Windows Service';
+   3    :result       :='GUI App';
+   else  result       :='Unknown';
+
    end;//case
 
    end
@@ -6133,40 +6187,57 @@ else
    //nil
    end;
 
-except;end;
 end;
 
 function info__rootfind(xname:string):string;//central point from which to find the requested information - 05feb2026, 08aug2025, 09apr2024
 var
-   v:longint;
+   v                  :longint32;
 
-   function vbuildno(x:string):longint;//add build number
+   function vbuildno(const x:string):longint32;//add build number
    var
-      p:longint;
+      p               :longint32;
    begin
-   result:=0;
+
+   //defaults
+   result             :=0;
 
    if (x<>'') then
       begin
+
       for p:=low__len32(x) downto 1 do if (x[p-1+stroffset]='.') then
          begin
-         result:=strint32(strcopy1(x,p+1,low__len32(x)));
+
+         result       :=frcmin32(strint32(  strcopy1( x ,succ(p) ,low__len32(x) )  ),0);
+
          break;
+
          end;//p
+
       end;
+
    end;
+
 begin
+
 //defaults
-result:='';
+result                :='';
 
 //get
+
 //.app
 if (result='') then
    begin
-   result:=info__app(xname);
+
+   result             :=info__app(xname);
 
    //.fallback to internal defaults for key values - 08aug2025
-   if (result='') then result:=app__valuedefaults(xname);
+   if (result='') then
+      begin
+
+      result          :=app__valuedefaults(xname);
+
+      end;
+
    end;
 
 if (result='') then result:=info__root(xname);
@@ -6196,23 +6267,39 @@ if (result='') then result:=info__game(xname);//08aug2025
 {$endif}
 
 if (result='') then result:=info__text(xname);//13feb2026
+if (result='') then result:=info__doc (xname);//29oct2026
 
 
 //global values
 if (result='') then
    begin
+
    //init
-   xname:=strlow(xname);
+   xname              :=strlow(xname);
 
    //get
-   if      (xname='mode.int')         then result:=info__rootfind('gossroot.'+xname)
-   else if (xname='mode')             then result:=info__rootfind('gossroot.'+xname)
+   if      (xname='mode.int')         then
+      begin
+
+      result          :=info__rootfind('gossroot.'+xname);
+
+      end
+
+   else if (xname='mode')             then
+      begin
+
+      result          :=info__rootfind('gossroot.'+xname);
+
+      end
+
    else if (xname='gossamer.build')   then
       begin
+
       v:=
       vbuildno(app__info('gossroot.ver'))+
       vbuildno(app__info('gossio.ver'))+
       vbuildno(app__info('gossimg.ver'))+
+      vbuildno(app__info('gossdoc.ver'))+//29oct2026
       vbuildno(app__info('gossteps.ver'))+//10mar2026
       vbuildno(app__info('gossnet.ver'))+
       vbuildno(app__info('gosswin.ver'))+
@@ -6225,77 +6312,109 @@ if (result='') then
       vbuildno(app__info('gossfast.ver'))+//05feb2026
       vbuildno(app__info('gossgame.ver'))+//05feb2026
       0;
+
       //set
-      result:=intstr64(v);
+      result          :=intstr64(v);
+
       end
-   else if (xname='gossamer.ver')     then result:='4.00.'+app__info('gossamer.build');
+
+   else if (xname='gossamer.ver')     then
+      begin
+
+      result          :='4.00.'+app__info('gossamer.build');
+
+      end;
+
    end;
+
 end;
 
-function info__mode:longint;
+function info__mode:longint32;
 begin
+
 //get
 if (info_mode<=0) then
    begin
-   info_mode:=1;
+
+   info_mode          :=1;
 
    end;
+
 //set
-result:=info_mode;
+result                :=info_mode;
+
 end;
 
 function splash__findvalue2(const x:longint;const xnameORvalue:boolean):string;//17dec2025
 var
-   xname,xvalue:string;
+   xname              :string;
+   xvalue             :string;
+
 begin
 
 splash__findvalue(x,xname,xvalue);
-result:=low__aorbstr(xname,xvalue,xnameORvalue);
+
+result                :=low__aorbstr(xname,xvalue,xnameORvalue);
 
 end;
 
 function splash__findvalue(const x:longint;var xname,xvalue:string):boolean;//14jul2025
 var
-   v:string;
+   v                  :string;
 
-   procedure xset(dname,dvalue:string);
+   procedure xset(const dname,dvalue:string);
    begin
-   xname:=dname;
-   xvalue:=dvalue;
+
+   xname              :=dname;
+   xvalue             :=dvalue;
+
    end;
 begin
+
 //defaults
-result:=false;
-xname:='';
-xvalue:='';
+result                :=false;
+xname                 :='';
+xvalue                :='';
 
 //get
 case x of
+
 0:xset('Version',app__info('ver')+'  ( '+k64(app__bits)+' bit )');
+
 1:xset('License',strdefb(app__info('license'),low__aorbstr('Free','Paid',system_paid)));
+
 2:begin
 
    case app__guimode of
-   true:v:=low__aorbstr('Desktop App','Microsoft Store App',system_msix);//10dec2025
-   else v:='Console App';
+
+   true:v             :=low__aorbstr('Desktop App','Microsoft Store App',system_msix);//10dec2025
+   else v             :='Console App';
+
    end;//case
 
-   v:=v+' ('+low__aorbstr('Standard','Multi-Panel Plus',programplus)+' Edition)';
+   v                  :=v + ' ('+low__aorbstr('Standard','Multi-Panel Plus',programplus)+' Edition)';
+
    xset('Type',v);
 
    end;
+
 3:xset('Codebase','Gossamer v'+app__info('gossamer.ver'));
+
 4:if (app__info('splash.infoname')<>'') then xset( app__info('splash.infoname'), app__info('splash.infoline') );//14jul2025
+
 5:begin
 
-   v:=app__info('nocopyright');
+   v                  :=app__info('nocopyright');
+
    if (v<>'') then xset('',v) else xset('Copyright',strdefb(app__info('copyright'),'© '+low__yearstr(2025)));
 
    end;
+
 end;//case
 
 //successful
-result:=(xname<>'') or (xvalue<>'');
+result                :=(xname<>'') or (xvalue<>'');
+
 end;
 
 
@@ -6304,14 +6423,14 @@ end;
 function msix__active:boolean;//10dec2025
 begin
 
-result:=system_msix;
+result                :=system_msix;
 
 end;
 
 function msix__tags:string;//12dec2025
 begin
 
-result:=strup( app__info('msix.tags') );
+result                :=strup( app__info('msix.tags') );
 
 end;
 
@@ -6830,12 +6949,14 @@ satMSIXmode           :r('OS.MSIX.Active');//10dec2025
 satMSIXtags           :r('OS.MSIX.Tags');//01feb2026, 10dec2025
 satDPIawareV2         :r('OS.Dpi.Aware.v2');
 satAccessibility      :r('Accessibility');//23jul2026, 10jul2026
+{//????????
 satAccessibilitySC    :r(' + slot count');
 satAccessibilityMC    :r(' + messages');
 satAccessibilityQC    :r(' + query interface');
 satAccessibilityUC    :r(' + iunknown');
 satAccessibilityDC    :r(' + idispatch');
 satAccessibilityAC    :r(' + iaccessible');
+{}//???????????????
 satScale              :r('Active Scaling');//10dec2025
 satGUIresources       :r('OS.GUI.Resources');
 satDLLload            :r('OS.DLL.Load');
@@ -7166,12 +7287,12 @@ satMSIXmode           :xset0(low__yes(msix__active));//10dec2025
 satMSIXtags           :xset0(strdefb(msix__tagsLabel,'<none>'));//12dec2025
 satDPIawareV2         :xset0(low__yes(system_monitors_dpiAwareV2));
 satAccessibility      :{$ifdef gui}xset0( auto__status(true) );{$else}xset0('Offline');{$endif}
-satAccessibilitySC    :{$ifdef gui}xset0( k64(auto__info.slotCount) );{$else}xset0('0');{$endif}
-satAccessibilityMC    :{$ifdef gui}xset0( k64(auto__info.mcount) );{$else}xset0('0');{$endif}
-satAccessibilityQC    :{$ifdef gui}xset0( k64(auto__info.qcount) );{$else}xset0('0');{$endif}
-satAccessibilityUC    :{$ifdef gui}xset0( k64(auto__info.ucount) );{$else}xset0('0');{$endif}
-satAccessibilityDC    :{$ifdef gui}xset0( k64(auto__info.dcount) );{$else}xset0('0');{$endif}
-satAccessibilityAC    :{$ifdef gui}xset0( k64(auto__info.acount) );{$else}xset0('0');{$endif}
+//????satAccessibilitySC    :{$ifdef gui}xset0( k64(auto__info.slotCount) );{$else}xset0('0');{$endif}
+//????satAccessibilityMC    :{$ifdef gui}xset0( k64(auto__info.mcount) );{$else}xset0('0');{$endif}
+//????satAccessibilityQC    :{$ifdef gui}xset0( k64(auto__info.qcount) );{$else}xset0('0');{$endif}
+//????satAccessibilityUC    :{$ifdef gui}xset0( k64(auto__info.ucount) );{$else}xset0('0');{$endif}
+//????satAccessibilityDC    :{$ifdef gui}xset0( k64(auto__info.dcount) );{$else}xset0('0');{$endif}
+//????satAccessibilityAC    :{$ifdef gui}xset0( k64(auto__info.acount) );{$else}xset0('0');{$endif}
 satScale              :{$ifdef gui}xset0( k64(round( viscale*100 )) +'%');{$else}xset0('?');{$endif}
 satGUIresources       :xset0( low__aorbstr('-',k64(app__guiresources),app__guiresources>=0) );
 satDLLload            :xset0(k64(win__dllload)+' / '+k64(dllcount));//07sep2025
@@ -7297,1217 +7418,6 @@ if (sysleak_label[x]<>'') then
 except;end;
 end;
 
-
-//utf-8 procs ------------------------------------------------------------------
-function utf8__charlen(x:byte):longint;
-begin
-if      (x>=240) then result:=4//4 byte character
-else if (x>=224) then result:=3//3 byte
-else if (x>=192) then result:=2//2 byte
-else                  result:=1;//1 byte -> pure ascii (0..127)
-end;
-
-function utf8__charpoint0(x:pobject;var xpos:longint):longint;
-const
-   vm=64;
-var
-   v1,v2,v3,v4:longint;
-begin
-//defaults
-result:=0;
-
-//get
-case utf8__charlen(str__bytes0(x,xpos)) of
-1:begin
-   result:=str__bytes0(x,xpos+0);
-   inc(xpos,1);
-   end;
-2:begin
-   v1:=str__bytes0(x,xpos+0)-192;
-   v2:=str__bytes0(x,xpos+1)-128;
-   if (v1>=0) and (v2>=0) then result:=(v1*vm)+v2;
-   inc(xpos,2);
-   end;
-3:begin
-   v1:=str__bytes0(x,xpos+0)-224;
-   v2:=str__bytes0(x,xpos+1)-128;
-   v3:=str__bytes0(x,xpos+2)-128;
-   if (v1>=0) and (v2>=0) and (v3>=0) then result:=(v1*vm*vm)+(v2*vm)+v3;
-   inc(xpos,3);
-   end;
-4:begin
-   v1:=str__bytes0(x,xpos+0)-240;
-   v2:=str__bytes0(x,xpos+1)-128;
-   v3:=str__bytes0(x,xpos+2)-128;
-   v4:=str__bytes0(x,xpos+3)-128;
-   if (v1>=0) and (v2>=0) and (v3>=0) and (v4>=0) then result:=(v1*vm*vm*vm)+(v2*vm*vm)+(v3*vm)+v4;
-   inc(xpos,4);
-   end
-else
-   begin
-   inc(xpos,1);
-   end;
-end;//case
-end;
-
-function utf8__encodetohtml(s,d:pobject;dappend,dasfilename,dnoslashes:boolean):boolean;
-label
-   redo,skipend;
-var
-   v,spos,slen:longint;
-
-   procedure xadd(x:string);
-   begin
-   str__sadd(d,x);
-   end;
-
-   procedure xaddcode(x:longint);
-   begin
-   str__sadd(d,'&#'+intstr32(x)+';');
-   end;
-begin
-//defaults
-result:=false;
-
-//check
-if (not str__ok(s)) or (not str__ok(d)) then exit;
-
-//init
-if not dappend then str__clear(d);
-
-//get
-spos:=0;
-slen:=str__len32(s);
-if (slen<=0) then goto skipend;
-
-redo:
-v:=utf8__charpoint0(s,spos);
-if (v=ssmorethan) or (v=sslessthan) or (v=ssampersand) or (v=ssdoublequote) then xaddcode(v)//absolute minimum to make it html safe
-else if dasfilename and ((v=sssemicolon) or (v=ssasterisk) or (v=ssquestion) or (v=ssdoublequote) or (v=sslessthan) or (v=ssmorethan) or (v=sspipe) or (v=ssdollar)) then xaddcode(v)
-else if dnoslashes and ((v=ssslash) or (v=ssbackslash)) then xaddcode(v)
-else if (v>=32) and (v<=127) then xadd(char(v))//visible ascii
-else xaddcode(v);
-
-//loop
-if (spos<slen) then goto redo;
-
-//successful
-result:=true;
-skipend:
-end;
-
-function utf8__encodetohtmlstr(x:string;xasfilename,xnoslashes:boolean):string;
-var
-   s,d:tobject;
-begin
-//defaults
-result:='';
-
-try
-//init
-s:=str__new9;
-str__settext(@s,x);
-d:=str__new9;
-//get
-utf8__encodetohtml(@s,@d,false,xasfilename,xnoslashes);
-//set
-result:=str__text(@d);
-except;end;
-try
-str__free(@s);
-str__free(@d);
-except;end;
-end;
-
-function utf8__toasciib(const xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):string;
-var
-   s,d:tstr8;
-begin
-
-//defaults
-result:='';
-s     :=nil;
-d     :=nil;
-
-try
-
-//init
-s     :=str__new8;
-d     :=str__new8;
-
-//get
-s.text:=xtext;
-utf8__toascii2(@s,@d,xhaltonunsupportedchar,xMarkUnknownChars);
-
-//reduce ram
-str__clear(@s);
-
-//set
-result:=d.text;
-
-except;end;
-
-//free
-str__free(@s);
-str__free(@d);
-
-end;
-
-function utf8__toascii(s,d:pobject;const xhaltonunsupportedchar:boolean):boolean;
-begin
-result:=utf8__toascii2(s,d,xhaltonunsupportedchar,true);
-end;
-
-function utf8__toascii2(s,d:pobject;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):boolean;//16feb2026
-label
-   redo,skipend;
-var
-   v,slen,spos:longint;
-   d8:tstr8;//pointer only
-
-   procedure dadd(x:byte);
-   begin
-
-   if (d8<>nil) then d8.addbyt1(x) else str__addbyt1(d,x);
-
-   end;
-
-begin
-
-//defaults
-result:=false;
-
-try
-
-//check
-if not str__lock2(s,d) then goto skipend;
-if (s=d)               then goto skipend;
-
-//init
-str__clear(d);
-spos :=0;
-slen :=str__len32(s);
-
-if str__is8(d) then d8:=(d^ as tstr8) else d8:=nil;
-
-//check
-if (slen<=0) then
-   begin
-   result:=true;
-   goto skipend;
-   end;
-
-//get
-redo:
-if (spos<slen) then
-   begin
-
-   v:=utf8__charpoint0(s,spos);
-
-   case v of
-   0..255:dadd(v);
-   8212  :begin//long dash
-      dadd(ssdash);
-      dadd(ssdash);
-      end;
-   8216  :dadd(sssinglequote);//left single quote
-   8217  :dadd(sssinglequote);//right single quote
-   8220  :dadd(ssdoublequote);//left double quote
-   8221  :dadd(ssdoublequote);//right double quote
-   8230  :begin//eclipse "..."
-      dadd(ssdot);
-      dadd(ssdot);
-      dadd(ssdot);
-      end;
-   65279 :dadd(ssspace);//non-breaking-space
-
-   else
-      begin
-
-      if xhaltonunsupportedchar then goto skipend
-      else if xMarkUnknownChars then dadd(ssQuestion);//16feb2026
-
-      end;
-
-   end;//case
-
-   goto redo;
-   end;
-
-//successful
-result:=true;
-
-skipend:
-except;end;
-
-//free
-str__uaf2(s,d);
-
-end;
-
-function utf8__to7bitText(s,d:pobject;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):boolean;//16feb2026
-label
-   redo,skipend;
-var
-   v,slen,spos:longint;
-   d8:tstr8;//pointer only
-
-   procedure dadd(x:byte);
-   begin
-
-   if (d8<>nil) then d8.addbyt1(x) else str__addbyt1(d,x);
-
-   end;
-
-begin
-
-//defaults
-result:=false;
-
-try
-
-//check
-if not str__lock2(s,d) then goto skipend;
-if (s=d)               then goto skipend;
-
-//init
-str__clear(d);
-spos :=0;
-slen :=str__len32(s);
-
-if str__is8(d) then d8:=(d^ as tstr8) else d8:=nil;
-
-//check
-if (slen<=0) then
-   begin
-   result:=true;
-   goto skipend;
-   end;
-
-//get
-redo:
-
-if (spos<slen) then
-   begin
-
-   v:=utf8__charpoint0(s,spos);
-
-   case v of
-   9,10,13,32..127:dadd(v);//OK
-   160            :dadd(32);
-   8212  :begin//long dash
-      dadd(ssdash);
-      dadd(ssdash);
-      end;
-   8216  :dadd(sssinglequote);//left single quote
-   8217  :dadd(sssinglequote);//right single quote
-   8220  :dadd(ssdoublequote);//left double quote
-   8221  :dadd(ssdoublequote);//right double quote
-   8230  :begin//eclipse "..."
-      dadd(ssdot);
-      dadd(ssdot);
-      dadd(ssdot);
-      end;
-   65279 :dadd(ssspace);//non-breaking-space
-
-   else
-      begin
-
-      if      xhaltonunsupportedchar then goto skipend
-      else if xMarkUnknownChars      then dadd(ssQuestion);//16feb2026
-
-      end;
-
-   end;//case
-
-   goto redo;
-   end;
-
-//successful
-result:=true;
-
-skipend:
-except;end;
-
-//free
-str__uaf2(s,d);
-
-end;
-
-function utf8__to7bitTextb(const xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean):string;//16feb2026
-var
-   s,d:tstr8;
-begin
-
-//defaults
-result:='';
-s     :=nil;
-d     :=nil;
-
-try
-
-//init
-s     :=str__new8;
-d     :=str__new8;
-
-//get
-s.text:=xtext;
-
-utf8__to7bitText(@s,@d,xhaltonunsupportedchar,xMarkUnknownChars);
-
-//reduce ram
-str__clear(@s);
-
-//set
-result:=d.text;
-
-except;end;
-
-//free
-str__free(@s);
-str__free(@d);
-
-end;
-
-procedure utf8__to7bitTextb2(var xtext:string;const xhaltonunsupportedchar,xMarkUnknownChars:boolean);//16feb2026
-begin
-try;xtext:=utf8__to7bitTextb(xtext,xhaltonunsupportedchar,xMarkUnknownChars);except;end;
-end;
-
-procedure utf8__to7bitTextb3(var xtext:string);//16feb2026
-begin
-try;xtext:=utf8__to7bitTextb(xtext,false,true);except;end;
-end;
-
-
-//mail procs -------------------------------------------------------------------
-function mail__date(x:tdatetime):string;
-var
-   y,m,d,hr,min,sec,msec:word;
-   oh,om,ox:longint;
-   oxstr:string;
-begin
-//defaults
-result:='';
-
-try
-//init
-low__decodedate2(x,y,m,d);
-low__decodetime2(x,hr,min,sec,msec);
-low__gmtOFFSET(oh,om,ox);
-oxstr:=low__aorbstr('-','+',ox>=0);
-//get
-result:=
- low__dayofweekstr(x,false)+', '+low__digpad11(d,2)+#32+low__month1(m,false)+#32+low__digpad11(y,4)+#32+
- low__digpad11(hr,2)+':'+low__digpad11(min,2)+':'+low__digpad11(sec,2)+#32+oxstr+low__digpad11(oh,2)+low__digpad11(om,2);
-except;end;
-end;
-
-function mail__fromqp(_s:string):string;//quoted-printable, 22mar2024: updated "_" as a space
-label
-   redo;
-var
-   s,sline,d:tstr8;
-   int1,p,spos:longint;
-
-   procedure xdecode;
-   label
-      redo;
-   var
-      rcodeok:boolean;
-      p:longint;
-   begin
-   //defaults
-   rcodeok:=false;
-   try
-   //init
-   if (sline.len<1) or (sline.pbytes[sline.len32-1]<>ssEqual) then rcodeok:=true;//line has a return code
-   if (sline.len>=1) and (sline.pbytes[sline.len32-1]=ssEqual) then sline.setlen(sline.len-1);//strip trailing "="
-   //get
-   p:=0;
-   redo:
-   inc(p);
-   if (p<=sline.len) then
-      begin
-      //get
-      if (sline.pbytes[p-1]=ssEqual) then
-         begin
-         d.sadd(char(low__hexint2(sline.str1[p+1,2])));
-         inc(p,2);
-         end
-      else if (sline.pbytes[p-1]=ssUnderscore) then d.aadd([ssSpace])//22mar2024
-      else d.sadd(sline.str1[p,1]);
-      //loop
-      goto redo;
-      end;
-   except;end;
-   try
-   //.append return code
-   if rcodeok then d.sadd(#10);
-   except;end;
-   end;
-begin
-//defaults
-result:='';
-
-try
-s:=nil;
-sline:=nil;
-d:=nil;
-//init
-s:=str__new8;
-s.sadd(_s);
-sline:=str__new8;
-d:=str__new8;//22mar2024
-spos:=0;
-//get
-redo:
-if low__nextline0(s,sline,spos) then
-   begin
-   //strip trailing white space "#32/#9"
-   int1:=0;
-   if (sline.len>=1) then for p:=sline.len32 downto 1 do if (sline.pbytes[p-1]<>9) and (sline.pbytes[p-1]<>32) then
-      begin
-      int1:=p;
-      break;
-      end;
-   if (int1<>sline.len) then sline.setlen(int1);
-   //decode
-   xdecode;
-   goto redo;
-   end;
-//set
-result:=d.text;
-except;end;
-try
-str__free(@s);
-str__free(@sline);
-str__free(@d);
-except;end;
-end;
-
-function mail__encodefield(x:string;xencode:boolean):string;//like subject etc
-label
-   encode1,decode2,redo1,redo2,skipend;
-var
-   xmustencode:boolean;
-   p:longint;
-   str2,str1,z:string;
-
-   function xextractline(var xresult,x,xtype,xline:string):boolean;
-   var
-      int1,p:longint;
-   begin
-   //defaults
-   result:=false;
-
-   try
-   xline:='';
-   xtype:='';//raw
-   //check
-   if (x='') then exit;
-   //start
-   if (x<>'') then for p:=1 to low__len32(x) do if (x[p-1+stroffset]='=') then
-      begin
-      if strmatch(strcopy1(x,p,8),'=?UTF-8?') then
-         begin
-         if (p>=2) and ((x[p-1-1+stroffset]=#32) or (x[p-1-1+stroffset]=#9)) then int1:=1 else int1:=0;
-         if (xresult='') then xresult:=strcopy1(x,1,p-1-int1);
-         xtype:=strlow(strcopy1(x,p+8,1));
-         strdel1(x,1,p+9);
-         break;
-         end
-      else if strmatch(strcopy1(x,p,13),'=?iso-8859-1?') then
-         begin
-         if (p>=2) and ((x[p-1-1+stroffset]=#32) or (x[p-1-1+stroffset]=#9)) then int1:=1 else int1:=0;
-         if (xresult='') then xresult:=strcopy1(x,1,p-1-int1);
-         xtype:=strlow(strcopy1(x,p+13,1));
-         strdel1(x,1,p+14);
-         break;
-         end;
-      end;
-   //finish
-   if (x<>'') and (xtype<>'') then for p:=1 to low__len32(x) do if (x[p-1+stroffset]='?') and strmatch(strcopy1(x,p,2),'?=') then
-      begin
-      result:=true;
-      xline:=strcopy1(x,1,p-1);
-      strdel1(x,1,p+1);
-      break;
-      end;
-   //raw
-   if (xtype='') then
-      begin
-      xline:=x;
-      result:=(x<>'');
-      x:='';
-      end;
-   except;end;
-   end;
-
-   function hascode(xn:string;var x:string):boolean;
-   begin
-   result:=false;
-
-   try
-   result:=
-    strmatch(strcopy1(x,1,low__len32(xn)),xn) or
-    strmatch(strcopy1(x,1,low__len32(xn)+1),#32+xn) or
-    strmatch(strcopy1(x,1,low__len32(xn)+1),#9+xn);//Old Netscape Mail 3.0 compatible - they used leading tabs instead of spaces back then
-   except;end;
-   end;
-begin
-//defaults
-result:='';
-
-try
-result:=x;
-xmustencode:=false;
-//check
-if xencode then goto encode1 else goto decode2;
-//-- Encode --
-encode1:
-if (not xmustencode) and (hascode('=?iso-8859-1?',x) or hascode('=?UTF-8?',x)) then xmustencode:=true;
-if (not xmustencode) and (low__len32(result)>60) then xmustencode:=true;//allows for 16c field name, e.g. "Subject: " = 9c
-if (not xmustencode) and (result<>'') then for p:=1 to low__len32(result) do
-   begin
-   case byte(result[p-1+stroffset]) of
-   32..126:;//OK - 7bit
-   else
-      begin
-      xmustencode:=true;
-      break;
-      end;
-   end;//case
-   end;//p
-if not xmustencode then goto skipend;
-//.encode - special note: last line of encoded content HAS NO trailing return code - 30oct2018
-z:=low__tob64bstr(result,0);
-result:='';
-redo1:
-str1:=strcopy1(z,1,44);
-if (str1<>'') then
-   begin
-   result:=result+insstr(#10+#32,result<>'')+'=?iso-8859-1?B?'+str1+'?=';//15c + base64 data
-   strdel1(z,1,44);
-   goto redo1;
-   end;
-goto skipend;
-
-//-- Decode --
-decode2:
-//init
-z:=stripwhitespace_lt(result);
-result:='';
-low__remchar(z,#10);
-low__remchar(z,#13);
-redo2:
-if xextractline(result,z,str1,str2) then
-   begin
-   //.base64
-   if (str1='b') then
-      begin
-      if (str2<>'') then result:=result+low__fromb64str(str2);
-      end
-   //.quoted-printable encoded chunk
-   else if (str1='q') then
-      begin
-      if (str2<>'') then result:=result+mail__fromqp(str2);
-      end
-   //.other
-   else result:=result+str2;
-   //loop
-   goto redo2;
-   end;
-goto skipend;
-
-skipend:
-//remove trailing return codes
-if (result<>'') then striptrailingrcodes(result);
-except;end;
-end;
-
-function mail__extractaddress(x:string):string;//03apr2025
-var
-   a:tfastvars;
-   p2,p:longint;
-   bol1:boolean;
-begin
-//defaults
-result:='';
-
-try
-a:=nil;
-//init
-a:=tfastvars.create;
-//get
-x:=x+'<';
-swapchars(x,#13,'<');
-swapchars(x,#10,'<');
-swapchars(x,'>','<');
-//.split multiple entries into a list of vars "v0..vN" within "a"
-low__splitto(x,a,'<');
-if (a.s['v0']<>'')      then result:=a.s['v0']
-else if (a.s['v1']<>'') then result:=a.s['v1']
-else if (a.s['v2']<>'') then result:=a.s['v2']
-else                         result:=a.s['v3'];
-//filter to raw email address only
-if (result<>'') then
-   begin
-   //.detect an invalid address (one without @ symbol)
-   bol1:=false;
-   if (result<>'') then for p:=1 to low__len32(result) do if (result[p-1+stroffset]='@') then
-      begin
-      bol1:=true;
-      break;
-      end;//p
-   if not bol1 then result:='';
-
-   //.remove leading labels
-   if (result<>'') then for p:=1 to low__len32(result) do if (result[p-1+stroffset]='@') then
-      begin
-      for p2:=p downto 1 do if (result[p2-1+stroffset]=#32) or (result[p2-1+stroffset]='<') or (result[p2-1+stroffset]='>') or (result[p2-1+stroffset]=';') or (result[p2-1+stroffset]=',') then
-         begin
-         result:=strcopy1(result,p2+1,low__len32(result));
-         break;
-         end;//p2
-      break;
-      end;
-
-   //.remove trailing labels
-   if (result<>'') then for p:=1 to low__len32(result) do if (result[p-1+stroffset]='@') then
-      begin
-      for p2:=p to low__len32(result) do if (result[p2-1+stroffset]=#32) or (result[p2-1+stroffset]='<') or (result[p2-1+stroffset]='>') or (result[p2-1+stroffset]=';') or (result[p2-1+stroffset]=',')  then
-         begin
-         result:=strcopy1(result,1,p2-1);
-         break;
-         end;//p2
-      break;
-      end;
-
-   //.filter content -- 03apr2025
-   low__remchar(result,'"');
-   end;
-except;end;
-
-//free
-freeobj(@a);
-
-end;
-
-function mail__filteraddresses(x:string;xaddressesonly,xwraponlines:boolean):string;//06apr2025
-var
-   a:tdynamicstring;
-   d:tstr8;
-   p:longint;
-   xline,v:string;
-begin
-//defaults
-result:='';
-
-try
-result:=x;
-a:=nil;
-d:=nil;
-//check
-if (x='') then exit;
-//init
-a:=tdynamicstring.create;
-d:=str__new8;
-swapchars(x,#13,#10);
-swapchars(x,';',#10);
-swapchars(x,',',#10);//28oct2018
-swapstrs(x,'<',#10+'<');
-swapstrs(x,'>','>'+#10);
-a.text:=x;
-xline:='';
-//get
-if (a.count>=1) then for p:=0 to (a.count-1) do if (a.value[p]<>'') then
-   begin
-   //filter
-   v:=a.value[p];
-   if xaddressesonly then v:=mail__extractaddress(v);
-   //get
-   if (v<>'') then
-      begin
-      case xwraponlines of
-      true:begin
-         if ((low__len32(xline)+low__len32(v))<=74) then xline:=xline+v+', '//76c line length limit
-         else
-            begin
-            if (xline<>'') then d.sadd(xline+#10);//let NO accidental blank lines through - 04nov2018
-            xline:=#32+v+', ';//enforce leading space for next line
-            end;
-         end;//begin
-      else d.sadd(insstr(', ',d.len>=1)+v);//06apr2025: fixed
-      end;//case
-      end;//if
-   end;//p
-//.finalise
-if (xline<>'') then d.sadd(xline+#10);//let NO accidental blank lines through - 04nov2018
-//set
-result:=striptrailingrcodesb(d.text);//no trailing RCODE
-if (low__len32(result)>=2) and (strcopy1(result,low__len32(result)-1,2)=', ') then strdel1(result,low__len32(result)-1,2);//remove trailing ", "
-except;end;
-try
-freeobj(@a);
-str__free(@d);
-except;end;
-end;
-
-function mail__diskname(xdate:tdatetime;xsubject:string;xtrycount:longint):string;//21nov2024: fixed ":" oversight
-
-   function xsafename80(x:string):string;//21nov2024: fixed ":' oversight
-   var//Special Note: forces "_" to "&#95;", allowing "_" to be used for other purposes
-      lp,p,len:longint;
-      xwithin:boolean;
-   begin
-   //defaults
-   if (x='') then x:='(no subject)';
-   //strip leading/trailing white space
-   result:=stripwhitespace_lt(x);
-   //convert from utf-8 binary to html using disk safe name convention
-   result:=utf8__encodetohtmlstr(result,true,true);
-   //force "_" to html code "&#95;" so the "_" can be used internally for filename importance -> do after ABOVE html conversion so the "&" is preserved - 15apr2024
-   swapstrs(result,'_','&#95;');
-   swapchars(result,':','-');//21nov2024
-   //check length, trim to last whoe "&#...;" code
-   len:=low__len32(result);
-   if (len>80) then
-      begin
-      lp:=1;
-      xwithin:=false;
-      for p:=1 to len do
-      begin
-      if (result[p-1+stroffset]='&') then
-         begin
-         lp:=p-1;
-         xwithin:=true;
-         end
-      else if (result[p-1+stroffset]=';') then xwithin:=false
-      else if not xwithin then lp:=p;
-      //trim
-      if (p>=80) then
-         begin
-         result:=strcopy1(result,1,lp);
-         break;
-         end;
-      end;//p
-      end;
-   end;
-begin
-result:=low__dateascode(xdate)+'_'+xsafename80(xsubject)+insstr('_'+intstr32(xtrycount),xtrycount>=1)+'.eml';
-end;
-
-function mail__makemsg(x:pobject;xsenderip,xfrom,xto,xsubject,xmsg:string;xdate:tdatetime;var e:string):boolean;//06apr2025, 09feb2024
-
-   function xmsgfilter(x:string):string;
-   label
-      redo;
-   var
-      b:tstr8;
-      xline:string;
-      xlen,xpos:longint;
-   begin
-   //defaults
-   result:='';
-
-   try
-   b:=nil;
-   //check
-   if (x='') then exit;
-   //init
-   b:=str__new8;
-   xlen:=low__len32(x);
-   xpos:=1;
-   //get
-   redo:
-   if low__nextline1(x,xline,xlen,xpos) then
-      begin
-      if (xline='.') then b.sadd(#32+xline+#10) else b.sadd(xline+#10);
-      goto redo;
-      end;
-   //set
-   result:=b.text;
-   except;end;
-
-   //free
-   str__free(@b);
-   
-   end;
-
-   procedure ladd(xline:string);
-   begin
-   str__sadd(x,xline+rcode);//must be #13#10 as per RFC1035
-   end;
-begin
-//defaults
-result:=false;
-e:=gecTaskfailed;
-
-//check
-if not str__lock(x) then exit;
-
-try
-//init
-str__clear(x);
-
-//get
-ladd('From: '+mail__filteraddresses(xfrom,true,true));
-ladd('To: '+mail__filteraddresses(xto,true,true));
-ladd('Subject: '+xsubject);
-ladd('Date: '+mail__date(xdate));
-ladd('Content-Type: text/plain; charset=windows-1252; format=flowed');
-ladd('Content-Transfer-Encoding: 7bit');
-ladd('Content-Language: en-US');
-ladd('');
-ladd(xmsg);
-
-//successful
-result:=true;
-except;end;
-//free
-str__uaf(x);
-end;
-
-function mail__findfield(x:pobject;const xfieldname:string;xoutput:pobject):boolean;
-begin
-result:=mail__findfield2(x,xfieldname,true,xoutput);
-end;
-
-function mail__findfield2(x:pobject;const xfieldname:string;xdecodelines:boolean;xoutput:pobject):boolean;
-label
-   skipend;
-var
-   xline:tstr8;
-   xpos,nlen:longint;
-   xwithin:boolean;
-   v,lc,uc:byte;
-begin
-//defaults
-result     :=false;
-xline      :=nil;
-nlen       :=low__len32(xfieldname);
-xwithin    :=false;
-
-try
-//check
-if not str__lock2(x,xoutput) then goto skipend;
-if (nlen<=0)                 then goto skipend;
-
-//init
-xline:=str__new8;
-xpos :=0;
-lc   :=byte(strlow(xfieldname[1])[1]);
-uc   :=byte(strup (xfieldname[1])[1]);
-
-//find
-while str__nextline0(x,@xline,xpos) do
-begin
-v:=xline.bytes[0];
-
-//stop
-if xwithin and (v<>ssSpace) then break;
-
-//start
-if (not xwithin) and ((v=lc) or (v=uc)) and strmatch(xfieldname,xline.str1[1,nlen]) then xwithin:=true;
-
-//add line to output
-if xwithin then
-   begin
-
-   if xdecodelines then//unwrap lines into one long line
-      begin
-      if (v=ssSpace) then str__add3(xoutput,@xline,1,xline.len-1)//exclude leading space
-      else                str__add (xoutput,@xline);
-      end
-   else
-      begin//retain raw format
-      str__add(xoutput,@xline);
-      str__sadd(xoutput,rcode);//must be CRLF for mail
-      end;
-
-   result:=true;//mark as found
-   end;
-
-end;//loop
-
-skipend:
-except;end;
-//clear on error
-if not result then str__clear(xoutput);
-//free
-str__free(@xline);
-str__uaf(x);
-str__uaf(xoutput);
-end;
-
-function mail__makemsg2(x:pobject;xserverdomain,xuseragent,xsenderip,xfrom,xto,xcc,xbcc,xsubject,xmsg:string;xdate:tdatetime;xattachments:tfastvars;var e:string):boolean;//07apr2025
-var//Note: xattachments=optional, but when supplied this proc looks for files with name of "file.name1..N" and file data "file.data1..N":
-   ///RFC5322 -> max line limit is 998c + CRLF = total 1,000c hard line length limit -> not to be exceeded
-   xboundary,xname:string;
-   xdata:tstr8;
-   xcount,xdatalen,p:longint;
-   xneedboundary:boolean;
-
-   function xpullandshrink(var x:string):string;
-   begin
-   result:=strcopy1(x,1,200);
-   strdel1(x,1,low__len32(result));
-   end;
-
-   function xmakemsgid36:string;
-   var
-      p:longint;
-
-      function rc:char;
-      var
-         v:longint;
-      begin
-      v:=frcrange32(random(36),0,35);
-      case v of
-      0..25:result:=char(v+llA);
-      else  result:=char(v+nn0-26);
-      end;//case
-
-      end;
-   begin
-   low__setlen(result,36);
-   for p:=1 to low__len32(result) do result[p-1+stroffset]:=rc;
-   end;
-
-   function xmakeboundary36:string;
-   begin
-   result:='------------'+strup(strcopy1(xmakemsgid36,1,24))+result;
-   end;
-
-   procedure ladd(xline:string);
-   const
-      xlimit=990;
-
-      procedure xaddpart(const xpartline:string);
-      begin
-      case (xpartline='.') of
-      true:str__sadd(x,#32+xpartline+rcode);//avoid lines with only a dot ".'
-      else str__sadd(x,    xpartline+rcode);
-      end;//case
-      end;
-   begin
-   //expected blank line -> only point a blank line is allowed
-   if (xline='') then
-      begin
-      str__sadd(x,rcode);
-      exit;
-      end;
-
-   //no blank lines from this point on -> break long line into sub-lines and avoid RFC limit of 998c + CRLF
-   while (low__len32(xline)>xlimit) do//greater than avoids creating any "unexpected blank line/s"
-   begin
-   xaddpart(strcopy1(xline,1,xlimit));
-   strdel1(xline,1,xlimit);//remainder should never be "nil"
-   end;
-
-   //strictly enforce the no "unexpected blank line" policy
-   if (xline<>'') then xaddpart(xline);
-   end;
-
-   function laddmsg(const x:string):string;//longish lines permitted - 03apr2025
-   var
-      xline:string;
-      xlen,xpos:longint;
-   begin
-   try
-   //check
-   if (x='') then exit;
-
-   //init
-   xlen :=low__len32(x);
-   xpos :=1;
-
-   //get
-   while low__nextline1(x,xline,xlen,xpos) do ladd(xline);
-   except;end;
-   end;
-
-   function xsafefilename64(const x:string):string;
-   begin
-   //defaults
-   result:=x;
-
-   //filter
-   low__remchar(result,'"');
-
-   //get
-   result:=strcopy1(result,1, frcmax32(low__len32(result),64) );
-   end;
-begin
-//defaults
-result   :=false;
-e        :=gecTaskfailed;
-xdata    :=nil;
-xcount   :=0;
-
-//check
-if not str__lock(x) then exit;
-
-
-try
-//init
-str__clear(x);
-xdata     :=str__new8;
-
-
-//filter
-//.subject
-swapchars(xsubject,#10,#32);
-low__remchar(xsubject,#13);
-utf8__to7bitTextb3(xsubject);
-utf8__to7bitTextb3(xuseragent);
-
-//.xserverdomain
-low__remchar(xserverdomain,#32);
-utf8__to7bitTextb3(xserverdomain);
-
-//.message
-utf8__to7bitTextb3(xmsg);
-
-
-//find attachment count
-if (xattachments<>nil) and (xattachments.count>=2) then for p:=1 to (max32-1) do if xattachments.found('file.name'+intstr32(p)) then xcount:=p else break;
-
-
-//generate boundary marker
-xneedboundary:=(xcount>=1);
-if xneedboundary then xboundary:=xmakeboundary36;//create a unique boundary that does not appear within the message and is 76-2-2-12=60 chars long at most
-
-
-//message headers --------------------------------------------------------------
-//.to - required
-ladd('To: '+mail__filteraddresses(xto,true,true));//wrap over multiple lines
-
-//.cc
-if (xcc<>'')  then ladd('Cc: '+mail__filteraddresses(xcc,true,true));//wrap over multiple lines
-
-//.bcc
-if (xbcc<>'') then ladd('Bcc: '+mail__filteraddresses(xbcc,true,true));//wrap over multiple lines
-
-//.from -> single address only (multiple not permitted
-ladd('From: '+mail__filteraddresses(xfrom,true,true));//wrap over multiple lines
-
-//.subject -> wrap over multiple lines
-ladd('Subject: '+xpullandshrink(xsubject));
-while (xsubject<>'') do ladd(#32+xpullandshrink(xsubject));
-
-//.message-id
-ladd('Message-ID: <'+xmakemsgid36+'@'+strdefb(xserverdomain,'localhost')+'>');//36c + @ + domain - 07apr2025
-
-//.date
-ladd('Date: '+mail__date(xdate));
-
-//.user-agent - optional
-if (xuseragent<>'') then ladd('User-Agent: '+xuseragent);
-
-//.mime version
-ladd('Mime-Version: 1.0');
-
-//.multi-part indicating attachments etc - optional
-if xneedboundary then
-   begin
-   ladd('Content-Type: multipart/mixed;');
-   ladd(' boundary="'+xboundary+'"');
-   ladd('');
-   ladd('This is a multi-part message in MIME format.');
-   ladd('--'+xboundary);
-   end;
-
-
-//message
-ladd('Content-Type: text/plain; charset=UTF-8');
-ladd('Content-Transfer-Encoding: 7bit');
-ladd('');
-laddmsg(xmsg);
-ladd('');
-
-
-//attachments - optional
-if (xcount>=1) then for p:=1 to xcount do if xattachments.sfound('file.name'+intstr32(p),xname) then
-   begin
-   //start
-   ladd('--'+xboundary);
-
-   //file name
-   xname:=xsafefilename64(xname);
-   ladd('Content-Type: '+net__mimefind(io__lastext(xname))+';');
-   ladd(' name="'+xname+'"');//68c name max
-   ladd('Content-Transfer-Encoding: base64');
-   ladd('Content-Disposition: attachment;');
-   ladd(' filename="'+xname+'"');//64c name max
-   ladd('');
-   //.file data - base64 format
-   str__clear(@xdata);
-   xattachments.sfound8('file.data'+intstr32(p),@xdata,false,xdatalen);
-
-   str__tob643(@xdata,@xdata,1,72,true,true,true);
-   str__add(x,@xdata);
-   str__clear(@xdata);
-   end;//p
-
-
-//last boundary trails with "--" -> not required for a simple message
-if xneedboundary then ladd('--'+xboundary + '--');
-
-
-//successful
-result:=true;
-except;end;
-//free
-str__uaf(x);
-end;
-
-function mail__writemsg(x:pobject;xsubject,xdestfolder:string):boolean;
-label
-   skipend,redo;
-var
-   df,e:string;
-   xtrycount:longint;
-begin
-//defaults
-result:=false;
-
-//check
-if not str__lock(x) then exit;
-
-try
-//get -> write as .tmp first (so remote client won't download until FULL file is written) then rename full file as a non-tmp
-xtrycount:=0;
-redo:
-
-case (xdestfolder<>'') of
-true:begin
-   xdestfolder:=io__asfolder(xdestfolder);
-   io__makefolder(xdestfolder);
-   df:=xdestfolder+mail__diskname(date__now,xsubject,xtrycount);
-   end;
-else df:=app__subfolder('inbox')+mail__diskname(date__now,xsubject,xtrycount);
-end;
-
-if io__fileexists(df+'.tmp') or io__fileexists(df) then
-   begin
-   inc(xtrycount);
-   if (xtrycount>=500) then goto skipend;
-   app__waitms(10);
-   goto redo;
-   end;
-
-//set
-if not io__tofile64(df+'.tmp',x,e) then goto skipend;
-if not io__renamefile(df+'.tmp',df) then goto skipend;
-
-//successful
-result:=true;
-skipend:
-except;end;
-try;str__unlockautofree(x);except;end;
-end;
 
 
 //global memory procs ----------------------------------------------------------
@@ -9431,13 +8341,9 @@ result:=false;
 //check
 if not str__lock(x) then exit;
 
-try
-
 //get
 if      (x^ is tstr8) then result:=(x^ as tstr8).minlen(xnewlen)
 else if (x^ is tstr9) then result:=(x^ as tstr9).minlen(xnewlen);
-
-except;end;
 
 //free
 str__uaf(x);
@@ -9660,12 +8566,45 @@ end;
 //string procs -----------------------------------------------------------------
 function str__addrec(const x:pobject;const xrec:pauto;const xrecsize:longint64):boolean;//20feb2024, 07feb2022
 begin
+
 result:=str__pins2(x,pdlbyte(xrec),xrecsize,str__len(x),0,xrecsize-1);
+
 end;
 
-function str__add(const x,xadd:pobject):boolean;
+function str__add(const x,xadd:pobject):boolean;//29oct2026
 begin
-result:=str__ins2(x,xadd,str__len(x),0,max32);
+
+if (x<>nil) and (xadd<>nil) and (x^ is tstr8) and (xadd^ is tstr8) then
+   begin
+
+   if (not tstr8(x^).oautofree) and (not tstr8(xadd^).oautofree) then
+      begin
+
+      //add -> upto 600% faster
+      result:=tstr8(x^).addFAST( tstr8(xadd^) );
+
+      end
+
+   else begin
+
+      //add -> upto 300% faster
+      result   :=low__true2( str__lock(x), str__lock(xadd) ) and (x^ as tstr8).addFAST( (xadd^ as tstr8) );
+
+      //free
+      str__uaf( x    );
+      str__uaf( xadd );
+
+      end;
+
+   end
+
+else begin
+
+   //standard
+   result   :=str__ins2(x,xadd,str__len(x),0,max32);
+
+   end;
+
 end;
 
 function str__add2(const x,xadd:pobject;const xfrom,xto:longint64):boolean;
@@ -9786,6 +8725,39 @@ begin
 result:=str__ok(x) and (x^ is tstr9);
 end;
 
+function str__as89(const s:pobject;var s8:tstr8;var s9:tstr9):boolean;//06nov2026
+begin
+
+//defaults
+result                :=false;
+s8                    :=nil;
+s9                    :=nil;
+
+//get
+
+if (s<>nil) and (s^<>nil) then
+   begin
+
+   if (s^ is tstr8) then
+      begin
+
+      result          :=true;
+      s8              :=tstr8(s^);
+
+      end
+
+   else if (s^ is tstr9) then
+      begin
+
+      result          :=true;
+      s9              :=tstr9(s^);
+
+      end;
+
+   end;
+
+end;
+
 function str__as8(const x:pobject):tstr8;
 begin
 if str__is8(x) then result:=(x^ as tstr8) else result:=nil;
@@ -9866,37 +8838,50 @@ except;end;
 try;str__uaf(x);except;end;
 end;
 
-function str__addbyt1(x:pobject;xval:longint):boolean;
+function str__addbyt1(const x:pobject;const xval:longint32):boolean;
 begin
-result:=str__aadd(x,[xval]);
+
+result                :=str__aadd( x ,[xval] );
+
 end;
 
-function str__addbol1(x:pobject;xval:boolean):boolean;
+function str__addbol1(const x:pobject;const xval:boolean):boolean;
 begin
-if xval then result:=str__aadd(x,[1]) else result:=str__aadd(x,[0]);
+
+if xval then result   :=str__aadd( x ,[1] )
+else         result   :=str__aadd( x ,[0] );
+
 end;
 
-function str__addchr1(x:pobject;xval:char):boolean;
+function str__addchr1(const x:pobject;const xval:char):boolean;
 begin
-result:=str__aadd(x,[byte(xval)]);
+
+result                :=str__aadd( x ,[byte(xval)] );
+
 end;
 
-function str__addsmi2(x:pobject;xval:smallint):boolean;
+function str__addsmi2(const x:pobject;const xval:smallint):boolean;
 var
-   a:twrd2;
+   a                  :twrd2;
 begin
-a.si:=xval;
-result:=str__aadd(x,[a.bytes[0],a.bytes[1]]);
+
+a.si                  :=xval;
+result                :=str__aadd( x ,[  a.bytes[0] ,a.bytes[1]  ] );
+
 end;
 
-function str__addwrd2(x:pobject;xval:word):boolean;
+function str__addwrd2(const x:pobject;const xval:word):boolean;
 begin
-result:=str__aadd(x,twrd2(xval).bytes);
+
+result                :=str__aadd( x ,twrd2(xval).bytes );
+
 end;
 
-function str__addint4(x:pobject;xval:longint):boolean;
+function str__addint4(const x:pobject;const xval:longint32):boolean;
 begin
-result:=str__aadd(x,tint4(xval).bytes);
+
+result                :=str__aadd( x ,tint4(xval).bytes );
+
 end;
 
 function str__writeto1(const x:pobject;const a:pauto;const asize,xfrom1,xlen:longint64):boolean;
@@ -12609,6 +11594,75 @@ begin
 result:=strcopy1(xcolwidth,1,frcmax32(low__len32(xcolwidth),xmaxwidth)-low__len32(x))+x;
 end;
 
+function hex__char(const x:byte):char;//20oct2026
+begin
+
+case x of
+
+0.. 9   :result   :=chr(48+x);
+10..15   :result   :=chr(55+x);
+else      result   :=chr(70);//55+15
+
+end;//case
+
+end;
+
+function hex__charLow(const x:byte):char;//20oct2026,02jan2025
+begin
+
+case x of
+
+ 0.. 9   :result   :=chr(48+x);
+10..15   :result   :=chr(87+x);
+else      result   :=chr(102);//87+15
+
+end;//case
+
+end;
+
+function int1__hex2(const x:longint32):string;//20oct2026
+var
+   v        :byte;
+   v1       :byte;
+   v2       :byte;
+
+begin
+
+//defaults
+result      :='00';
+
+//range
+if      (x<0)   then v:=0
+else if (x>255) then v:=255
+else                 v:=byte( x );
+
+//get
+v1          :=v div 16;
+v2          :=v - (v1*16);
+
+if (v1<=9) then result[0+stroffset]:=char(v1+48) else result[0+stroffset]:=char(v1+55);
+if (v2<=9) then result[1+stroffset]:=char(v2+48) else result[1+stroffset]:=char(v2+55);
+
+end;
+
+function hex2__int1(const x:string):byte;//20oct2026
+
+   function xval(const x:byte):longint;
+   begin
+   case x of
+   48..57: result:=x-48;
+   65..70: result:=x-55;
+   97..102:result:=x-87;
+   else    result:=0;
+   end;//case
+   end;
+
+begin
+
+result                :=( xval(strbyte1(x,1)) * 16 ) + xval(strbyte1(x,2));
+
+end;
+
 function hex4__int2(const x:string):word;//26aug2025
 
    function xval(x:byte):longint;
@@ -12623,12 +11677,16 @@ function hex4__int2(const x:string):word;//26aug2025
 
    function v1(xpos:longint):byte;
    begin
+
    result:=(xval(strbyte1(x,xpos))*16) + xval(strbyte1(x,xpos+1));
+
    end;
 
 begin
+
 twrd2(result).bytes[0]:=v1(1);
 twrd2(result).bytes[1]:=v1(3);
+
 end;
 
 function int2__hex4(const x:longint):string;//26aug2025
@@ -12658,7 +11716,7 @@ end;
 
 function hex4__int2RL(const x:string):word;//26aug2025
 
-   function xval(x:byte):longint;
+   function xval(const x:byte):longint;
    begin
    case x of
    48..57: result:=x-48;
@@ -12668,14 +11726,18 @@ function hex4__int2RL(const x:string):word;//26aug2025
    end;//case
    end;
 
-   function v1(xpos:longint):byte;
+   function v1(const xpos:longint):byte;
    begin
+
    result:=(xval(strbyte1(x,xpos))*16) + xval(strbyte1(x,xpos+1));
+
    end;
 
 begin
+
 twrd2(result).bytes[0]:=v1(3);
 twrd2(result).bytes[1]:=v1(1);
+
 end;
 
 function int2__hex4RL(const x:longint):string;//26aug2025
@@ -12705,7 +11767,7 @@ end;
 
 function hex8__int4(const x:string):longint;//26aug2025
 
-   function xval(x:byte):longint;
+   function xval(const x:byte):longint;
    begin
    case x of
    48..57: result:=x-48;
@@ -12715,15 +11777,19 @@ function hex8__int4(const x:string):longint;//26aug2025
    end;//case
    end;
 
-   function v1(xpos:longint):byte;
+   function v1(const xpos:longint):byte;
    begin
+
    result:=(xval(strbyte1(x,xpos))*16) + xval(strbyte1(x,xpos+1));
+
    end;
 begin
+
 tint4(result).bytes[0]:=v1(1);
 tint4(result).bytes[1]:=v1(3);
 tint4(result).bytes[2]:=v1(5);
 tint4(result).bytes[3]:=v1(7);
+
 end;
 
 function int4__hex8(const x:longint):string;//26aug2025
@@ -12765,7 +11831,7 @@ end;
 
 function hex8__int4RL(const x:string):longint;//26aug2025
 
-   function xval(x:byte):longint;
+   function xval(const x:byte):longint;
    begin
    case x of
    48..57: result:=x-48;
@@ -12775,15 +11841,20 @@ function hex8__int4RL(const x:string):longint;//26aug2025
    end;//case
    end;
 
-   function v1(xpos:longint):byte;
+   function v1(const xpos:longint):byte;
    begin
+
    result:=(xval(strbyte1(x,xpos))*16) + xval(strbyte1(x,xpos+1));
+
    end;
+
 begin
+
 tint4(result).bytes[0]:=v1(7);
 tint4(result).bytes[1]:=v1(5);
 tint4(result).bytes[2]:=v1(3);
 tint4(result).bytes[3]:=v1(1);
+
 end;
 
 function int4__hex8RL(const x:longint):string;//26aug2025
@@ -12825,81 +11896,32 @@ end;
 
 function int8__hex16(const x:comp):string;//26aug2025
 begin
+
 result:=int4__hex8(tcmp8(x).ints[0]) + int4__hex8(tcmp8(x).ints[1]);
+
 end;
 
 function hex16__int8(const x:string):comp;//26aug2025
 begin
+
 tcmp8(result).ints[0]:=hex8__int4( strcopy1(x,1,8) );
 tcmp8(result).ints[1]:=hex8__int4( strcopy1(x,9,8) );
+
 end;
 
 function int8__hex16RL(const x:comp):string;//26aug2025
 begin
+
 result:=int4__hex8RL(tcmp8(x).ints[1]) + int4__hex8RL(tcmp8(x).ints[0]);
+
 end;
 
 function hex16__int8RL(const x:string):comp;//26aug2025
 begin
+
 tcmp8(result).ints[0]:=hex8__int4RL( strcopy1(x,9,8) );
 tcmp8(result).ints[1]:=hex8__int4RL( strcopy1(x,1,8) );
-end;
 
-function low__hexchar(x:byte):char;
-begin
-//range
-if (x>15) then x:=15;
-//get
-case x of
-0..9   :result:=chr(48+x);
-10..15 :result:=chr(55+x);
-else    result:='?';
-end;//case
-end;
-
-function low__hex(x:byte):string;
-var
-   a,b:byte;
-begin
-a:=x div 16;
-b:=x-(a*16);
-result:=low__hexchar(a)+low__hexchar(b);
-end;
-
-function low__hexchar_lowercase(x:byte):char;//02jan2025
-begin
-//range
-if (x>15) then x:=15;
-//get
-case x of
-0..9   :result:=chr(48+x);
-10..15 :result:=chr(87+x);
-else    result:='?';
-end;//case
-end;
-
-function low__hex_lowercase(x:byte):string;
-var
-   a,b:byte;
-begin
-a:=x div 16;
-b:=x-(a*16);
-result:=low__hexchar_lowercase(a)+low__hexchar_lowercase(b);
-end;
-
-function low__hexint2(const x2:string):longint;//26dec2023
-
-   function xval(x:byte):longint;
-   begin
-   case x of
-   48..57: result:=x-48;
-   65..70: result:=x-55;
-   97..102:result:=x-87;
-   else    result:=0;
-   end;//case
-   end;
-begin
-result:=(xval(strbyte1(x2,1))*16)+xval(strbyte1(x2,2));
 end;
 
 function low__splitstr(const s:string;const ssplitval:byte;var dn,dv:string):boolean;//03may2026, 02mar2025
@@ -12912,7 +11934,7 @@ begin
 if (pchar(s)=pchar(dn)) or (pchar(s)=pchar(dv)) then
    begin
 
-   low__splitstrSAFE(s,ssplitval,dn,dv);
+   low__splitstrSAFE( s ,ssplitval ,dn ,dv );
    exit;
 
    end;
@@ -13005,77 +12027,103 @@ if (low__len32(s)>=2) then for p:=1 to low__len32(s) do if (s[p-1+stroffset]=sse
 except;end;
 end;
 
-function low__ref32u(const x:string):longint;//1..32 - 25dec2023, 04feb2023
-var//Fast: 180% faster
-   v:byte;
-   p,xlen:longint;
-begin
-//default
-result:=0;
+function low__ref32u(const x:string):longint32;//1..32 - 23oct2026, 25dec2023, 04feb2023
+var//203% faster - 23oct2026
+   v                                      :byte;
+   p                                      :longint32;
+   xlen                                   :longint32;
 
-try
-//init
-xlen:=low__len32(x);
-if (xlen<=0) then exit;
-if (xlen>high(p4INT32)) then xlen:=high(p4INT32);
-//get
-for p:=0 to (xlen-1) do
 begin
-//2-stage - prevent math error
-v:=byte(x[p+stroffset]);
-if (v>=97) and (v<=122) then dec(v,32);
-//inc
-result:=result+p4INT32[p+1]*v;//fixed - 25dec2023
+
+//default
+result                                    :=0;
+
+//init
+xlen                                      :=low__len32(x);
+
+if      (xlen<=0)            then exit
+else if (xlen>high(p4INT32)) then xlen    :=high(p4INT32);
+
+//get
+for p:=0 to pred(xlen) do
+begin
+
+v                                         :=byte(x[p+stroffset]);
+
+case v of
+97..122:dec(v,32);
+end;//case
+
+inc( result ,p4INT32[succ(p)] * v );
+
 end;//p
+
 //check
-if (result=0) then result:=1;//never zero - 04feb2023
-except;end;
+if (result=0) then result                 :=1;//never zero - 04feb2023
+
 end;
 
-function low__ref256(const x:string):comp;//01may2025: never 0 for valid input, 28dec2023
-var//Fast: 300% faster
-   p,xlen:longint;
-begin
-//default
-result:=0;
+function low__ref256(const x:string):longint64;//23oct2026, 01may2025: never 0 for valid input, 28dec2023
+var
+   p                                      :longint32;
+   xlen                                   :longint32;
 
-try
+begin
+
+//default
+result                                    :=0;
+
 //init
-xlen:=low__len32(x);
-if (xlen<=0) then exit;
-if (xlen>high(p8CMP256)) then xlen:=high(p8CMP256);
+xlen                                      :=low__len32(x);
+
+if      (xlen<=0)  then exit
+else if (xlen>high(p8CMP256)) then xlen   :=high(p8CMP256);
+
 //get
-for p:=0 to (xlen-1) do result:=result+p8CMP256[p+1]*byte(x[p+stroffset]);//fixed - 25dec2023
+for p:=0 to pred(xlen) do
+begin
+
+result                                    :=result + ( p8CMP256[succ(p)] * byte( x[p+stroffset] ) );//fixed - 25dec2023
+
+end;//p
+
 //check
-if (result=0) then result:=1;//never zero - 01may2024
-except;end;
+if (result=0) then result                 :=1;//never zero - 01may2024
+
 end;
 
-function low__ref256U(const x:string):comp;//01may2025: never 0 for valid input, 28dec2023
+function low__ref256U(const x:string):longint64;//23oct2026, 01may2025: never 0 for valid input, 28dec2023
 var//Fast: 300% faster
-   v:byte;
-   p,xlen:longint;
-begin
-//default
-result:=0;
+   v                                      :byte;
+   p                                      :longint32;
+   xlen                                   :longint32;
 
-try
-//init
-xlen:=low__len32(x);
-if (xlen<=0) then exit;
-if (xlen>high(p8CMP256)) then xlen:=high(p8CMP256);
-//get
-for p:=0 to (xlen-1) do
 begin
-//lowercase
-v:=byte(x[p+stroffset]);
-if (v>=97) and (v<=122) then dec(v,32);
-//add
-result:=result+p8CMP256[p+1]*v;//fixed - 25dec2023
+
+//default
+result                                    :=0;
+
+//init
+xlen                                      :=low__len32(x);
+
+if      (xlen<=0)             then exit
+else if (xlen>high(p8CMP256)) then xlen   :=high(p8CMP256);
+
+//get
+for p:=0 to pred(xlen) do
+begin
+
+v                                         :=byte( x[ p + stroffset ] );
+
+if (v>=97) and (v<=122) then v            :=v-32;//convert lowercase to uppercase
+
+result                                    :=result + (p8CMP256[succ(p)] * v      ) ;//fixed - 25dec2023
+
 end;//p
+
 //check
-if (result=0) then result:=1;//never zero - 01may2024
-except;end;
+if (result=0) then result                 :=1;//never zero - 01may2024
+
 end;
 
 {//code left for reference purposes
@@ -13735,6 +12783,230 @@ str__uaf2(@s,@d);
 
 end;
 
+function str__tohex(const s,d:pobject;const dlinelength:longint32;duppercase:boolean):boolean;//06nov2026
+label
+   skipend;
+
+var
+   a                  :longint32;
+   b                  :longint32;
+   llen               :longint32;
+   p                  :longint32;
+   s8                 :tstr8;
+   s9                 :tstr9;
+   d8                 :tstr8;
+   d9                 :tstr9;
+   v                  :longint32;
+   voff               :longint32;
+
+   procedure sa(const x:byte);
+   begin
+
+   if (d8<>nil) then
+      begin
+
+      case x of
+      0..9   :d8.addbyt1( nn0 + x );
+      10..15 :d8.addbyt1( voff + x );
+      end;//case
+
+      end
+
+   else if (d9<>nil) then
+      begin
+
+      case x of
+      0..9   :d9.addbyt1( nn0 + x );
+      10..15 :d9.addbyt1( voff + x );
+      end;//case
+
+      end
+
+   else begin
+
+      case x of
+      0..9   :str__addbyt1( d, nn0 + x );
+      10..15 :str__addbyt1( d, voff + x );
+      end;//case
+
+      end;
+
+   end;
+
+begin
+
+//defaults
+result                :=false;
+
+try
+
+//check
+if not str__lock2(s,d) then goto skipend;
+
+//init
+str__as89( s ,s8 ,s9 );
+str__as89( d ,d8 ,d9 );
+
+str__clear( d );
+
+llen        :=0;
+
+if duppercase then voff:=uuA - 10
+else               voff:=lla - 10;
+
+//get
+for p:=0 to pred(str__len32(s)) do
+begin
+
+if (s8<>nil) then//fast
+   begin
+
+   a                  :=s8.pbytes[p] div 16;
+   b                  :=s8.pbytes[p] - (a*16);
+
+   end
+
+else if (s9<>nil) then//semi-fast
+   begin
+
+   v                  :=s9.bytes[p];
+   a                  :=v div 16;
+   b                  :=v - (a*16);
+
+   end
+
+else begin//slow
+
+   v                  :=str__bytes0( s ,p );
+   a                  :=v div 16;
+   b                  :=v - (a*16);
+
+   end;
+
+sa(a);
+sa(b);
+
+inc(llen,2);
+
+if (dlinelength=0) then
+   begin
+
+   //nil
+
+   end
+
+else if (llen>=dlinelength) then
+   begin
+
+   llen               :=0;
+
+   if (d8<>nil) then
+      begin
+
+      d8.addbyt1(13);
+      d8.addbyt1(10);
+
+      end
+
+   else if (d9<>nil) then
+      begin
+
+      d9.addbyt1(13);
+      d9.addbyt1(10);
+
+      end
+
+   else begin
+
+      str__addbyt1( d ,13 );
+      str__addbyt1( d ,10 );
+
+      end;
+
+   end;
+
+end;//p
+
+//successful
+result                :=true;
+
+skipend:
+
+except;end;
+
+//free
+str__uaf2(s,d);
+
+end;
+
+function str__hex(const v:string;const dlineLength:longint32;const duppercase:boolean):string;//06nov2026
+var
+   s                  :tstr8;
+   d                  :tstr8;
+
+begin
+
+//defaults
+result                :='';
+s                     :=nil;
+d                     :=nil;
+
+try
+
+//get
+s                     :=faststr__new8;
+s.text                :=v;
+d                     :=faststr__new8;
+
+if str__tohex( @s ,@d ,dlineLength ,duppercase ) then
+   begin
+
+   result            :=d.text;
+
+   end;
+
+except;end;
+
+//free
+if (s<>nil) then faststr__free(@s);
+if (d<>nil) then faststr__free(@d);
+
+end;
+
+function hex__str(const v:string):string;//06nov2026
+var
+   s                  :tstr8;
+   d                  :tstr8;
+
+begin
+
+//defaults
+result                :='';
+s                     :=nil;
+d                     :=nil;
+
+try
+
+//get
+s                     :=faststr__new8;
+s.text                :=v;
+d                     :=faststr__new8;
+
+if low__fromhex( s ,d ) then
+   begin
+
+   result            :=d.text;
+
+   end;
+
+except;end;
+
+//free
+if (s<>nil) then faststr__free(@s);
+if (d<>nil) then faststr__free(@d);
+
+end;
+
 
 //general procs ----------------------------------------------------------------
 function debugging:boolean;
@@ -13982,6 +13254,7 @@ function strm(const sfullname,spartialname:string;var vs:string;var v:longint):b
 begin
 
 result:=strmatch( spartialname, strcopy1(sfullname,1,low__len32(spartialname)) );
+
 if result then
    begin
 
@@ -14385,15 +13658,17 @@ striptrailingrcodes(result);
 except;end;
 end;
 
-function freeobj(x:pobject):boolean;//01sep2025, 22jun2024: Updated for GUI support, 09feb2024: Added support for "._rtmp" & mustnil, 02feb2021, 05may2020, 05DEC2011, 14JAN2011, 15OCT2004
+function freeobj(const x:pobject):boolean;//01sep2025, 22jun2024: Updated for GUI support, 09feb2024: Added support for "._rtmp" & mustnil, 02feb2021, 05may2020, 05DEC2011, 14JAN2011, 15OCT2004
 var
-   xmustnil:boolean;
+   xmustnil :boolean;
+
 begin//Note: as a function this proc supports inline processing -> e.g. if a and b and freeobj() and d then -> which uses LESS code
 
 //pass-thru
-result:=true;
+result      :=true;
 
 try
+
 //check
 if (x=nil) or (x^=nil)  then exit;
 
@@ -14404,15 +13679,26 @@ if (x=nil) or (x^=nil)  then exit;
 //          A call to "vars8.data" returns a tstr8 object with data, which must be destroyed by the proc it's passed to, in this case low__tofile64.
 //          It is not safe to pass this directly, so tstr__ptr() stores it in "_rtmp" on the object in question - 09feb2024
 
-xmustnil:=true;
-if (x^ is tobjectex) and (x=@(x^ as tobjectex).__cacheptr) then xmustnil:=false;
+xmustnil    :=true;
+
+if (x^ is tobjectex) and (x=@(x^ as tobjectex).__cacheptr) then
+   begin
+
+   xmustnil :=false;
+
+   end;
 
 //free the object
 x^.free;
 zzdel(x^);//Note: Must immediately follow the object's "free" proc - 04may2021
 
 //safe to set the owner var to nil
-if xmustnil then x^:=nil;
+if xmustnil then
+   begin
+
+   x^:=nil;
+
+   end;
 
 except;end;
 end;
@@ -14616,9 +13902,11 @@ var
    p:longint;
    a:tstr8;
 
-   function h(x:byte):string;
+   function h(const x:byte):char;
    begin
-   result:=low__hex_lowercase(x);
+
+   result:=hex__charLow(x);
+
    end;
 begin
 //defaults
@@ -14685,9 +13973,11 @@ var
    w,w2:twrd2;
    vsep:string;
 
-   function a(v:byte):string;
+   function a(const v:byte):char;
    begin
-   result:=low__hex_lowercase(v);
+
+   result:=hex__charLow(v);
+
    end;
 begin
 //init
@@ -14759,20 +14049,24 @@ swapchars(result,xreturncodeASchar,#10);
 except;end;
 end;
 
-procedure text__filterText(x:tstr8);
+procedure text__filterText(var x:tstr8);
 label
    skipend;
+
 var
-   xlen,dlen,p:longint;
-   v:byte;
+   xlen               :longint32;
+   dlen               :longint32;
+   p                  :longint32;
+   v                  :byte;
+
 begin
 
 //lock
 if not str__lock(@x) then exit;
 
 //check
-dlen        :=0;
-xlen        :=_blen32(x);
+dlen                  :=0;
+xlen                  :=_blen32(x);
 
 if (xlen<=0) then goto skipend;
 
@@ -14780,12 +14074,13 @@ if (xlen<=0) then goto skipend;
 for p:=1 to xlen do
 begin
 
-v:=x.byt1[p-1];
+v                     :=x.byt1[p-1];
 
 if (v=9) or (v=10) or (v>=32) then
    begin
 
    inc(dlen);
+
    if (dlen<p) then x.byt1[dlen-1]:=v;//16feb2026
 
    end;
@@ -15332,50 +14627,78 @@ begin
 result:=sysutils.strlen(str);
 end;
 
-function floattostrex2(x:extended):string;//19DEC2007
+function floattostrex2(const x:extended):string;//19DEC2007
 begin
+
 result:=floattostrex(x,18);
+
 end;
 
-function floattostrex(x:extended;dig:byte):string;//07NOV20210
+function floattostrex(const x:extended;const dig:byte):string;//07NOV20210
 var//dig: 0=longint32 part only, 1-18=include partial content if present
-   p:longint;
-   a,b,c:string;
+   p                  :longint32;
+   a                  :string;
+   b                  :string;
+   c                  :string;
+
 begin
+
 //defaults
-result:='0';
+result                :='0';
 
 //get
 //was: a:=floattostrf(x,ffFixed,18,18);
-a:=float__tostr(x);//31oct2024
-b:='';
-c:='';
+a                     :=float__tostr(x);//31oct2024
+b                     :='';
+c                     :='';
+
 if (a<>'') then
    begin
+
    for p:=0 to (low__len32(a)-1) do if (a[p+stroffset]='.') then
-   begin
-   if (dig>=1) then b:=strcopy0(a,p+1,dig);
-   a:=strcopy0(a,0,p);
-   break;
+      begin
+
+      if (dig>=1) then
+         begin
+
+         b            :=strcopy0(a,p+1,dig);
+
+         end;
+
+      a               :=strcopy0(a,0,p);
+
+      break;
+
+      end;//p
+
    end;
-   end;
+
 //scan
 if (b<>'') then
    begin
+
    for p:=(low__len32(b)-1) downto 0 do if (b[p+stroffset]<>'0') then
-   begin
-   c:=strcopy0(b,0,p+1);//strip off excess zeros - 07NOV2010
-   break;
+      begin
+
+      c               :=strcopy0(b,0,p+1);//strip off excess zeros - 07NOV2010
+
+      break;
+
+      end;//p
+
    end;
-   end;
+
 //set
-result:=a+insstr('.'+c,c<>'');
+result                :=a+insstr('.'+c,c<>'');
+
 end;
 
-function strtofloatex(x:string):extended;//triggers less errors (x=nil now covered)
+function strtofloatex(const x:string):extended;//triggers less errors (x=nil now covered)
 begin
+
 //was: result:=0;try;if (x<>'') then result:=strtofloat(x);except;end;
 result:=float__fromstr(x);//31oct2024
+
 end;
 
 function restrict64(const x:longint64):longint64;//13jul2026, 24jan2016
@@ -16104,7 +15427,7 @@ function app__folder3(xsubfolder:string;xcreate,xalongsideexe:boolean):string;//
 begin
 
 case system_msix of
-//.a MSIX app cannot use its own root folder for file stoage -> switch to "app data" - 08dec2025
+//.a MSIX app cannot use its own root folder for file storage -> switch to "app data" - 08dec2025
 true:begin
 
    result:=io__asfolder(io__appdata+io__extractfilename(io__exename)+'_storage');
@@ -17044,6 +16367,7 @@ try
 for p:=0 to high(p4INT32) do p4INT32[p]:=p*p*p*p;
 //.cmp256
 for p:=0 to high(p8CMP256) do p8CMP256[p]:=mult64(p*p,p*p);
+
 except;end;
 
 
@@ -17308,19 +16632,27 @@ if (not xguimode) and con__running and ((system_scn_visible<>system_scn_ref1) or
 
 //.1000ms
 {$ifdef debug}
+
 if msok(timer1000) then
    begin
+
    //track stats
    for p:=0 to (track_limit-1) do
    begin
-   if (track_ratec[p]=0) then track_ratec[p]:=track_create[p]  else track_ratec[p]:=(track_ratec[p]+track_create[p]) div 2;
+
+   if (track_ratec[p]=0) then track_ratec[p]:=track_create[p]  else track_ratec[p]:=(track_ratec[p]+track_create[p] ) div 2;
    if (track_rated[p]=0) then track_rated[p]:=track_destroy[p] else track_rated[p]:=(track_rated[p]+track_destroy[p]) div 2;
-   track_create[p]:=0;
-   track_destroy[p]:=0;
+
+   track_create[p]    :=0;
+   track_destroy[p]   :=0;
+
    end;//p
+
    //reset
    msset(timer1000,1000);
+
    end;
+
 {$endif}
 
 
@@ -17345,9 +16677,14 @@ app__rootWaitAndMessages;//01apr2026
 //.increase processing priority during turbo mode
 if (system_turbo<>xlastturbo) then
    begin
-   xlastturbo:=system_turbo;
-   if system_turbo then root__settimeperiod(1) else root__stoptimeperiod;
+
+   xlastturbo         :=system_turbo;
+
+   if system_turbo then root__settimeperiod(1)
+   else                 root__stoptimeperiod;
+
    if (xlastturbo<>root__priority) then root__setpriority(xlastturbo);
+
    end;
 
 //.app is closing
@@ -17550,6 +16887,7 @@ procedure app__rootWaitAndMessages;//01apr2026
 begin
 
 case system_eventdriven of
+
 true:if (not app__processmessages) and (system_state=ssRunning) and (not system_musthalt) then
    begin
 
@@ -17562,10 +16900,13 @@ true:if (not app__processmessages) and (system_state=ssRunning) and (not system_
       end;//case
 
       end
+
    else win____waitmessage;//don't switch to wait mode if we're not running, e.g. shuting down etc - 28apr2024
 
    end;
+
 else app__processmessages;//time sliced - custom ms/processing
+
 end;//case
 
 //.timers
@@ -17801,17 +17142,23 @@ begin
 //app info
 if msok(system_timer500) then
    begin
+
    system_turbo:=mswaiting(system_turboref);
+
    //screen changed
    if (not app__guimode) and scn__changed(false) then scn__paint;
+
    //fileache - 12apr2024
    filecache__managementevent;
+
    //reset
    msset(system_timer500,500);
+
    end;
 
 //timers
 app__ontimer;
+
 if assigned(system_timer1) then system_timer1(nil);
 if assigned(system_timer2) then system_timer2(nil);
 if assigned(system_timer3) then system_timer3(nil);
@@ -18925,6 +18272,42 @@ if (result<min) then result:=min;
 if (result>max) then result:=max;
 end;
 
+function frcmin(const x,min:iauto):iauto;//07nov2026
+begin
+
+if (x<min) then result:=min
+else            result:=x;
+
+end;
+
+function frcmax(const x,max:iauto):iauto;//07nov2026
+begin
+
+if (x>max) then result:=max
+else            result:=x;
+
+end;
+
+function frcrange(const x,min,max:iauto):iauto;//07nov2026
+begin
+
+result                          :=x;
+
+if (result<min) then result     :=min;
+if (result>max) then result     :=max;
+
+end;
+
+function frcrange2(var x:iauto;const xmin,xmax:iauto):boolean;//07nov2026
+begin
+
+result                          :=true;//pass-thru
+
+if (x<xmin) then x              :=xmin;
+if (x>xmax) then x              :=xmax;
+
+end;
+
 function frcminD64(const x,min:double):double;//05jul2025
 begin
 if (x<min) then result:=min else result:=x;
@@ -19284,12 +18667,16 @@ end;
 
 function float__tostr(const x:extended):string;//31oct2024: system independent
 begin
+
 result:=float__tostr3(x,ssdot,true);
+
 end;
 
 function float__tostr2(const x:extended;const xsep:byte):string;//31oct2024: system independent
 begin
+
 result:=float__tostr3(x,xsep,true);
+
 end;
 
 function float__tostr3(x:extended;const xsep:byte;const xallowdecimal:boolean):string;//15dec2025, 31oct2024: system independent
@@ -19298,29 +18685,40 @@ var//Speed   : ~1.07 million cycles/sec vs "floattostrf" ~2.66 million cycles/se
    //Range   : -999999999999999999.0 to 999999999999999999.0 (min64..max64)
    //Format  : System independent decimal point/formatting
    //Note    : Replaces "floattostrf()"
-   sv:extended;
-   slen,rlen,rlastnonzero,rseplen,alen,blen:longint;
-   rok,sforce0:boolean;
+   sv                 :extended;
+   slen               :longint32;
+   rlen               :longint32;
+   rlastnonzero       :longint32;
+   rseplen            :longint32;
+   alen               :longint32;
+   blen               :longint32;
+   rok                :boolean;
+   sforce0            :boolean;
 
-   procedure radd(x:char);
+   procedure radd(const x:char);
    begin
 
    if not rok then
       begin
-      result:='000000000000000000000';//21 -> space for 18 digits + "-" symbol + "." decimal point + plus extra space for safety
-      rok:=true;
+
+      result          :='000000000000000000000';//21 -> space for 18 digits + "-" symbol + "." decimal point + plus extra space for safety
+      rok             :=true;
+
       end;
 
    inc(rlen);
+
    result[rlen-1+stroffset]:=x;
+
    if sforce0 and (x<>'0') then rlastnonzero:=rlen;
 
    end;
 
    procedure xscan(const xmin:extended);
    var
-      p:longint;
+      p               :longint32;
    begin
+
    if (sv>=xmin) then
       begin
 
@@ -19329,40 +18727,52 @@ var//Speed   : ~1.07 million cycles/sec vs "floattostrf" ~2.66 million cycles/se
 
       if (sv>=(p*xmin)) then
          begin
-         sv:=sv-(p*xmin);
+
+         sv           :=sv-(p*xmin);
+
          inc(slen);
+
          radd(char(48+p));
+
          break;
+
          end
-      else
-         begin
+
+      else begin
+
          if (p<=1) and ((slen>=1) or sforce0) then
             begin
+
             inc(slen);
             inc(rlen);
+
             end;
+
          end;
 
       end;//p
 
       end
+
    else if (slen>=1) or sforce0 then
       begin
+
       inc(slen);
       inc(rlen);
+
       end;
    end;
 
 begin
 
 //defaults
-result       :='0';
-rok          :=false;
-rlen         :=0;
-alen         :=0;
-blen         :=0;
-rlastnonzero :=0;
-rseplen      :=0;
+result                :='0';
+rok                   :=false;
+rlen                  :=0;
+alen                  :=0;
+blen                  :=0;
+rlastnonzero          :=0;
+rseplen               :=0;
 
 //check
 if (x=0) then exit;
@@ -19370,15 +18780,18 @@ if (x=0) then exit;
 //init
 if (x<0) then
    begin
-   x:=-x;
+
+   x                  :=-x;
+
    radd('-');
+
    end;
 
 //get
 //.whole number -> left of decimal point, stored in "astr" -> 1-18 digits
-sv      :=x;
-slen    :=0;
-sforce0 :=false;
+sv                    :=x;
+slen                  :=0;
+sforce0               :=false;
 
 xscan(100000000000000000.0);
 xscan(10000000000000000.0);
@@ -19401,11 +18814,13 @@ xscan(1.0);
 alen:=slen;
 
 //.fraction -> right of decimal point, stored in "bstr" -> 1-18 digits
-slen    :=0;
-sforce0 :=true;
+slen                  :=0;
+sforce0               :=true;
+
 if xallowdecimal then blen:=18-alen;
 
 case blen of
+
  0:sv:=0;
  1:sv:=frac(x)*10;
  2:sv:=frac(x)*100;
@@ -19426,16 +18841,20 @@ case blen of
 17:sv:=frac(x)*mult64(100000000,1000000000);
 18:sv:=frac(x)*mult64(mult64(100000000,1000000000),10);
 else sv:=0;
-end;
+
+end;//case
+
 
 //.insert decimal point
 if (blen>=1) then
    begin
 
    if (alen<=0) then radd('0');
+
    radd(char(xsep));
-   rseplen      :=rlen;
-   rlastnonzero :=rlen;
+
+   rseplen            :=rlen;
+   rlastnonzero       :=rlen;
 
    if (blen>=18) then xscan(100000000000000000.0);
    if (blen>=17) then xscan(10000000000000000.0);
@@ -19462,27 +18881,35 @@ if (blen>=1) then
 if (rlen>=1) then
    begin
 
+
    if (blen>=1) then
       begin
 
       if (rseplen=rlastnonzero) then result:=strcopy1(result,1,rseplen-1) else result:=strcopy1(result,1,rlastnonzero);
 
       end
+
    else result:=strcopy1(result,1,rlen);
 
+
    end
+
 else result:='0';//should never be required -> but here just in case
 
 end;
 
 function float__fromstr(const x:string):extended;//31oct2024: system independent
 begin
+
 result:=float__fromstr3(x,ssDot,true);
+
 end;
 
 function float__fromstr2(const x:string;const xsep:byte):extended;//31oct2024: system independent
 begin
+
 result:=float__fromstr3(x,xsep,true);
+
 end;
 
 function float__fromstr3(const x:string;const xsep:byte;const xallowdecimal:boolean):extended;//01nov2024, 31oct2024: system independent
@@ -20407,39 +19834,53 @@ end;
 
 //general procs ----------------------------------------------------------------
 
-function low__true1(v1:boolean):boolean;
+function low__true1(const v1:boolean):boolean;
 begin
+
 result:=v1;
+
 end;
 
-function low__true2(v1,v2:boolean):boolean;
+function low__true2(const v1,v2:boolean):boolean;
 begin
+
 result:=v1 and v2;
+
 end;
 
-function low__true3(v1,v2,v3:boolean):boolean;
+function low__true3(const v1,v2,v3:boolean):boolean;
 begin
+
 result:=v1 and v2 and v3;
+
 end;
 
-function low__true4(v1,v2,v3,v4:boolean):boolean;
+function low__true4(const v1,v2,v3,v4:boolean):boolean;
 begin
+
 result:=v1 and v2 and v3 and v4;
+
 end;
 
-function low__true5(v1,v2,v3,v4,v5:boolean):boolean;
+function low__true5(const v1,v2,v3,v4,v5:boolean):boolean;
 begin
+
 result:=v1 and v2 and v3 and v4 and v5;
+
 end;
 
-function low__or2(v1,v2:boolean):boolean;
+function low__or2(const v1,v2:boolean):boolean;
 begin
+
 result:=v1 or v2;
+
 end;
 
-function low__or3(v1,v2,v3:boolean):boolean;
+function low__or3(const v1,v2,v3:boolean):boolean;
 begin
+
 result:=v1 or v2 or v3;
+
 end;
 
 procedure low__swapbol(var x,y:boolean);//05oct2018
@@ -25004,14 +24445,16 @@ str__uaf(@s);
 
 end;
 
-function tstr8.addfast32(const s:tstr8):boolean;//04jun2026, 24may2026
+function tstr8.addfast(const s:tstr8):boolean;//29oct2026, 04jun2026, 24may2026
 var
-   p,xfrom,slen:longint32;
+   p                  :iauto;
+   xfrom              :iauto;
+   slen               :iauto;
 
 begin
 
 //defaults
-result      :=false;
+result                :=false;
 
 //check
 if (s=nil) then
@@ -25020,23 +24463,24 @@ if (s=nil) then
    exit;
 
    end
+
 else if (s=self) then
    begin
 
-   result:=true;
+   result            :=true;
 
    exit;
 
    end;
 
 //init
-slen        :=s.len32;
+slen                 :=s.lenAuto;
 
 if (slen>=1) then
    begin
 
-   xfrom    :=len32;
-   result   :=minlen( xfrom + slen );//return result
+   xfrom             :=lenAuto;
+   result            :=minlen( xfrom + slen );//return result
 
    //get
    if result then
@@ -26974,55 +26418,53 @@ icount:=frcmin64(icount,xpos+8);//10may2020
 
 end;
 
-procedure tstr8.setcur8(xpos:longint64;xval:currency);
-var
-   a:tcur8;
+procedure tstr8.setcur8(xpos:longint64;xval:currency);//10nov2026
 begin
 
-if (xpos<0) then xpos:=0;
+if (xpos<0)                             then xpos:=0;
 if (not minlen(xpos+8)) or (ibytes=nil) then exit;
-a.val:=xval;
-ibytes[iautoRange(xpos+0)]:=a.bytes[0];
-ibytes[iautoRange(xpos+1)]:=a.bytes[1];
-ibytes[iautoRange(xpos+2)]:=a.bytes[2];
-ibytes[iautoRange(xpos+3)]:=a.bytes[3];
-ibytes[iautoRange(xpos+4)]:=a.bytes[4];
-ibytes[iautoRange(xpos+5)]:=a.bytes[5];
-ibytes[iautoRange(xpos+6)]:=a.bytes[6];
-ibytes[iautoRange(xpos+7)]:=a.bytes[7];
-icount:=frcmin64(icount,xpos+8);//10may2020
+
+ibytes[iautoRange(xpos+0)]      :=tcur8(xval).bytes[0];
+ibytes[iautoRange(xpos+1)]      :=tcur8(xval).bytes[1];
+ibytes[iautoRange(xpos+2)]      :=tcur8(xval).bytes[2];
+ibytes[iautoRange(xpos+3)]      :=tcur8(xval).bytes[3];
+ibytes[iautoRange(xpos+4)]      :=tcur8(xval).bytes[4];
+ibytes[iautoRange(xpos+5)]      :=tcur8(xval).bytes[5];
+ibytes[iautoRange(xpos+6)]      :=tcur8(xval).bytes[6];
+ibytes[iautoRange(xpos+7)]      :=tcur8(xval).bytes[7];
+
+icount                          :=frcmin64(icount,xpos+8);//10may2020
 
 end;
 
-procedure tstr8.setint4(xpos:longint64;xval:longint);
+procedure tstr8.setint4(xpos:longint64;xval:longint32);//10nov2026
 var
-   a:tint4;
-   v:longint32;
+   v                  :longint32;
+
 begin
 
-if (xpos<0) then xpos:=0;
+if (xpos<0)                             then xpos:=0;
 if (not minlen(xpos+4)) or (ibytes=nil) then exit;
-a.val:=xval;
 
 {$ifdef 64bit}
 
-ibytes[xpos+0]:=a.bytes[0];
-ibytes[xpos+1]:=a.bytes[1];
-ibytes[xpos+2]:=a.bytes[2];
-ibytes[xpos+3]:=a.bytes[3];
+ibytes[xpos+0]        :=tint4(xval).bytes[0];
+ibytes[xpos+1]        :=tint4(xval).bytes[1];
+ibytes[xpos+2]        :=tint4(xval).bytes[2];
+ibytes[xpos+3]        :=tint4(xval).bytes[3];
 
 {$else}
 
-v:=iautoRange(xpos);
+v                     :=iautoRange(xpos);
 
-ibytes[v+0]:=a.bytes[0];
-ibytes[v+1]:=a.bytes[1];
-ibytes[v+2]:=a.bytes[2];
-ibytes[v+3]:=a.bytes[3];
+ibytes[v+0]           :=tint4(xval).bytes[0];
+ibytes[v+1]           :=tint4(xval).bytes[1];
+ibytes[v+2]           :=tint4(xval).bytes[2];
+ibytes[v+3]           :=tint4(xval).bytes[3];
 
 {$endif}
 
-icount:=frcmin64(icount,xpos+4);//10may2020
+icount                :=frcmin64(icount,xpos+4);//10may2020
 
 end;
 
@@ -32622,6 +32064,7 @@ setlimit( xlimit );
 //vars
 ofullcompatibility    :=true;//21aug2024: new
 oincludecomments      :=true;//24aug2024: new
+oremovewhitespaceSLOW :=false;//14nov2026
 
 //clear
 clear;
@@ -32711,18 +32154,25 @@ str__free(@b);
 
 end;
 
-procedure tfastvars2.setdata(xdata:tstr8);//20aug2024: upgraded to handle more data variations, e.g. "name: value" or "name:value" or "name   " -> originally only the first instance was accepted, now all 3 are
+procedure tfastvars2.setdata(xdata:tstr8);//14nov2026, 20aug2024: upgraded to handle more data variations, e.g. "name: value" or "name:value" or "name   " -> originally only the first instance was accepted, now all 3 are
 label
    redo;
+
 var
-   xline:tstr8;
-   pmax,xlen,p,xpos:longint;
-   lb:pdlbyte;
-   xok:boolean;
+   xline                        :tstr8;
+   pmax                         :longint32;
+   xlen                         :longint32;
+   p                            :longint32;
+   xpos                         :longint32;
+   lb                           :pdlbyte;
+   xok                          :boolean;
+
 begin
 try
+
 //init
-xline:=nil;
+xline                           :=nil;
+
 clear;
 
 //check
@@ -32730,20 +32180,25 @@ if zznil(xdata,2077) then exit;
 
 //init
 str__lock(@xdata);
-xline:=str__new8;
-xpos:=0;
+
+xline                           :=faststr__new8;
+xpos                            :=0;
 
 //get
 redo:
-if low__nextline0(xdata,xline,xpos) then
+
+if low__nextline0( xdata ,xline ,xpos ) then
    begin
-   xlen:=xline.len32;
-   pmax:=xline.len32-1;
+
+   xlen                         :=xline.len32;
+   pmax                         :=xline.len32-1;
+
    if (pmax>=0) and (xline.pbytes<>nil) then//27apr2021
       begin
+
       //init
-      xok:=false;
-      lb:=xline.pbytes;
+      xok                       :=false;
+      lb                        :=xline.pbytes;
 
       //scan for "name: value" divider ":"
       for p:=0 to pmax do if (lb[p]=ssColon) then
@@ -32752,25 +32207,37 @@ if low__nextline0(xdata,xline,xpos) then
          //"name:"
          if (p=pmax) then
             begin
-            xok:=true;
-            sets(xline.str[0,p],'');
+
+            xok                 :=true;
+
+            sets( xline.str[0,p] ,'' );
+
             break;
+
             end
 
          //"name: value"
          else if (p<pmax) and (lb[p+1]=ssSpace) then
             begin
-            xok:=true;
-            sets(xline.str[0,p],xline.str[p+2,pmax+1]);
+
+            xok                 :=true;
+
+            sets( xline.str[0,p] ,xline.str[p+2,pmax+1] );
+
             break;
+
             end
 
          //"name:value"
          else if ofullcompatibility then
             begin
-            xok:=true;
-            sets(xline.str[0,p],xline.str[p+1,pmax+1]);
+
+            xok                 :=true;
+
+            sets( xline.str[0,p] ,xline.str[p+1,pmax+1] );
+
             break;
+
             end
 
          else break;
@@ -32783,10 +32250,14 @@ if low__nextline0(xdata,xline,xpos) then
 
          for p:=pmax downto 0 do if (lb[p]<>ssSpace) then
             begin
-            xok:=true;
-            sets(xline.str[0,p+1],'');
+
+            xok                 :=true;
+
+            sets( xline.str[0,p+1] ,'' );
+
             break;
-            end;
+
+            end;//p
 
          end;
 
@@ -32794,19 +32265,21 @@ if low__nextline0(xdata,xline,xpos) then
 
    //fetch next line
    goto redo;
+
    end;
 except;end;
 
 //free
-str__free(@xline);
-str__uaf(@xdata);
+if (xline<>nil) then faststr__free(@xline);
+if (xdata<>nil) then str__uaf(@xdata);
 
 end;
 
 function tfastvars2.getdata:tstr8;
 var
-   p:longint;
+   p:longint32;
 begin
+
 result :=nil;
 
 try
@@ -32854,7 +32327,7 @@ end;
 procedure tfastvars2.setnettext(x:string);
 var
    xname,xvalue:string;
-   v,c,xlen,o,t,p:longint;
+   v,c,xlen,o,t,p:longint32;
 begin
 try
 //init
@@ -32901,7 +32374,7 @@ end;
 
 procedure tfastvars2.clear;
 var
-   p:longint;
+   p:longint32;
 begin
 icount:=0;
 for p:=0 to (ilimit-1) do
@@ -32917,9 +32390,9 @@ vm[p]:=0;
 end;//p
 end;
 
-function tfastvars2.xmakename(xname:string;var xindex:longint):boolean;//03may2026, 20aug2024: update to check "vn[p]" with xname
+function tfastvars2.xmakename(xname:string;var xindex:longint32):boolean;//03may2026, 20aug2024: update to check "vn[p]" with xname
 var
-   ni,nref1,nref2,p:longint;
+   ni,nref1,nref2,p:longint32;
    c:tcur8;
 begin
 
@@ -32974,9 +32447,9 @@ if result and (xindex>=icount) then icount:=xindex+1;
 
 end;
 
-function tfastvars2.find(xname:string;var xindex:longint):boolean;
+function tfastvars2.find(xname:string;var xindex:longint32):boolean;
 var
-   nref1,nref2,p:longint;
+   nref1,nref2,p:longint32;
    c:tcur8;
 begin
 
@@ -33012,7 +32485,7 @@ end;
 
 function tfastvars2.found(xname:string):boolean;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 
 result      :=find(xname,xindex);
@@ -33021,7 +32494,7 @@ end;
 
 function tfastvars2.sfound(xname:string;var x:string):boolean;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:=find(xname,xindex);
 x:='';
@@ -33029,9 +32502,9 @@ x:='';
 try;if result then x:=vs[xindex]^ else x:='';except;end;
 end;
 
-function tfastvars2.sfound8(xname:string;x:pobject;xappend:boolean;var xlen:longint):boolean;
+function tfastvars2.sfound8(xname:string;x:pobject;xappend:boolean;var xlen:longint32):boolean;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:=false;
 xlen:=0;
@@ -33050,7 +32523,7 @@ end;
 
 function tfastvars2.getb(xname:string):boolean;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:=false;
 
@@ -33067,9 +32540,9 @@ if find(xname,xindex) then
 except;end;
 end;
 
-function tfastvars2.geti(xname:string):longint;
+function tfastvars2.geti(xname:string):longint32;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:=0;
 
@@ -33086,9 +32559,9 @@ if find(xname,xindex) then
 except;end;
 end;
 
-function tfastvars2.getc(xname:string):comp;
+function tfastvars2.getc(xname:string):longint64;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:=0;
 
@@ -33107,7 +32580,7 @@ end;
 
 function tfastvars2.gets(xname:string):string;
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 result:='';
 
@@ -33124,21 +32597,21 @@ if find(xname,xindex) then
 except;end;
 end;
 
-function tfastvars2.getn(xindex:longint):string;
+function tfastvars2.getn(xindex:longint32):string;
 begin
 result:='';
 
 try;if (xindex>=0) and (xindex<ilimit) and ((vnref1[xindex]<>0) or (vnref2[xindex]<>0)) then result:=vn[xindex]^;except;end;
 end;
 
-function tfastvars2.getv(xindex:longint):string;
+function tfastvars2.getv(xindex:longint32):string;
 begin
 result:='';
 
 try;if (xindex>=0) and (xindex<ilimit) and ((vnref1[xindex]<>0) or (vnref2[xindex]<>0)) then result:=vs[xindex]^;except;end;
 end;
 
-procedure tfastvars2.setv(xindex:longint;x:string);//22aug2024
+procedure tfastvars2.setv(xindex:longint32;x:string);//22aug2024
 begin
 try;if (xindex>=0) and (xindex<ilimit) and ((vnref1[xindex]<>0) or (vnref2[xindex]<>0)) then vs[xindex]^:=x;except;end;
 end;
@@ -33155,7 +32628,7 @@ end;
 
 procedure tfastvars2.setb(xname:string;x:boolean);
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 if xmakename(xname,xindex) then
    begin
@@ -33163,13 +32636,13 @@ if xmakename(xname,xindex) then
    vi[xindex]:=0;
    vc[xindex]:=0;
    vs[xindex]^:='';
-   vm[xindex]:=1;//1=boolean, 2=longint, 3=comp, 4=string
+   vm[xindex]:=1;//1=boolean, 2=longint32, 3=longint64, 4=string
    end;
 end;
 
-procedure tfastvars2.seti(xname:string;x:longint);
+procedure tfastvars2.seti(xname:string;x:longint32);
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 if xmakename(xname,xindex) then
    begin
@@ -33177,13 +32650,13 @@ if xmakename(xname,xindex) then
    vi[xindex]:=x;
    vc[xindex]:=0;
    vs[xindex]^:='';
-   vm[xindex]:=2;//1=boolean, 2=longint, 3=comp, 4=string
+   vm[xindex]:=2;//1=boolean, 2=longint32, 3=longint64, 4=string
    end;
 end;
 
-procedure tfastvars2.setc(xname:string;x:comp);
+procedure tfastvars2.setc(xname:string;x:longint64);
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 if xmakename(xname,xindex) then
    begin
@@ -33191,28 +32664,47 @@ if xmakename(xname,xindex) then
    vi[xindex]:=0;
    vc[xindex]:=x;
    vs[xindex]^:='';
-   vm[xindex]:=3;//1=boolean, 2=longint, 3=comp, 4=string
+   vm[xindex]:=3;//1=boolean, 2=longint32, 3=longint64, 4=string
    end;
 end;
 
-procedure tfastvars2.sets(xname:string;x:string);
+procedure tfastvars2.sets(xname:string;x:string);//14nov2026
 var
-   xindex:longint;
+   xindex                       :longint32;
+
 begin
+
+//filter out whitespace - 14nov2026
+if oremovewhitespaceSLOW then
+   begin
+
+   try
+
+   xname                        :=stripwhitespace_lt( xname );
+   x                            :=stripwhitespace_lt( x     );
+
+   except;end;
+
+   end;
+
+//get
 if xmakename(xname,xindex) then
    begin
-   vb[xindex]:=false;
-   vi[xindex]:=0;
-   vc[xindex]:=0;
-   try;vs[xindex]^:=x;except;end;
-   vm[xindex]:=4;//1=boolean, 2=longint, 3=comp, 4=string
+
+   vb[xindex]                  :=false;
+   vi[xindex]                  :=0;
+   vc[xindex]                  :=0;
+   try;vs[xindex]^             :=x;except;end;
+   vm[xindex]                  :=4;//1=boolean, 2=longint32, 3=longint64, 4=string
+
    end;
+
 end;
 
 function tfastvars2.getdt(xname:string):tdatetime;//20aug2024
 var
    y,m,d,hh,mm,ss,ms:word;
-   int1,lp,p,vcount:longint;
+   int1,lp,p,vcount:longint32;
    str1,v:string;
 begin
 result:=0;
@@ -33279,9 +32771,9 @@ begin
 iinc2(xname,1);
 end;
 
-procedure tfastvars2.iinc2(xname:string;xval:longint);
+procedure tfastvars2.iinc2(xname:string;xval:longint32);
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 if xmakename(xname,xindex) then
    begin
@@ -33289,7 +32781,7 @@ if xmakename(xname,xindex) then
    low__iroll(vi[xindex],xval);
    vc[xindex]:=0;
    vs[xindex]^:='';
-   vm[xindex]:=2;//1=boolean, 2=longint, 3=comp, 4=string
+   vm[xindex]:=2;//1=boolean, 2=longint32, 3=longint64, 4=string
    end;
 end;
 
@@ -33298,9 +32790,9 @@ begin
 cinc2(xname,1);
 end;
 
-procedure tfastvars2.cinc2(xname:string;xval:comp);
+procedure tfastvars2.cinc2(xname:string;xval:longint64);
 var
-   xindex:longint;
+   xindex:longint32;
 begin
 if xmakename(xname,xindex) then
    begin
@@ -33308,7 +32800,7 @@ if xmakename(xname,xindex) then
    vi[xindex]:=0;
    low__roll64(vc[xindex],xval);
    vs[xindex]^:='';
-   vm[xindex]:=3;//1=boolean, 2=longint, 3=comp, 4=string
+   vm[xindex]:=3;//1=boolean, 2=longint32, 3=longint64, 4=string
    end;
 end;
 
@@ -33763,7 +33255,7 @@ var
    i4:tint4;
    cc,sLEN,cs,rc,p:longint32;
    tmp,h,j,k,kr:tstr8;
-   ref64,ref64b:comp;
+   ref64,ref64b:longint64;
 begin
 //defaults
 result:=false;
@@ -33904,7 +33396,7 @@ var
    dHDR,tmp,h,j,k,kr:tstr8;
    pw:twrd2;
    int1:longint;
-   ref64,ref64b:comp;
+   ref64,ref64b:longint64;
 begin
 //defaults
 result:=false;
@@ -34061,7 +33553,7 @@ var
    tmp,h,j,k,kr:tstr8;
    v3,v4:boolean;
    pw:twrd2;
-   ref64,ref64b:comp;
+   ref64,ref64b:longint64;
 begin
 //defaults
 result:=false;
@@ -34926,87 +34418,120 @@ end;
 
 
 //-- multi-undo procs ----------------------------------------------------------
-function mundo__init(x:tstr8;xlimit:longint):boolean;
-var//stores data as: "<undo slots>[255]<redo slots>[255]<unused slots>"
-   p:longint;
-begin
-//defaults
-result:=false;
 
-try
-//check
-if not str__lock(@x) then exit;
-//range
-xlimit:=frcrange32(xlimit,2,255);//Note: 2..255 => 0..254 with 255 reserved as a boundary value
-//get
-x.setlen(xlimit+2);
-x.pbytes[0]:=255;
-x.pbytes[1]:=255;
-for p:=2 to (x.len32-1) do x.pbytes[p]:=p-2;//0..254
-//successful
-result:=true;
-except;end;
-try;str__uaf(@x);except;end;
+function mundo__slotLimit:longint32;
+begin
+
+result      :=255;//0..254
+
 end;
 
-function mundo__startsplit(x:tstr8;var u,r,f:tstr8):boolean;
-begin
-//defaults
-result:=false;
+function mundo__init(const x:tstr8;xlimit:longint):boolean;
+var//stores data as: "<undo slots>[255]<redo slots>[255]<unused slots>"
+   p        :longint32;
 
-try
-u:=nil;
-r:=nil;
-f:=nil;
+begin
+
+//defaults
+result      :=false;
+
 //check
 if not str__lock(@x) then exit;
-//init
-u:=str__new8;
-r:=str__new8;
-f:=str__new8;
+
+try
+
+//range
+xlimit      :=frcrange32( xlimit ,2 ,255 );//Note: 2..255 => 0..254 with 255 reserved as a boundary value
+
 //get
-result:=mundo__split(x,u,r,f);
+x.setlen(xlimit+2);
+x.pbytes[0] :=255;
+x.pbytes[1] :=255;
+
+for p:=2 to (x.len32-1) do x.pbytes[p]:=p-2;//0..254
+
+//successful
+result      :=true;
+
+except;end;
+
+//free
+str__uaf(@x);
+
+end;
+
+function mundo__startsplit(const x:tstr8;var u,r,f:tstr8):boolean;
+begin
+
+//defaults
+result      :=false;
+u           :=nil;
+r           :=nil;
+f           :=nil;
+
+//check
+if not str__lock(@x) then exit;
+
+try
+
+//init
+u           :=str__new8;
+r           :=str__new8;
+f           :=str__new8;
+
+//get
+result      :=mundo__split(x,u,r,f);
+
 except;end;
 end;
 
 function mundo__start(var u,r,f:tstr8):boolean;
 begin
-result:=true;//pass-thru
+
+//pass-thru
+result      :=true;
+
+//init
+u           :=nil;
+r           :=nil;
+f           :=nil;
 
 try
-//init
-u:=nil;
-r:=nil;
-f:=nil;
+
 //get
-u:=str__new8;
-r:=str__new8;
-f:=str__new8;
+u           :=str__new8;
+r           :=str__new8;
+f           :=str__new8;
+
 except;end;
 end;
 
 function mundo__finish(var x,u,r,f:tstr8):boolean;
 begin
-result:=true;//pass-thru
 
-try
+result      :=true;//pass-thru
+
+//free
 str__free(@u);
 str__free(@r);
 str__free(@f);
 str__uaf(@x);
-except;end;
+
 end;
 
-function mundo__make(x,u,r,f:tstr8):boolean;
+function mundo__make(const x,u,r,f:tstr8):boolean;
 label
    skipend;
+
 begin
+
 //defaults
-result:=false;
+result      :=false;
 
 try
 //check
 if not low__true4(str__lock(@x),str__lock(@u),str__lock(@r),str__lock(@f)) then goto skipend;
+
 //get
 x.clear;
 x.add(u);
@@ -35014,347 +34539,560 @@ x.aadd([255]);
 x.add(r);
 x.aadd([255]);
 x.add(f);
+
 //successful
-result:=true;
+result      :=true;
+
 skipend:
 except;end;
-try
+
+//free
 str__uaf(@u);
 str__uaf(@r);
 str__uaf(@f);
 str__uaf(@x);
-except;end;
+
 end;
 
-function mundo__split(x,u,r,f:tstr8):boolean;
+function mundo__split(const x,u,r,f:tstr8):boolean;
 label
    skipend;
-var//u=undo slots, r=redo slot, f=free slots
-   bc,p:longint;
-   v:byte;
-begin
-//defaults
-result:=false;
 
-try
+var//u=undo slots, r=redo slot, f=free slots
+   bc       :longint32;
+   p        :longint32;
+   v        :byte;
+
+begin
+
+//defaults
+result      :=false;
+
 //check
 if not low__true4(str__lock(@x),str__lock(@u),str__lock(@r),str__lock(@f)) then goto skipend;
+
+//init
 u.clear;
 r.clear;
 f.clear;
+
 if (x.len<3) then goto skipend;
+
 //get
-bc:=0;
+bc          :=0;
+
 for p:=0 to (x.len32-1) do
 begin
-v:=x.pbytes[p];
-if (v=255) then inc(bc)
-else
+
+v           :=x.pbytes[p];
+
+if (v=255) then
    begin
+
+   inc(bc)
+
+   end
+
+else begin
+
    case bc of
+
    0:u.aadd([v]);
    1:r.aadd([v]);
    2:f.aadd([v]);
+
    end;//case
+
    end;
+
 end;//p
+
 //successful
-result:=true;
+result      :=true;
+
 skipend:
-except;end;
-try
+
+//free
 str__uaf(@u);
 str__uaf(@r);
 str__uaf(@f);
 str__uaf(@x);
-except;end;
+
 end;
 
 function mundo__clear(x:tstr8):boolean;
 label
    skipend;
-var
-   u,r,f:tstr8;
-begin
-result:=false;
 
-try
+var
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+
+begin
+
+//defaults
+result      :=false;
+
+//init
 mundo__start(u,r,f);
+
+//check
 if not mundo__split(x,u,r,f) then goto skipend;
+
+//clear
 x.clear;
 x.aadd([255,255]);
 x.add(u);
 x.add(r);
 x.add(f);
-result:=true;
+
+//successful
+result      :=true;
+
 skipend:
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__insertslotREDO(x:tstr8):longint;//02jul2022
+function mundo__insertslotREDO(x:tstr8):longint32;//02jul2022
 label
    skipdone;
-var
-   u,r,f:tstr8;
-begin
-//defaults
-result:=0;
 
-try
+var
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+
+begin
+
+//defaults
+result      :=0;
+
 //check
 if not str__lock(@x) then exit;
+
+//init
 mundo__start(u,r,f);
+
 if not mundo__split(x,u,r,f) then goto skipdone;
+
 //roll
 if (r.len>=1) then
    begin
-   result:=r.pbytes[r.len32-1];
+
+   result   :=r.pbytes[r.len32-1];
+
    r.del3(r.len-1,1);
    r.ains([result],0);//at top of redo list
    mundo__make(x,u,r,f);
+
    goto skipdone;
+
    end;
+
 //new slot from "f=free" list
 if (f.len>=1) then
    begin
-   result:=f.pbytes[0];
+
+   result   :=f.pbytes[0];
+
    r.ains([result],0);//at top of redo list
    f.del3(0,1);
    mundo__make(x,u,r,f);//remake
+
    goto skipdone;
+
    end;
+
 skipdone:
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__newslot(x:tstr8):longint;
+function mundo__newslot(x:tstr8):longint32;
 label
    skipdone;
-var
-   u,r,f:tstr8;
-begin
-//defaults
-result:=0;
 
-try
+var
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+
+begin
+
+//defaults
+result      :=0;
+
 //check
 if not str__lock(@x) then exit;
+
+//init
 mundo__start(u,r,f);
+
 if not mundo__split(x,u,r,f) then goto skipdone;
+
 //flush redo
 if (r.len>=1) then
    begin
+
    f.ins(r,0);
    r.clear;
+
    end;
+
 //new slot from "f=free" list
 if (f.len>=1) then
    begin
-   result:=f.pbytes[0];
+
+   result   :=f.pbytes[0];
+
    u.aadd([result]);
    f.del3(0,1);
    mundo__make(x,u,r,f);//remake
+
    goto skipdone;
+
    end;
+
 //roll
 if (u.len>=2) then
    begin
-   result:=u.pbytes[0];
+
+   result   :=u.pbytes[0];
+
    u.del3(0,1);
    u.aadd([result]);
+
    end;
+
 //remake
 mundo__make(x,u,r,f);
+
 skipdone:
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
-end;
 
-function mundo__redocount(x:tstr8):longint;
-var
-   u,r,f:tstr8;
-begin
-if mundo__startsplit(x,u,r,f) then result:=r.len32 else result:=0;
+//finish
 mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__redofind(x:tstr8;xindex:longint;var xslot:longint):boolean;//
+function mundo__redocount(x:tstr8):longint32;
 var
-   u,r,f:tstr8;
-begin
-//defaults
-result:=false;
-xslot:=0;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
 
-try
+begin
+
+//get
+if mundo__startsplit(x,u,r,f) then result:=r.len32
+else                               result:=0;
+
+//finish
+mundo__finish(x,u,r,f);
+
+end;
+
+function mundo__redofind(x:tstr8;const xindex:longint32;var xslot:longint32):boolean;
+var
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+
+begin
+
+//defaults
+result      :=false;
+xslot       :=0;
+
 //get
 if mundo__startsplit(x,u,r,f) and (r.len>=1) and (xindex>=0) then
    begin
-   xslot:=f.pbytes[frcrange32(xindex,0,r.len32-1)];
-   result:=true;
+
+   xslot    :=f.pbytes[frcrange32(xindex,0,r.len32-1)];
+   result   :=true;
+
    end;
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
 function mundo__redoflush(x:tstr8):boolean;//true=did something, false=nothing changed - 02may2023
 var
-   u,r,f:tstr8;
-begin
-result:=false;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
 
-try
+begin
+
+//defaults
+result      :=false;
+
+//start
 if mundo__startsplit(x,u,r,f) and (r.len>=1) then
    begin
-   result:=true;
+
+   result   :=true;
+
    f.add(r);//take slot numbers from the "redo list" and add them to the "free list"
    r.clear;//wipe the "redo list"
+
    mundo__make(x,u,r,f);//rebuild undo/redo/free list data stream - 02may20223
+
    end;
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
-end;
 
-function mundo__undocount(x:tstr8):longint;
-var
-   u,r,f:tstr8;
-begin
-if mundo__startsplit(x,u,r,f) then result:=u.len32 else result:=0;
+//finish
 mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__undofind(x:tstr8;xindex:longint;var xslot:longint):boolean;//
+function mundo__undocount(x:tstr8):longint32;
 var
-   u,r,f:tstr8;
-begin
-//defaults
-result:=false;
-xslot:=0;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
 
-try
+begin
+
+//start
+if mundo__startsplit(x,u,r,f) then result:=u.len32
+else                               result:=0;
+
+//finish
+mundo__finish(x,u,r,f);
+
+end;
+
+function mundo__undofind(x:tstr8;const xindex:longint32;var xslot:longint32):boolean;
+var
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+
+begin
+
+//defaults
+result      :=false;
+xslot       :=0;
+
 //get
 if mundo__startsplit(x,u,r,f) and (u.len>=1) and (xindex>=0) then
    begin
-   xslot:=f.pbytes[frcrange32(xindex,0,u.len32-1)];
-   result:=true;
+
+   xslot    :=f.pbytes[frcrange32(xindex,0,u.len32-1)];
+   result   :=true;
+
    end;
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__canundo(x:tstr8):boolean;
+function mundo__canundo(const x:tstr8):boolean;
 var
-   p:longint;
-begin
-result:=false;
+   p        :longint32;
 
-try
+begin
+
+//defaults
+result      :=false;
+
+//get
 if (x<>nil) and (x.len>=3) then
    begin
-   for p:=0 to (x.len32-1) do if (x.pbytes[p]=255) then break else result:=true;
+
+   for p:=0 to pred(x.len32) do
+   begin
+
+   if (x.pbytes[p]=255) then break;
+
+   result   :=true;
+
+   end;//p
+
    end;
-except;end;
+
 end;
 
-function mundo__undo(x:tstr8;var xslot:longint):boolean;
-label
-   skipend;
+function mundo__undo(x:tstr8;var xslot:longint32):boolean;
 var
-   u,r,f:tstr8;
-begin
-//defaults
-result:=false;
-xslot:=0;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
 
-try
+begin
+
+//defaults
+result      :=false;
+xslot       :=0;
+
 //check
 if not str__lock(@x) then exit;
+
 //get
 if mundo__start(u,r,f) and mundo__split(x,u,r,f) and (u.len>=1) then
    begin
-   xslot:=u.pbytes[u.len32-1];
+
+   xslot    :=u.pbytes[ pred(u.len32) ];
+
    u.del3(u.len-1,1);
+
    r.ains([xslot],0);
+
    mundo__make(x,u,r,f);
-   result:=true;
+
+   result   :=true;
+
    end;
-skipend:
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
-function mundo__canredo(x:tstr8):boolean;
+function mundo__canredo(const x:tstr8):boolean;
 var
-   xlen,p:longint;
-begin
-result:=false;
+   p        :longint32;
+   xlen     :longint32;
 
-try
+begin
+
+//defaults
+result      :=false;
+
+//get
 if (x<>nil) and (x.len>=3) then
    begin
-   xlen:=x.len32;
-   for p:=0 to (xlen-1) do
+
+   //init
+   xlen     :=x.len32;
+
+   //find
+   for p:=0 to pred(xlen) do
    begin
+
    if (x.pbytes[p]=255) then
       begin
-      result:=((p+1)<xlen) and (x.pbytes[p+1]<>255);
+
+      result:=( (p+1) < xlen ) and (x.pbytes[p+1]<>255);//layout => "<undo slots> + 255 + <redo slots> + 255 + <free slots>"
+
       break;
+
       end;
+
    end;//p
+
    end;
-except;end;
+
 end;
 
-function mundo__redo(x:tstr8;var xslot:longint):boolean;
-label
-   skipend;
+function mundo__redo(x:tstr8;var xslot:longint32):boolean;
 var
-   u,r,f:tstr8;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+   
 begin
-//defaults
-result:=false;
-xslot:=0;
 
-try
+//defaults
+result      :=false;
+xslot       :=0;
+
 //check
 if not str__lock(@x) then exit;
+
 //get
 if mundo__start(u,r,f) and mundo__split(x,u,r,f) and (r.len>=1) then
    begin
-   xslot:=r.pbytes[0];
+
+   xslot    :=r.pbytes[0];
+
    r.del3(0,1);
    u.aadd([xslot]);
    mundo__make(x,u,r,f);
-   result:=true;
+
+   result   :=true;
+
    end;
-skipend:
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
 function mundo__debug(x:tstr8):string;
 var
-   u,r,f:tstr8;
-   p:longint;
+   u        :tstr8;
+   r        :tstr8;
+   f        :tstr8;
+   p        :longint32;
 begin
-result:='';
 
-try
+//defaults
+result      :='';
+
+//start
 mundo__start(u,r,f);
+
 if mundo__split(x,u,r,f) then
    begin
-   result:='u( ';
-   if (u.len>=1) then for p:=0 to (u.len32-1) do result:=result+intstr32(u.pbytes[p])+' ';
-   result:=result+') r( ';
-   if (r.len>=1) then for p:=0 to (r.len32-1) do result:=result+intstr32(r.pbytes[p])+' ';
-   result:=result+') f( ';
-   if (f.len>=1) then for p:=0 to (f.len32-1) do result:=result+intstr32(f.pbytes[p])+' ';
-   result:=result+')';
+
+   result   :='u( ';
+
+   if (u.len>=1) then
+      begin
+
+      for p:=0 to pred(u.len32) do
+      begin
+
+      result:=result + intstr32(u.pbytes[p]) + #32;
+
+      end;//p
+
+      end;
+
+   result   :=result+') r( ';
+
+   if (r.len>=1) then
+      begin
+
+      for p:=0 to (r.len32-1) do
+      begin
+
+      result:=result + intstr32(r.pbytes[p]) + #32;
+
+      end;//p
+
+      end;
+
+   result   :=result+') f( ';
+
+   if (f.len>=1) then
+      begin
+
+      for p:=0 to (f.len32-1) do
+      begin
+
+      result:=result + intstr32(f.pbytes[p]) + #32;
+
+      end;//p
+
+      end;
+
+   result   :=result+')';
+
    end;
-except;end;
-try;mundo__finish(x,u,r,f);except;end;
+
+//finish
+mundo__finish(x,u,r,f);
+
 end;
 
 end.

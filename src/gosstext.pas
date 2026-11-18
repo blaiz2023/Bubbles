@@ -8,26 +8,18 @@ unit gosstext;
 //1. xread__htm
 //2. copy/paste as html
 //3. pdf (write/read = basic)
-
 //6. tstr8 outsourced to res__newstr for rapid reuse????
 //7. option to edit htm/html as TXT (not stylised - will be required for Claude) ***!!!!!!!!!!!
 //8. Option for persistent undo/redo storage (might be trickey if file moves/changes etc)
-
 //[done/png] 9. image inside RTF for copy -> MS uses metafile8 for older apps, e.g. WordPad will create a new document with metafile8 images
-
 //[done] 10. cancopy = RTF
 //[done] 11. canpaste = RTF
-
 //[done] 12. cancopy = HTM (basic)
 //13. canpaste = HTM (basic)
-
 //14. remove 4byte hdr for unicode/utf8 documents: htm/html/txt
-
 //15. metaFile support for xread__rtf -> for backward compatibility for WordPad documents etc
 //15. Windows Meta File (picture) for RTF (older format support)
-
-//16. high quality Italic mode that is OBVIOUS at a glance - for easier reading [ ITALIC ]
-
+//[done] 16. high quality Italic mode that is OBVIOUS at a glance - for easier reading [ ITALIC ]
 //18. fix font bugs....etc -> different fonts sometimes screw up font.height and one font is below the rest of the line for no reason
 //19. improve highlight function -> currently is wiping out background color!
 //20. default font color -> not black, but system color (clnone=system color??????)
@@ -36,10 +28,11 @@ unit gosstext;
 //23. upgrade RTF/HTML support to include multi-font, multi-size, multi-textColor and multi-backColor fonts....
 //24. upgrade tbwpBar.WrapStyle to work with doceditor (currently it fights against it) - 28feb2026
 //25. scale image up/down in line with system "viscale" -> instead of zoom, need a fast__drawStretch proc for this with layer/power support
-//26. 127-255 character support for RTF
+//[done] 26. 127-255 character support for RTF
 //27. better switch support for when onefontname/onefontsize are engaged and disengaged -> currently, fonts don't always switch back properly - 01mar2026
 //28. Default font color = system color even for custom font/color/style text box
 //29. *** Scale images *** (not system TEPs) to active system scale (e.g. OS scale + User scale) -> need to use fast__drawArea() proc => similar to old copyareaFast()...
+//[done] 30. Fix undo misalignment by 1
 
 //??????????????????????????????????????????????????????????????????????????????
 //??????????????????????????????????????????????????????????????????????????????
@@ -55,7 +48,7 @@ interface
 {$ifdef con2} {$define con} {$define jpeg} {$endif}//09oct2026
 {$ifdef WIN64}{$define 64bit}{$endif}
 {$ifdef fpc} {$mode delphi}{$define laz} {$define d3laz} {$undef d3} {$else} {$define d3} {$define d3laz} {$undef laz} {$endif}
-uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossroot, gossio, gossimg, gossfast;
+uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossroot, gossdoc, gossio, gossimg, gossfast;
 {$ifdef d3laz} const stroffset=1; {$else} const stroffset=0; {$endif}  {0 or 1 based string index handling}
 {$align on}{$iochecks on}{$O+}{$W-}{$U+}{$V+}{$B-}{$X+}{$T-}{$P+}{$H+}{$J-} { set critical compiler conditionals for proper compilation - 10aug2025 }
 //## ==========================================================================================================================================================================================================================
@@ -78,21 +71,25 @@ uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossroot, gossio
 //##
 //## ==========================================================================================================================================================================================================================
 //## Library.................. TextCore - non-GUI and GUI text engine for text boxes - (gosstext.pas)
-//## Version.................. 4.00.7549 (+41)
+//## Version.................. 4.00.7700 (+58)
 //## Items.................... 2
-//## Last Updated ............ 16jul2026, 01jul2026, 22apr2026, 26mar2026, 25mar2026, 03mar2026, 01mar2026, 28feb2026, 19feb2026, 17feb2026, 15feb2026, 13feb2026
-//## Lines of Code............ 13,000+
+//## Last Updated ............ 10nov2026, 07nov2026, 02nov2026, 29oct2026, 27oct2026, 25oct2026, 22oct2026, 16jul2026, 01jul2026, 22apr2026, 26mar2026, 25mar2026, 03mar2026, 01mar2026, 28feb2026, 19feb2026, 17feb2026, 15feb2026, 13feb2026
+//## Lines of Code............ 12,700+
 //## Origin .................. Human generated and maintained
 //##
 //## main.pas ................ App specific code
 //## gossdat.pas ............. App specific icons and help documents
+//## gossdoc.pas ............. Multi-format document procs for decoding/encoding document formats
+//## gossepub.pas ............ EPUB generator
 //## gossfast.pas ............ FastDraw - rapid render graphic procs
-//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gamefiles.pas ........... Built-in file(s) for GameCore (optional)
+//## gossfold.pas ............ Virtual folder(s) and file viewer(s) for interactive archive support
+//## gossgame.pas ............ GameCore - 2D game engine with integrated menu handler, xbox controller + mouse + keyboard support and window integration
 //## gossgui.pas ............. GUI management and controls
 //## gossimg.pas ............. Multi-format graphic procs for 8, 24 and 32 bit images with IO support
 //## gossio.pas .............. File IO and low level file/folder/disk/data format procs
 //## gossjpg.pas ............. JPEG IO (read/write jpeg image data via third party libraries)
+//## gossmake.pas ............ Dynamic content generators for interactive archive support
 //## gossnet.pas ............. Networking - ip filtering, socket management etc
 //## gossroot.pas ............ App startup and control (GUI, console and service)
 //## gosssnd.pas ............. Sound, audio, midi and midi based chimes
@@ -105,8 +102,8 @@ uses {$ifdef laz}classes, {$endif} sysutils, gosswin2, gosswin, gossroot, gossio
 //## ==========================================================================================================================================================================================================================
 //## | Name                   | Hierarchy         | Version   | Date        | Update history / brief description of function
 //## |------------------------|-------------------|-----------|-------------|--------------------------------------------------------
-//## | tspell                 | tobjectex         | 1.00.160  | 17feb2026   | System dictionary of 296,000+ full length, non-encoded / non-shortened words - 11feb2022
-//## | ttextcore              | tobject           | 2.00.7348 | 16jul2026   | Multi-line, multi-format, text engine for text box controls - now using FastDraw procs for ~200%+ render speed improvement - 22apr2026, 26mar2026, 25mar2026, 03mar2026, 28feb2026, 17feb2026, 17feb2026: read/write basic RTF, 15feb2026, 13feb2026
+//## | tspell                 | tobjectex         | 1.00.162  | 25oct2026   | Realtime spell checker and dictionary support - 17feb2026, 11feb2022
+//## | ttextcore              | tobject           | 2.00.7480 | 10nov2026   | Multi-line, multi-format, text engine for text box controls - now using FastDraw procs for ~200%+ render speed improvement - 08nov2026, 02nov2026, 29oct2025: fixed delete.Left undo misalignment by 1, 27oct2026, 16jul2026, 22apr2026, 26mar2026, 25mar2026, 03mar2026, 28feb2026, 17feb2026, 17feb2026: read/write basic RTF, 15feb2026, 13feb2026
 //## ==========================================================================================================================================================================================================================
 //## Performance Note:
 //##
@@ -332,10 +329,10 @@ type
     d1                :tstr8;
     d2                :tstr8;
     d3                :tstr8;
-    style             :longint;
-    from1             :longint;//required
-    act               :longint;//vital - 03jul2022
-    len               :longint;//required
+    style             :longint32;
+    from1             :longint32;//required
+    act               :longint32;//vital - 03jul2022
+    len               :longint32;//required
 
     end;
 
@@ -346,6 +343,7 @@ type
     data              :tstr8;
     data2             :tstr8;
     data3             :tstr8;
+    udata             :tunidoc;
 
     //temp streams
     tmp1          :tstr8;
@@ -363,6 +361,7 @@ type
     wfrom             :longint;//for write
     wto               :longint;//for write
     wsize             :longint;
+    wtranslateCount   :longint32;//number of unsupported characters that were translated
 
     //create
     constructor create; virtual;
@@ -392,10 +391,6 @@ type
     //font list -> linear graphic font
     fslot             :array[0..textcore_listmax] of tresslot;//resource slot # to tresfont object
     fref              :array[0..textcore_listmax] of string;//simple lookup name for style|size|fontname -> used to autocreate fslot when required - 28feb2026
-
-    //text list
-    tlist             :array[0..textcore_listmax] of ttextinfo;//text list
-    ilist             :array[0..textcore_listmax] of timageinfo;//image list
 
     //data streams
     idata             :tstr8;//single byte text stream
@@ -548,7 +543,7 @@ type
     function xkeyboard__fromak(xcode:longint;var xctrl,xalt,xshift,xkeyx:boolean;var xkey:longint;var xhavekey:boolean):boolean;
     function strbyte1x(const x:string;xpos:longint64):byte;//1based always -> backward compatible with D3 - 02may2020
     function bstr(const x:tstr8):string;
-    function blen32(x:tstr8):longint;
+    function blen32(const x:tstr8):longint32;
     function bsetlen(const x:tstr8;const xlen:longint64):boolean;
     function xscale__px1(const xval:double;const xmin:longint):longint;//rounds down - 10dec2025
     function xvifeather:longint;
@@ -628,8 +623,6 @@ type
     function gethpos2:longint;//only return hpos value if showing the horizontal scrollbar
     function gethmax:longint;
     function xpos__rc(const xpos:longint):longint;//pos>rc => find end of line #10
-    function xmakefont2(const xoverride:boolean;xname:string;xsize,xcolor,xbgcolor,xbrcolor:longint;xbold,xitalic,xunderline,xstrikeout:boolean;xalign:byte):longint;
-    function xmakefont:longint;
     function xappend(xout:tstr8;const n:string;xval:tstr8):boolean;//fixed - 28jan2021
     function xappendstr(xout:tstr8;const n,v:string):boolean;
     function xappendint4(xout:tstr8;n:string;v:longint):boolean;
@@ -645,7 +638,6 @@ type
     function xfindstyle(const x:byte):byte;//21aug2020
     procedure xdelsel2(const xmoveto:boolean);
     procedure xdelsel;
-    function xmakeimage2(const ximgdata:tstr8;const xsysTEP:longint):longint;
     procedure setlinespacing(x:longint);
     procedure setpagecolor(x:longint);
     procedure setpagecolor2(x:longint);
@@ -664,7 +656,7 @@ type
     function xpaste(xreplace:boolean):boolean;//22apr2026, 01may2025
 
     procedure xfontonevals(var xfontname:string;var xfontsize:longint);//04feb2023
-    procedure xfilterText(x:tstr8);
+    procedure xfilterText(var x:tstr8);
     procedure xapplyzoom;
     function xcursorword_loose:string;//boundaries are "<=32", was: "spaces, tabs and return codes only" - 19jun2022
     procedure xmouseup_specialactions;
@@ -690,7 +682,7 @@ type
     procedure xioset(x:tstr8);
 
     //.document readers
-    procedure xsetdata(x:tstr8;xformat:string;const xmode:longint);
+    function  xsetdata(const x:tstr8;xformat:string;const xmode:longint32):boolean;
 
     procedure xread__bwd(const v:ttextio);
     procedure xread__bwp(const v:ttextio);
@@ -698,7 +690,7 @@ type
     procedure xread__htm(const v:ttextio);
     procedure xread__md(const v:ttextio);
     procedure xread__pdf(const v:ttextio);
-    procedure xread__rtf(const v:ttextio);//basic RTF
+    procedure xread__udoc(const v:ttextio);
     procedure xread__dic(const v:ttextio);//17feb2026
 
     //.document writers
@@ -713,6 +705,7 @@ type
     procedure xwrite__md(const v:ttextio);
     procedure xwrite__pdf(const v:ttextio);
     procedure xwrite__rtf(const v:ttextio);//basic RTF
+    procedure xwrite__udoc(const v:ttextio);
     procedure xwrite__dic(const v:ttextio);//17feb2026
 
     //.document modifiers
@@ -723,11 +716,11 @@ type
     function mdok:boolean;
     function mmax:longint;
     function mredoflush:boolean;//true=flushed redo, false=nothing changed
-    function mstore12(xuseslot:longint;xstoreRecovered:boolean):boolean;//27sep2022 fixed "no undo in use issue", multi-undo write
+    function mstore12(const xuseslot:longint32;const xstoreRecovered:boolean):boolean;//29oct2026, 27sep2022 fixed "no undo in use issue", multi-undo write
     function me(x:tstr8):tstr8;//pass-thru - encode
     function md(x:tstr8):tstr8;//pass-thru - decode
     function mstore1:boolean;//multi-undo write
-    function mread1(xslot:longint;xundo:boolean):boolean;//27sep2022 fixed "no undo in use issue"
+    function mread1(xslot:longint32;const xundo:boolean):boolean;//27sep2022 fixed "no undo in use issue"
 
     function mcopy(sslot,dslot:longint):boolean;
     function mcanundo:boolean;
@@ -742,7 +735,6 @@ type
     function xfindformatlevel:longint;//19jun2022
     procedure setmaxformatlevel(x:longint);
     function xfind(const xtext:string;xcmd:string):boolean;
-    procedure xbackup(const xcap:string);
     function xdocsep(i,xdepthcount:longint):boolean;//slow, mainly for dic support - 05feb2023
     function xdocsep2(i,xdepthcount:longint;const xsplitdash:boolean):boolean;//slow, mainly for dic support - 05feb2023
     procedure sethavefocus(x:boolean);
@@ -752,6 +744,13 @@ type
 
    public
 //11111111111111111111111111111111//??????????????????????
+    //text list
+    tlist             :array[0..textcore_listmax] of ttextinfo;//text list
+    ilist             :array[0..textcore_listmax] of timageinfo;//image list
+
+    //options
+    otranslateCount   :longint32;//number of characters that were translated
+
     //create
     constructor createDataonly; virtual;
     constructor create(const xdataonly:boolean); virtual;
@@ -777,6 +776,7 @@ type
     property havefocus          :boolean   read ihavefocus               write sethavefocus;
     function hshow              :boolean;
     property len32              :longint   read xlen32;
+    property landscape          :boolean   read ilandscape;
 
     //.optional edit these documents as TXT (source code, set to FALSE)
     property caneditHTML        :boolean   read icaneditHTML             write icaneditHTML;
@@ -884,7 +884,7 @@ type
 
     procedure cmakeuppercase(const xforce:boolean);
     procedure cmakelowercase(const xforce:boolean);
-    function ccanmakealign:boolean;
+    function  ccanmakealign:boolean;
     procedure cmakealignment(const xforce:boolean);//cycles through alignment modes
     procedure cmakealign(const xforce:boolean;xval:longint);
     procedure cmakeleft(const xforce:boolean);
@@ -943,6 +943,8 @@ type
     function  undo                                                                :boolean;
     function  canredo                                                             :boolean;
     function  redo                                                                :boolean;
+    procedure redoFlush;
+
     property  undoUse            :boolean   read getundouse               write setundouse;
     procedure undoClear;
 
@@ -958,13 +960,33 @@ type
     procedure iosethtm(x:tstr8);
     procedure iosetdata(x:tstr8);
     procedure iosetdata2(x:tstr8;const xformat:string);
+    function  iosetdata3(const s:pobject):boolean;//06nov2026
+    function  iosetdata4(const s:pobject;const sformat:string):boolean;//06nov2026
 
-    function iogettxt(x:tstr8):boolean;
-    function iogetbwd(x:tstr8):boolean;
-    function iogetbwp(x:tstr8):boolean;
-    function iogethtm(x:tstr8):boolean;
-    function iogetdata(x:tstr8;const xformat:string):boolean;
-    function iogetdata2(x:tstr8;const xformat:string;const xfrom,xto:longint):boolean;
+    procedure setdata(const x:tstr8;const xformat:string;const xmode:longint);//22oct2026
+    procedure backup(const xcap:string);//22oct2026
+
+    function  iogettxt(x:tstr8):boolean;
+    function  iogetrtf(x:tstr8):boolean;
+    function  iogetbwd(x:tstr8):boolean;
+    function  iogetbwp(x:tstr8):boolean;
+    function  iogethtm(x:tstr8):boolean;
+    function  iogetdata(x:tstr8;const xformat:string):boolean;
+    function  iogetdata2(x:tstr8;const xformat:string;const xfrom,xto:longint32):boolean;
+    function  iogetdata3(const d:pobject;const dformat:string):boolean;//06nov2026
+    function  iogetdata4(const d:pobject;const dformat:string;const xfrom,xto:longint32):boolean;//06nov2026
+
+    //read -> 8-bit ascii - 15nov2026
+    function  r_8 (const s:tstr8):boolean;
+    function  r_82(const s:tstr8;const xfrom0,xto0:longint32):boolean;
+    function  r_83(const s:tstr8;const xfrom0,xlen:longint32):boolean;
+
+    //any
+    function  any__fromuni (const ss:tobject):boolean;//07nov2026 - uniDoc -> TextCore
+    function  any__fromuni2(const ss:tobject;const xfrom0,xto0:longint32):boolean;//07nov2026 - uniDoc -> TextCore
+    function  any__fromuni3(const ss:tobject;const xfrom0,xto0:longint32;const xflush:boolean):boolean;//15nov2026, 07nov2026 - uniDoc -> TextCore
+    function  any__touni   (const dd:tobject):boolean;  //07nov2026 - TextCore -> uniDoc
+    function  any__touni2  (const dd:tobject;const sfrom0,sto0:longint32):boolean;//07nov2026 - TextCore -> uniDoc
 
     //doc formats supported
     function  supportsFormat(const xformat:string)                                :boolean;
@@ -1018,6 +1040,9 @@ type
     procedure markModified;
     function  fontslot(const xindex:longint)                                      :longint32;
     function  lineHeight(const xpos1:longint32)                                   :longint32;
+    function  xmakefont2(const xoverride:boolean;xname:string;xsize,xcolor,xbgcolor,xbrcolor:longint;xbold,xitalic,xunderline,xstrikeout:boolean;xalign:byte):longint;
+    function  xmakefont:longint;
+    function  xmakeimage2(const ximgdata:tstr8;const xsysTEP:longint):longint;
 
     //.mark content as changed
     procedure contentChangedAll;//26mar2026
@@ -1056,6 +1081,8 @@ function info__text(xname:string):string;//information specific to this unit of 
 
 
 //support procs ----------------------------------------------------------------
+
+function doc__core:ttextcore;
 
 function font__safesize(const xsize:longint):longint;
 function html__char(const xindex:longint;xlastWasSpace:boolean):string;
@@ -1142,8 +1169,8 @@ xname:=strlow(xname);
 if (strcopy1(xname,1,9)='gosstext.') then strdel1(xname,1,9) else exit;
 
 //get
-if      (xname='ver')        then result:='4.00.7549'
-else if (xname='date')       then result:='16jul2026'
+if      (xname='ver')        then result:='4.00.7700'
+else if (xname='date')       then result:='10nov2026'
 else if (xname='name')       then result:='Text'
 else
    begin
@@ -1155,6 +1182,13 @@ end;
 
 
 //support procs ----------------------------------------------------------------
+
+function doc__core:ttextcore;
+begin
+
+result                :=ttextcore.createDataonly;
+
+end;
 
 function font__safesize(const xsize:longint):longint;
 begin
@@ -1363,7 +1397,7 @@ a           :=str__new8;
 
 //decide
 dformat     :=strlow(dformat);
-if not b.supportsFormat(dformat) then dformat:='bwp';
+if not b.supportsFormat(dformat) then dformat:=febwp;
 
 //s1
 if (str__len32(@s1)>=2) then
@@ -1516,11 +1550,18 @@ xmaxformatlevel :=fmlTXT;
 //search
 if xcan then a(febwd  ,true, fmlBWD );
 if xcan then a(febwp  ,true, fmlBWP );;
-if xcan then a(fedic  ,true, fmlTXT );//17feb2026
-if xcan then a(fehtm  ,true, fmlBWP );
-if xcan then a(fehtml ,true, fmlBWP );
 if xcan then a(fertf  ,true, fmlBWP );
+if xcan then a(feudoc ,true, fmlBWP );//07nov2026
 if xcan then a(fetxt  ,true, fmlTXT );
+if xcan then a(fetpub ,true, fmlTXT );//17oct2026
+if xcan then a(fedic  ,true, fmlTXT );//17feb2026
+
+//if xcan then a(fehtml ,true, fmlBWP );
+//if xcan then a(fehtm  ,true, fmlBWP );
+if xcan then a(fehtml ,true, fmlTXT );//for source code only, until HTM/HTML reader/writer procs are finished - 17oct2026
+if xcan then a(fehtm  ,true, fmlTXT );
+
+if xcan then a(fexml  ,true, fmlTXT );//17oct2026
 
 end;
 
@@ -1985,23 +2026,27 @@ end;
 function tspell.setClean(const xtext:string;const xsort:boolean):boolean;//17feb2026
 label
    skipdone,skipend;
+
 var
-   a,b:tdynamicstring;
-   f:array[0..26] of tdynamicnamelist;
-   p:longint;
-   v:string;
+   a                  :tdynamicstring;
+   b                  :tdynamicstring;
+   f                  :array[0..26] of tdynamicnamelist;
+   p                  :longint32;
+   v                  :string;
 
    function xnewword:boolean;
    var
-      c:byte;
+      c               :byte;
    begin
 
-   c:=byte( v[stroffset] );
+   c                  :=byte( v[stroffset] );
 
    case c of
+
    uuA..uuZ   :result:=f[c-uuA].addonce(v);
    llA..llZ   :result:=f[c-llA].addonce(v);
    else        result:=f[26].addonce(v);
+
    end;//case
 
    end;
@@ -2010,10 +2055,11 @@ var
 begin
 
 //defaults
-result      :=false;
-a           :=nil;
-b           :=nil;
-low__cls(@f,0);
+result                :=false;
+a                     :=nil;
+b                     :=nil;
+
+low__cls(@f,sizeof(f));//25oct2025
 
 try
 
@@ -2021,30 +2067,40 @@ try
 xclearwords;
 
 //init
-a           :=tdynamicstring.create;
-b           :=tdynamicstring.create;
-a.text      :=xtext;
+a                     :=tdynamicstring.create;
+b                     :=tdynamicstring.create;
+a.text                :=xtext;
 
 //check
 if (a.count<=0) then goto skipdone;
 
 //.f
-for p:=0 to high(f) do f[p]:=tdynamicnamelist.create;
+for p:=0 to high(f) do
+begin
+
+f[p]                  :=tdynamicnamelist.create;
+
+end;
 
 //get
-for p:=0 to (a.count-1) do
+for p:=0 to pred(a.count) do
 begin
 
 if (a.items[p]^<>'') then
    begin
 
-   v:=stripwhitespace_lt(a.items[p]^);
+   v                  :=stripwhitespace_lt(a.items[p]^);
 
-   if (v<>'') and xnewword then b.value[b.count]:=v;
+   if (v<>'') and xnewword then
+      begin
+
+      b.value[b.count]:=v;
+
+      end;
 
    end;
 
-end;
+end;//p
 
 //reduce ram
 a.clear;
@@ -2056,16 +2112,17 @@ if xsort then b.sort(true);
 iwordlist.atleast(b.count);
 iwordrefs.atleast(b.count);
 
-for p:=0 to (b.count-1) do
+for p:=0 to pred(b.count) do
 begin
 
-v:=b.svalue[p];
+v                               :=b.svalue[p];
 
 if (v<>'') then
    begin
 
    iwordlist.items[icount]^     :=v;
    iwordrefs.items[icount]      :=low__ref32u(v);
+
    inc(icount);
 
    end;
@@ -2075,7 +2132,7 @@ end;//p
 //successful
 skipdone:
 
-result      :=true;
+result                          :=true;
 
 skipend:
 
@@ -2084,6 +2141,7 @@ except;end;
 //free
 freeobj(@a);
 freeobj(@b);
+
 for p:=0 to high(f) do freeobj(@f[p]);
 
 end;
@@ -2351,6 +2409,7 @@ inherited create;
 data        :=rescache__newStr8;
 data2       :=rescache__newStr8;
 data3       :=rescache__newStr8;
+udata       :=doc__uni;//15nov2026
 
 tmp1        :=rescache__newStr8;
 tmp2        :=rescache__newStr8;
@@ -2371,6 +2430,7 @@ try
 rescache__delStr8(@data);
 rescache__delStr8(@data2);
 rescache__delStr8(@data3);
+freeobj(@udata);
 
 rescache__delStr8(@tmp1);
 rescache__delStr8(@tmp2);
@@ -2929,7 +2989,7 @@ if (x<>nil) and (not x.empty) then result:=x.text else result:='';
 except;end;
 end;
 
-function ttextcore.blen32(x:tstr8):longint;
+function ttextcore.blen32(const x:tstr8):longint32;
 begin
 
 case (x<>nil) of
@@ -3176,7 +3236,8 @@ true:begin//undo on
       begin
 
       iundoinfo.list :=str__new8;
-      mundo__init(iundoinfo.list,iundoinfo.limit);
+
+      mundo__init( iundoinfo.list ,iundoinfo.limit );
 
       end;
 
@@ -3196,12 +3257,16 @@ end;
 
 procedure ttextcore.undoClear;
 begin
+
 mclear(true);
+
 end;
 
 function ttextcore.canundo:boolean;
 begin
+
 result:=mcanundo;
+
 end;
 
 function ttextcore.undo:boolean;
@@ -3231,6 +3296,7 @@ for p:=low(n) to high(n) do
 begin
 
 if nUsed[p] and (n[p]<>'') and xcleanfiles then io__remfile(io__tempfolder+n[p]);
+
 nUsed[p]    :=false;//20dec2024
 
 end;//p
@@ -3252,76 +3318,99 @@ end;
 
 function ttextcore.mdok:boolean;
 begin
+
 result:=(iundoinfo.d1<>nil) and (iundoinfo.d2<>nil) and (iundoinfo.d3<>nil);
+
 end;
 
 function ttextcore.mmax:longint;
 begin
+
 result:=frcrange32(iundoinfo.limit-1,0,high(iundoinfo.n));
+
 end;
 
 function ttextcore.mredoflush:boolean;//true=flushed redo, false=nothing changed
 begin
+
 result:=iundoinfo.enabled and mundo__redoflush(iundoinfo.list);
+
 end;
 
 function ttextcore.me(x:tstr8):tstr8;//pass-thru - encode
 begin
+
 result:=x;
 
 try
+
 low__compress(@x);
 low__lestr(x);
+
 result:=x;
+
 except;end;
 end;
 
 function ttextcore.md(x:tstr8):tstr8;//pass-thru - decode
 begin
+
 result:=x;
 
 try
+
 low__ldstr(x);
 low__decompress(@x);
+
 result:=x;
+
 except;end;
 end;
 
-function ttextcore.mstore12(xuseslot:longint;xstoreRecovered:boolean):boolean;//27sep2022 fixed "no undo in use issue", multi-undo write
+function ttextcore.mstore12(const xuseslot:longint32;const xstoreRecovered:boolean):boolean;//29oct2026, 27sep2022 fixed "no undo in use issue", multi-undo write
 label
    skipend;
+
 var
-   v:tvars8;
-   a,b:tstr8;
-   h:tint4;
-   e:string;
-   l32,xact,xstyle,xslot,xfrom1,xlen:longint;
-   xmustdel:boolean;
+   v                  :tvars8;
+   a                  :tstr8;
+   b                  :tstr8;
+   h                  :tint4;
+   e                  :string;
+   l32                :longint32;
+   xact               :longint32;
+   xstyle             :longint32;
+   xslot              :longint32;
+   xfrom1             :longint32;
+   xlen               :longint32;
+   xmustdel           :boolean;
+
 begin
 
 //defaults
-result      :=false;
-a           :=nil;
-b           :=nil;
-v           :=nil;
-xslot       :=-1;
-xmustdel    :=true;
+result                :=false;
+a                     :=nil;
+b                     :=nil;
+v                     :=nil;
+xslot                 :=-1;
+xmustdel              :=true;
 
 //check - 27sep2022
 if not iundoinfo.enabled then
    begin
 
-   result:=true;
+   result             :=true;
+
    exit;
 
    end;
 
 //range
-l32         :=xlen32;
-xstyle      :=frcrange32(iundoinfo.style,musNone,musMax);
-xfrom1      :=frcrange32(iundoinfo.from1   ,1,l32);//32
-xlen        :=frcrange32(iundoinfo.len     ,0,l32);//32
-xact        :=muaRep;
+l32                   :=xlen32;
+xstyle                :=frcrange32( iundoinfo.style  ,musNone ,musMax );
+xfrom1                :=frcrange32( iundoinfo.from1  ,1       ,l32    );//32
+xlen                  :=frcrange32( iundoinfo.len    ,0       ,l32    );//32
+xact                  :=muaRep;
 
 try
 
@@ -3329,131 +3418,153 @@ try
 if (xstyle=musRecovered) and (not xstoreRecovered) then
    begin
 
-   xmustdel  :=false;
-   result    :=true;
+   xmustdel           :=false;
+   result             :=true;
+
    goto skipend;
 
    end;
 
 case xstyle of
+
 musDelL,musDelR:begin
 
-   xlen:=0;//from side stream
-   xact:=muaAdd;
+   xlen               :=0;//from side stream
+   xact               :=muaAdd;
 
    end;
+
 musIns,musInsimg:begin
 
-   xact:=muaSub;
+   xact               :=muaSub;
 
    end;
+
 musRangekeep:begin
 
-   xact:=muaRep;
+   xact               :=muaRep;
 
    end;
+
 musRecovered:begin
 
-   xlen:=blen32(iundoinfo.d1);//32
-   xact:=frcrange32(iundoinfo.act,0,muaMax);
+   xlen               :=blen32(iundoinfo.d1);//32
+   xact               :=frcrange32( iundoinfo.act ,0 ,muaMax );
 
    end;
+
 musSel,musSelKeep:begin
 
-   xfrom1   :=selstart;//from data stream
-   xlen     :=selcount;
+   xfrom1             :=selstart;//from data stream
+   xlen               :=selcount;
 
-   if (xstyle=musSelKeep) then xact:=muaRep else xact:=muaAdd;
+   if (xstyle=musSelKeep) then xact:=muaRep
+   else                        xact:=muaAdd;
 
    //check for empty selection requests and IGNORE them - 03jul2022
    if (xlen<=0) then
       begin
 
-      result:=true;
+      result          :=true;
+
       goto skipend;
 
       end;
 
    end;
-else
-   begin//nothing to do here for these modes
 
-   result:=true;
+else begin//nothing to do here for these modes
+
+   result             :=true;
+
    goto skipend;
 
    end;
+
 end;//case
 
 //init
+
 //.slot
-if (xuseslot>=-1) then xslot:=xuseslot
-else                   xslot:=mundo__newslot(iundoinfo.list);
+if (xuseslot>=-1) then xslot    :=xuseslot
+else                   xslot    :=mundo__newslot(iundoinfo.list);
 
 //.tmps
-a           :=str__new8;
-b           :=str__new8;
-v           :=vnew;
-xact        :=frcrange32(xact,0,muaMax);//action
+a                               :=str__new8;
+b                               :=str__new8;
+v                               :=vnew;
+xact                            :=frcrange32(xact,0,muaMax);//action
 
 //header ID - 28jun2022
-h.bytes[0]  :=uuU;
-h.bytes[1]  :=uuN;
-h.bytes[2]  :=uuD;
-h.bytes[3]  :=nn1;
-a.datpush(h.val,nil);
+h.bytes[0]                      :=uuU;
+h.bytes[1]                      :=uuN;
+h.bytes[2]                      :=uuD;
+h.bytes[3]                      :=nn1;
+
+a.datpush( h.val ,nil );
 
 //info
-v.i['x']    :=xfrom1;
-v.i['a']    :=xact;
-v.i['1']    :=icursorpos;
-v.i['2']    :=icursorpos2;
-v.i['v']    :=vpos_px;//low__wordcore2(x,'vpos.px',nil);
-v.i['h']    :=hpos;//low__wordcore2(x,'hpos',nil);
-a.datpush(0,v.data);
+v.i['x']                        :=xfrom1;
+v.i['a']                        :=xact;
+v.i['1']                        :=icursorpos;
+v.i['2']                        :=icursorpos2;
+v.i['v']                        :=vpos_px;//low__wordcore2(x,'vpos.px',nil);
+v.i['h']                        :=hpos;//low__wordcore2(x,'hpos',nil);
+
+a.datpush( 0 ,v.data );
+
 freeobj(@v);
 
 //data
 case xstyle of
+
 musDelL,musDelR:begin
 
-   a.datpush(1,me(iundoinfo.d1));
-   a.datpush(2,me(iundoinfo.d2));
-   a.datpush(3,me(iundoinfo.d3));
+   a.datpush( 1 ,me(iundoinfo.d1) );
+   a.datpush( 2 ,me(iundoinfo.d2) );
+   a.datpush( 3 ,me(iundoinfo.d3) );
 
    end;
+
 musIns,musSel,musSelKeep,musRangekeep,musInsimg:begin
 
    b.clear;
-   b.add31(idata ,xfrom1,xlen);
-   a.datpush(1,me(b));
+   b.add31( idata ,xfrom1 ,xlen );
+   a.datpush( 1 ,me(b) );
 
    b.clear;
-   b.add31(idata2,xfrom1,xlen);
-   a.datpush(2,me(b));
+   b.add31( idata2 ,xfrom1 ,xlen );
+   a.datpush( 2 ,me(b) );
 
    b.clear;
-   b.add31(idata3,xfrom1,xlen);
-   a.datpush(3,me(b));
+   b.add31( idata3 ,xfrom1 ,xlen );
+   a.datpush( 3 ,me(b) );
 
    end;
+
 musRecovered:begin
 
    if mdok then
       begin
-      a.datpush(1,me(iundoinfo.d1));
-      a.datpush(2,me(iundoinfo.d2));
-      a.datpush(3,me(iundoinfo.d3));
+
+      a.datpush( 1 ,me(iundoinfo.d1) );
+      a.datpush( 2 ,me(iundoinfo.d2) );
+      a.datpush( 3 ,me(iundoinfo.d3) );
+
       end;
 
    end;
+
 end;//case
 
 //save
-iundoinfo.nUsed[xslot]:=true;
+iundoinfo.nUsed[xslot]          :=true;
+
 if not io__tofile(io__tempfolder+iundoinfo.n[xslot],@a,e) then goto skipend;
 
 //successful
-result:=true;
+result                          :=true;
+
 skipend:
 
 except;end;
@@ -3469,10 +3580,10 @@ if (xstyle<>musNone) then//and (xstyle<>musRangekeep) then
    str__clear(@iundoinfo.d3);
 
    //vars
-   iundoinfo.from1 :=1;
-   iundoinfo.len   :=0;
-   iundoinfo.style :=musNone;
-   iundoinfo.act   :=muaRep;
+   iundoinfo.from1    :=1;
+   iundoinfo.len      :=0;
+   iundoinfo.style    :=musNone;
+   iundoinfo.act      :=muaRep;
 
    //delete selection
    if xmustdel and (xstyle=musSel) and (selcount>=1) then xdelsel2(false);//yyyyyyyyyyyyyy xdelsel2(true);//don't set "*_moveto" when inserting one or more characters - 02sep2019
@@ -3483,6 +3594,7 @@ if (xstyle<>musNone) then//and (xstyle<>musRangekeep) then
 freeobj(@a);
 freeobj(@b);
 freeobj(@v);
+
 except;end;
 end;
 
@@ -3491,46 +3603,58 @@ begin
 result:=mstore12(min32,false);
 end;
 
-function ttextcore.mread1(xslot:longint;xundo:boolean):boolean;//27sep2022 fixed "no undo in use issue"
+function ttextcore.mread1(xslot:longint32;const xundo:boolean):boolean;//27sep2022 fixed "no undo in use issue"
 label
    skipend;
+
 var
-   v:tvars8;
-   a,b:tstr8;
-   h:tint4;
-   bcount,xact,xfrom1,xcursor,xcursor2,xposV,xposH,bn,xpos:longint;
-   e:string;
+   v                  :tvars8;
+   a                  :tstr8;
+   b                  :tstr8;
+   h                  :tint4;
+   bcount             :longint32;
+   xact               :longint32;
+   xfrom1             :longint32;
+   xcursor            :longint32;
+   xcursor2           :longint32;
+   xposV              :longint32;
+   xposH              :longint32;
+   bn                 :longint32;
+   xpos               :longint32;
+   e                  :string;
+
 begin
 
 //defaults
-result      :=false;
-a           :=nil;
-b           :=nil;
-v           :=nil;
+result                :=false;
+a                     :=nil;
+b                     :=nil;
+v                     :=nil;
 
 //check - 27sep2022
 if not iundoinfo.enabled then
    begin
 
-   result:=true;
+   result             :=true;
+
    exit;
 
    end;
 
 //range
-xslot       :=frcrange32(xslot,low(iundoinfo.n),mmax);
+xslot                 :=frcrange32( xslot ,low(iundoinfo.n) ,mmax );
 
 //init
-a           :=str__new8;
-b           :=str__new8;
-v           :=vnew;
-xact        :=muaRep;
-xfrom1      :=0;
-xcursor     :=1;
-xcursor2    :=1;
-xposV       :=0;
-xposH       :=0;
-bcount      :=0;
+a                     :=str__new8;
+b                     :=str__new8;
+v                     :=vnew;
+xact                  :=muaRep;
+xfrom1                :=0;//??????????????????????
+xcursor               :=1;
+xcursor2              :=1;
+xposV                 :=0;
+xposH                 :=0;
+bcount                :=0;
 
 try
 
@@ -3543,13 +3667,13 @@ str__clear(@iundoinfo.d3);
 if not io__fromfile(io__tempfolder+iundoinfo.n[xslot],@a,e) then goto skipend;
 
 //get
-xpos        :=0;
+xpos                  :=0;
 
 //.header ID
-h.bytes[0]  :=uuU;
-h.bytes[1]  :=uuN;
-h.bytes[2]  :=uuD;
-h.bytes[3]  :=nn1;
+h.bytes[0]            :=uuU;
+h.bytes[1]            :=uuN;
+h.bytes[2]            :=uuD;
+h.bytes[3]            :=nn1;
 
 if (not a.datpull32(xpos,bn,b)) or (bn<>h.val) then goto skipend;
 
@@ -3557,20 +3681,20 @@ if (not a.datpull32(xpos,bn,b)) or (bn<>h.val) then goto skipend;
 while true do
 begin
 
-if not a.datpull32(xpos,bn,b) then break;
+if not a.datpull32( xpos ,bn ,b ) then break;
 
 //.info
 if (bn=0) then
    begin
 
    //get
-   v.data   :=b;
-   xfrom1   :=frcmin32(v.i['x'],1);
-   xact     :=frcrange32(v.i['a'],0,muaMax);
-   xcursor  :=frcmin32(v.i['1'],1);
-   xcursor2 :=frcmin32(v.i['2'],1);
-   xposV    :=v.i['v'];
-   xposH    :=v.i['h'];
+   v.data             :=b;
+   xfrom1             :=frcmin32( v.i['x'] ,1 );
+   xact               :=frcrange32(v.i['a'],0,muaMax);
+   xcursor            :=frcmin32(v.i['1'],1);
+   xcursor2           :=frcmin32(v.i['2'],1);
+   xposV              :=v.i['v'];
+   xposH              :=v.i['h'];
 
    //clear
    v.clear;
@@ -3579,8 +3703,8 @@ if (bn=0) then
    if not xundo then
       begin
 
-      if      (xact=muaAdd) then xact:=muaSub
-      else if (xact=muaSub) then xact:=muaAdd;
+      if      (xact=muaAdd) then xact     :=muaSub
+      else if (xact=muaSub) then xact     :=muaAdd;
 
       end;
 
@@ -3592,7 +3716,8 @@ else if (bn=1) and (xfrom1>=1) then
 
    //init
    md(b);
-   bcount:=blen32(b);//32
+
+   bcount                                 :=blen32(b);//32
 
    //get
    if (xfrom1>=1) and (bcount>=1) and ((xact=muaRep) or (xact=muaSub)) then
@@ -3600,24 +3725,29 @@ else if (bn=1) and (xfrom1>=1) then
 
       if (xact=muaRep) and mdok then
          begin
+
          str__clear(@iundoinfo.d1);
-         iundoinfo.d1.add3(idata, xfrom1-1,bcount);
+
+         iundoinfo.d1.add3( idata ,pred(xfrom1) ,bcount );
 
          str__clear(@iundoinfo.d2);
-         iundoinfo.d2.add3(idata2,xfrom1-1,bcount);
+
+         iundoinfo.d2.add3( idata2 ,pred(xfrom1) ,bcount );
 
          str__clear(@iundoinfo.d3);
-         iundoinfo.d3.add3(idata3,xfrom1-1,bcount);
+
+         iundoinfo.d3.add3( idata3 ,pred(xfrom1) ,bcount );
 
          end;
 
-      idata .del3(xfrom1-1,bcount);
-      idata2.del3(xfrom1-1,bcount);
-      idata3.del3(xfrom1-1,bcount);
+      idata .del3( pred(xfrom1) ,bcount );
+      idata2.del3( pred(xfrom1) ,bcount );
+      idata3.del3( pred(xfrom1) ,bcount );
 
       end;
 
-   if (xact<>muaSub) then idata.ins(b,xfrom1-1);
+   if (xact<>muaSub) then idata.ins( b ,pred(xfrom1) );
+
    if (iundoinfo.d1<>nil) and (xact<>muaRep) then iundoinfo.d1.replace:=b;//hold the undo value in the MD1-3 handlers - doubles up on the data but makes management easier and more reliable - 03jul2022
 
    end
@@ -3627,7 +3757,8 @@ else if (bn=2) and (xfrom1>=1) then
 
    md(b);
 
-   if (xact<>muaSub) then idata2.ins(b,xfrom1-1);
+   if (xact<>muaSub) then idata2.ins( b ,pred(xfrom1) );
+
    if (iundoinfo.d2<>nil) and (xact<>muaRep) then iundoinfo.d2.replace:=b;
 
    end
@@ -3637,7 +3768,8 @@ else if (bn=3) and (xfrom1>=1) then
 
    md(b);
 
-   if (xact<>muaSub) then idata3.ins(b,xfrom1-1);
+   if (xact<>muaSub) then idata3.ins( b ,pred(xfrom1) );
+
    if (iundoinfo.d3<>nil) and (xact<>muaRep) then iundoinfo.d3.replace:=b;
 
    end;
@@ -3646,13 +3778,15 @@ end;//loop
 
 //finalise
 case xact of
-muaRep,muaAdd:xcursor:=xfrom1+bcount;
-muaSub       :xcursor:=xfrom1;
+muaRep,muaAdd         :xcursor  :=xfrom1 + bcount;
+muaSub                :xcursor  :=xfrom1;
 end;//case
-xcursor2:=xcursor;
+
+xcursor2                        :=xcursor;
 
 //successful
-result:=true;
+result                          :=true;
+
 skipend:
 
 except;end;
@@ -3660,18 +3794,18 @@ try
 
 //finalise
 xmincheck;
-icursorpos  :=frcrange32(xcursor   ,1,blen32(idata));//32
-icursorpos2 :=frcrange32(xcursor2  ,1,blen32(idata));//32
-vpos_px     :=xposV;
-hpos        :=xposH;
+icursorpos                      :=frcrange32( xcursor   ,1 ,blen32(idata) );//32
+icursorpos2                     :=frcrange32( xcursor2  ,1 ,blen32(idata) );//32
+vpos_px                         :=xposV;
+hpos                            :=xposH;
 
-if (xfrom1>=1) then xwrapadd(xlinebefore(xfrom1),xfrom1+bcount+ic_pagewrap);
+if (xfrom1>=1) then xwrapadd( xlinebefore(xfrom1) ,xfrom1+bcount+ic_pagewrap );
 
-iundoinfo.from1 :=xfrom1;
-iundoinfo.len   :=0;
-iundoinfo.act   :=xact;
-iundoinfo.style :=musRecovered;
-itimer_chklinecursorx:=true;
+iundoinfo.from1                 :=xfrom1;
+iundoinfo.len                   :=0;
+iundoinfo.act                   :=xact;
+iundoinfo.style                 :=musRecovered;
+itimer_chklinecursorx           :=true;
 
 xincdata3;
 xchanged;
@@ -5815,37 +5949,51 @@ end;
 
 function ttextcore.canclearall:boolean;
 begin
+
 result:=xcanclear('clearall');
+
 end;
 
 function ttextcore.canclear:boolean;
 begin
+
 result:=xcanclear('clear');
+
 end;
 
 function ttextcore.canclear2:boolean;
 begin
+
 result:=xcanclear('clear2');
+
 end;
 
 procedure ttextcore.clear;
 begin
+
 xclear('clear');
+
 end;
 
 procedure ttextcore.clear2;
 begin
+
 xclear('clear2');
+
 end;
 
 procedure ttextcore.clearall;
 begin
+
 xclear('clearall');
+
 end;
 
 function ttextcore.xcanclear(const xstyle:string):boolean;
 begin
+
 result:=(xstyle='clearall') or (xstyle='clear') or (xstyle='clear2');
+
 end;
 
 procedure ttextcore.xclear(xstyle:string);
@@ -5870,6 +6018,7 @@ cdefault;
 
 //.clear everything - 27sep2022
 iwidestline           :=0;//12mar2021
+otranslateCount       :=0;//10nov2026
 idata .replacebyt1    :=10;
 idata2.replacebyt1    :=0;
 idata3.replacebyt1    :=0;//14feb2026
@@ -5974,9 +6123,11 @@ begin
 xins2(x,false);
 end;
 
-procedure ttextcore.xfilterText(x:tstr8);
+procedure ttextcore.xfilterText(var x:tstr8);
 begin
+
 text__filterText(x);
+
 end;
 
 procedure ttextcore.xins2(x:tstr8;const xoverrideReadonly2:boolean);
@@ -6179,7 +6330,7 @@ end;
 
 procedure ttextcore.iosetdic(x:tstr8);
 begin
-iosetdata2(x,'dic');
+iosetdata2(x,fedic);
 end;
 
 procedure ttextcore.iosetbwd(x:tstr8);
@@ -6207,34 +6358,156 @@ begin
 xsetdata(x,xformat,sioIOset);
 end;
 
+function ttextcore.iosetdata3(const s:pobject):boolean;//06nov2026
+begin
+
+result                :=iosetdata4( s ,'' );
+
+end;
+
+function ttextcore.iosetdata4(const s:pobject;const sformat:string):boolean;//06nov2026
+label
+   skipend;
+
+var
+   s8                 :tstr8;
+
+begin
+
+//defaults
+result                :=false;
+s8                    :=nil;
+
+try
+
+//check
+if not str__lock( s ) then goto skipend;
+
+//get
+if str__is8(s) then
+   begin
+
+   result             :=xsetdata( tstr8(s^) ,sformat ,sioIOset );
+
+   end
+
+else begin
+
+   //init
+   s8                 :=str__new8;
+
+   //s -> s8
+   if not str__add( @s8 ,s )           then goto skipend;
+
+   //get
+   if not xsetdata( s8 ,sformat ,sioIOset ) then goto skipend;
+
+   end;
+
+//successful
+result                :=true;
+
+skipend:
+
+except;end;
+
+//free
+str__uaf( s );
+
+if (s8<>nil) then str__free( @s8 );
+
+end;
+
 function ttextcore.iogettxt(x:tstr8):boolean;
 begin
-result:=iogetdata(x,'txt');
+result:=iogetdata(x,fetxt);
 end;
 
 function ttextcore.iogetbwd(x:tstr8):boolean;
 begin
-result:=iogetdata(x,'bwd');
+result:=iogetdata(x,febwd);
 end;
 
 function ttextcore.iogetbwp(x:tstr8):boolean;
 begin
-result:=iogetdata(x,'bwp');
+result:=iogetdata(x,febwp);
+end;
+
+function ttextcore.iogetrtf(x:tstr8):boolean;
+begin
+result:=iogetdata(x,fertf);
 end;
 
 function ttextcore.iogethtm(x:tstr8):boolean;
 begin
-result:=iogetdata(x,'htm');
+result:=iogetdata(x,fehtm);
 end;
 
 function ttextcore.iogetdata(x:tstr8;const xformat:string):boolean;
 begin
-xgetdata(x,xformat,1,xlen32);
+result:=xgetdata(x,xformat,1,xlen32);
 end;
 
-function ttextcore.iogetdata2(x:tstr8;const xformat:string;const xfrom,xto:longint):boolean;
+function ttextcore.iogetdata2(x:tstr8;const xformat:string;const xfrom,xto:longint32):boolean;
 begin
-xgetdata(x,xformat,xfrom,xto);
+result:=xgetdata(x,xformat,xfrom,xto);
+end;
+
+function ttextcore.iogetdata3(const d:pobject;const dformat:string):boolean;//06nov2026
+begin
+
+result                :=iogetdata4( d ,dformat ,1 ,xlen32 );
+
+end;
+
+function ttextcore.iogetdata4(const d:pobject;const dformat:string;const xfrom,xto:longint32):boolean;//06nov2026
+label
+   skipend;
+
+var
+   d8                 :tstr8;
+
+begin
+
+//defaults
+result                :=false;
+d8                    :=nil;
+
+try
+
+//check
+if not str__lock( d ) then goto skipend;
+
+//get
+if str__is8(d) then
+   begin
+
+   result             :=xgetdata( tstr8(d^) ,dformat ,xfrom, xto );
+
+   end
+
+else begin
+
+   //init
+   d8                 :=str__new8;
+
+   //d -> d8
+   str__add( @d8, d );
+
+   //get
+   result             :=xgetdata( d8 ,dformat ,xfrom, xto )
+
+   end;
+
+skipend:
+
+except;end;
+
+//free
+str__uaf( d );
+
+if (d8<>nil) then str__free( @d8 );
+
 end;
 
 procedure ttextcore.xioset(x:tstr8);
@@ -6252,15 +6525,26 @@ begin
 xsetdata(x,'',sioIOins_noundo);
 end;
 
-procedure ttextcore.xsetdata(x:tstr8;xformat:string;const xmode:longint);
-label
+procedure ttextcore.setdata(const x:tstr8;const xformat:string;const xmode:longint);//22oct2026
+begin
+
+xsetdata( x ,xformat ,xmode );
+
+end;
+
+function ttextcore.xsetdata(const x:tstr8;xformat:string;const xmode:longint32):boolean;
+label//Note: ioset=replaces current content with new one, ioins=inserts content at cursorpos (deletes current selection)
    skipend;
+
 var
-   v:ttextio;
-   int1,int2,int3:longint;
-begin//Note: ioset=replace current content with new one, ioins=insert at cursorpos (deletes current selection)
+   v        :ttextio;
+   int1     :longint32;
+   int2     :longint32;
+   int3     :longint32;
+begin
 
 //defaults
+result      :=false;
 v           :=nil;
 
 //check
@@ -6282,18 +6566,20 @@ xmincheck;
 if (xmode=sioIOset) then clear2;
 
 //get
-if      (xformat='txt')   then xread__txt(v)
-else if (xformat='bwd')   then xread__bwd(v)
-else if (xformat='bwp')   then xread__bwp(v)
-else if (xformat='dic')   then xread__dic(v)
-else if (xformat='rtf')   then xread__rtf(v)
+
+if      (xformat=fetxt)   then xread__txt(v)//utf-8
+else if (xformat=febwd)   then xread__bwd(v)
+else if (xformat=febwp)   then xread__bwp(v)
+else if (xformat=fedic)   then xread__dic(v)
+else if (xformat=fertf)   then xread__udoc(v)//data pass back via v.udata
+else if (xformat=feudoc)  then xread__udoc(v)//data pass back via v.udata
 else if (xformat='pdf')   then xread__pdf(v)
-else if (xformat='htm')   then
+else if (xformat=fehtm)   then
    begin
 
    case icaneditHTML of
    true:xread__htm(v);
-   else xread__txt(v);
+   else xread__txt(v);//utf-8
    end;//case
 
    end
@@ -6302,16 +6588,16 @@ else if (xformat='md')    then
 
    case icaneditMD of
    true:xread__md(v);
-   else xread__txt(v);
+   else xread__txt(v);//utf-8
    end;//case
 
    end
 
-else xread__txt(v);
+else xread__txt(v);//utf-8
 
 
 //set -> insert the 3 streams and update ---------------------------------
-if (blen32(v.data)>=1) then
+if (blen32(v.data)>=1) or (v.udata.count>=1) then
    begin
 
    if(xmode=sioIOins) or (xmode=sioIOins_noundo) then
@@ -6357,9 +6643,22 @@ if (blen32(v.data)>=1) then
       end;
 
    //insert data streams
-   idata .ins(v.data  ,int2-1);
-   idata2.ins(v.data2 ,int2-1);
-   idata3.ins(v.data3 ,int2-1);
+   if (v.udata.count>=1) then
+      begin
+
+      any__fromuni3(v.udata,0,max32,false);
+
+      v.wtranslateCount     :=otranslateCount;//pass it on
+
+      end
+
+   else begin
+
+      idata .ins(v.data  ,int2-1);
+      idata2.ins(v.data2 ,int2-1);
+      idata3.ins(v.data3 ,int2-1);
+
+      end;
 
    xmincheck;
 
@@ -6381,7 +6680,14 @@ if (blen32(v.data)>=1) then
 
    end;
 
+
+//translate count
+otranslateCount       :=v.wtranslateCount;//10nov2026
+
 except;end;
+
+//successful
+result      :=true;
 
 skipend:
 
@@ -6956,24 +7262,26 @@ end;
 
 procedure ttextcore.xread__txt(const v:ttextio);//14feb2026
 var
-   p,l32:longint;
-   wrd2:twrd2;
+   p                  :longint32;
+   l32                :longint32;
+   wrd2               :twrd2;
+
 begin
 
 //init
-v.data.add(v.iostream);
+u8__to82( @v.iostream ,@v.data ,v.wtranslateCount );//10nov2026, 02nov2026, 25oct2026
 
 //filter
 xfiltertext(v.data);
 
 //get
-l32:=blen32(v.data);
+l32                   :=blen32(v.data);
 
 if (l32>=1) then
    begin
 
    //init
-   wrd2.val :=xmakefont;
+   wrd2.val           :=xmakefont;
    v.data2.setlen(l32);
    v.data3.setlen(l32);
 
@@ -6994,7 +7302,7 @@ procedure ttextcore.xread__dic(const v:ttextio);//17feb2026
 begin
 
 //clean and sort dictionary
-xmodify__dic(@v.iostream);
+xmodify__dic(@v.iostream);//utf-8
 
 //load
 xread__txt(v);
@@ -7074,9 +7382,13 @@ var
 begin
 
 //init
+u8__to82( @v.iostream ,@v.data ,v.wtranslateCount );//10nov2026, 25oct2026
 
-//.utf8 -> 7bit text (0..127)
-utf8__to7bitText(@v.iostream,@v.tmp1,false,false);
+//filter
+xfiltertext(v.data);
+
+//???????????????//.utf8 -> 7bit text (0..127)
+//???????????????utf8__to7bitText(@v.iostream,@v.tmp1,false,false);
 
 s                     :=v.tmp1;
 xhead                 :=0;
@@ -7227,548 +7539,13 @@ begin
 
 end;
 
-procedure ttextcore.xread__rtf(const v:ttextio);
-const
-   n_nil              =0;
-   n_char             =1;
-   n_b                =2;
-   n_b0               =3;
-   n_i                =4;
-   n_i0               =5;
-   n_u                =6;
-   n_u0               =7;
-   n_s                =8;
-   n_s0               =9;
-   n_9                =10;
-   n_10               =11;
-   n_pic              =12;
-   n_pard             =13;
-   n_left             =14;
-   n_center           =15;
-   n_right            =16;
-   n_h                =17;//highlight
-   n_h0               =18;
-   n_url              =19;
-   
+procedure ttextcore.xread__udoc(const v:ttextio);
 var
-   a:tbasicimage;
-   n,v32,xbracketDepth,xpos,l32,xsize,xcolor,xalign,xlastid,p:longint;
-   xpardStart,xpardON,xbold,xitalic,xunderline,xstrikeout,xhighlight:boolean;
-   xname,xref,e:string;
-   wrd2:twrd2;
-
-   function dmakefont:longint;
-   begin
-
-   if low__setstr( xref ,bolstr(xbold)+bolstr(xitalic)+bolstr(xunderline)+bolstr(xstrikeout)+bolstr(xhighlight)+'|'+intstr32(xalign)+'|'+intstr32(xcolor)+'|'+intstr32(xsize)+'|'+xname) then
-      begin
-
-      case xhighlight of
-      true:xlastid   :=xmakefont2(true,xname,xsize,clnone,xcolor,clnone,xbold,xitalic,xunderline,xstrikeout,xalign);
-      else xlastid   :=xmakefont2(true,xname,xsize,xcolor,clnone,clnone,xbold,xitalic,xunderline,xstrikeout,xalign);
-      end;//case
-
-      end;
-
-   result       :=xlastid;
-
-   end;
-
-   procedure a1(const c:byte);
-   var
-      wrd2:twrd2;
-   begin
-
-   wrd2.val           :=dmakefont;
-
-   v.data .addbyt1(c);
-   v.data2.addbyt1( wrd2.bytes[0] );
-   v.data3.addbyt1( wrd2.bytes[1] );
-
-   end;
-
-   function v0(const xindex:longint):byte;
-   begin
-
-   if (xindex>=0) and (xindex<l32) then result:=v.iostream.pbytes[xindex] else result:=0;
-
-   end;
-
-   function xpull:boolean;
-   var
-      nv,xfieldType:string;
-      xdone:boolean;
-      p:longint;
-      c:byte;
-
-      procedure xreadPicData;
-      var
-         bd,xfrom,xto,i:longint;
-         xstart:boolean;
-      begin
-
-      //init
-      xfrom    :=p;
-      xto      :=p;
-      bd       :=0;//bracket depth
-      xstart   :=true;
-
-      //find start/finish
-      for i:=p to l32 do
-      begin
-
-      case v0(i) of
-      ssLCurlyBracket:inc(bd);
-      ssRCurlyBracket:begin
-
-         dec(bd);
-
-         if (not xstart) and (bd=-1) then
-            begin
-
-            xto    :=i-1;
-            xpos   :=i;//allow main loop to detect end-of-pict - 19feb2026
-            break;
-
-            end;
-
-         end;
-      ssSpace:begin
-
-         if (bd=0) and xstart then
-            begin
-
-            xfrom  :=i+1;
-            xto    :=i+1;
-            xpos   :=i+1;
-            xstart :=false;
-
-            end;
-
-         end;
-      end;//case
-
-      end;//i
-
-      //image
-      v.tmp1.clear;
-      v.tmp2.clear;
-      v.tmp2.add2(v.iostream,xfrom,xto);
-
-      low__fromhex(v.tmp2,v.tmp1);
-
-      //reduce ram
-      v.tmp2.clear;
-
-      end;
-
-      procedure xdecodeField;
-      label
-         redo;
-      var
-         bd,vmax,dlen,p:longint;
-
-         procedure a1(const c:byte);
-         begin
-
-         v.tmp1.pbytes[dlen]:=c;
-         inc(dlen,1);
-
-         end;
-
-      begin
-
-      //defaults
-      dlen  :=0;
-      vmax  :=v.tmp1.len32-1;
-      p     :=0;
-      bd    :=0;
-
-      //get
-      redo:
-
-      case v.tmp1.pbytes[p] of
-      ssLCurlyBracket,ssRCurlyBracket:;//nil
-      ssBackSlash:begin// "\{" => "{" etc
-
-         if      (v.tmp1.str[p,2]='\{')   then
-            begin
-
-            a1(ssLCurlyBracket);
-            inc(p,1);
-
-            end
-         else if (v.tmp1.str[p,2]='\}')   then
-            begin
-
-            a1(ssRCurlyBracket);
-            inc(p,1);
-
-            end
-         else if (v.tmp1.str[p,4]='\\\\') then
-            begin
-
-            a1(ssBackSlash);
-            inc(p,3);
-
-            end;
-
-         end;//begin
-
-      else  a1(v.tmp1.pbytes[p]);
-
-      end;//case
-
-      //loop
-      inc(p);
-      if (p<=vmax) then goto redo;
-
-      //finalise size
-      if (dlen<v.tmp1.len32) then v.tmp1.setlen(dlen);
-
-      end;
-
-      procedure xreadfield;
-      var
-         xfrom,bd,i,i2:longint;
-         xreadStop:boolean;
-      begin
-
-      //defaults
-      xfieldType      :='';
-      bd              :=0;
-      xfrom           :=frcmin32(xpos-2,0);
-      xreadStop       :=false;
-
-      //init
-      v.tmp1.clear;
-
-      //find start/finish
-      for i:=xfrom to l32 do
-      begin
-
-      case v0(i) of
-      ssRCurlyBracket:begin
-
-         if (v0(i-1)<>ssBackSlash) then dec(bd);
-
-         if (bd=0) then
-            begin
-
-            xpos:=i;//allow main loop to detect the trailing double "}" - 19feb2026
-            break;
-
-            end;
-
-         end;
-      ssLCurlyBracket:begin
-
-         if (v0(i-1)<>ssBackSlash) then inc(bd);
-
-         if (not xreadStop) and strmatch(v.iostream.str1[i+1,11],'{hyperlink ') then
-            begin
-
-            xfieldType   :='url';
-            xreadStop    :=true;
-
-            for i2:=(i+11) to l32 do if (v0(i2)=ssRCurlyBracket) and (v0(i2+1)=ssRCurlyBracket) then
-               begin
-
-               v.tmp1.text:=v.iostream.str1[i+12,i2-i-12];
-               xdecodeField;
-
-               break;//i2
-
-               end;
-            end;
-
-         end;//begin
-
-      end;//case
-
-      end;//i
-
-      end;
-
-   begin
-
-   //init
-   result   :=(xpos>=0) and (xpos<l32);
-   xdone    :=false;
-   n        :=n_nil;
-   v32      :=0;
-
-   //check
-   if not result then exit;
-
-   //get
-   c        :=v0(xpos);
-
-   case c of
-
-   ssLCurlyBracket:begin
-
-      if (v0(xpos-1)<>ssBackSlash) then inc(xBracketDepth);
-      inc(xpos);
-
-      end;
-   ssRCurlyBracket:begin
-
-      if (v0(xpos-1)<>ssBackSlash) then dec(xBracketDepth);
-      inc(xpos);
-
-      end;
-   ssBackSlash:begin
-
-
-      //encoded character ---------------------------------------------------
-
-      if (xbracketDepth=1) and xpardStart then
-         begin
-
-         case v0(xpos+1) of
-
-         ssLCurlyBracket:begin// "\{" => "{"
-
-            n         :=n_char;
-            v32       :=ssLCurlyBracket;
-            xpardON   :=true;
-            xdone     :=true;
-            inc(xpos,2);
-
-            end;
-
-         ssRCurlyBracket:begin// "\}" => "}"
-
-            n         :=n_char;
-            v32       :=ssRCurlyBracket;
-            xpardON   :=true;
-            xdone     :=true;
-            inc(xpos,2);
-
-            end;
-
-         ssBackSlash:begin// "\\" => "\"
-
-            n         :=n_char;
-            v32       :=ssBackSlash;
-            xpardON   :=true;
-            xdone     :=true;
-            inc(xpos,2);
-
-            end;
-
-         end;//case
-
-         end;//if
-
-
-      //command -------------------------------------------------------------
-      if not xdone then
-         begin
-
-         for p:=(xpos+1) to l32 do
-         begin
-
-         case v0(p) of
-
-         ssLCurlyBracket,ssRCurlyBracket,ssBackSlash,ssSpace,10,13:begin
-
-            xdone  :=true;
-            nv     :=strlow( v.iostream.str[xpos+1,p-xpos-1] );//0-based
-
-            if      (nv='b')           then n:=n_b
-            else if (nv='b0')          then n:=n_b0
-            else if (nv='i')           then n:=n_i
-            else if (nv='i0')          then n:=n_i0
-            else if (nv='ul')          then n:=n_u
-            else if (nv='ulnone')      then n:=n_u0
-            else if (nv='strike')      then n:=n_s
-            else if (nv='strike0')     then n:=n_s0
-            else if (nv='par')         then n:=n_10
-            else if (nv='tab')         then n:=n_9
-            else if (nv='ql')          then n:=n_left
-            else if (nv='qc')          then n:=n_center
-            else if (nv='qr')          then n:=n_right
-            else if (nv='pict')        then
-               begin
-
-               n                             :=n_pic;
-               xreadPicData;
-               break;
-
-               end
-            else if (nv='field')       then
-               begin
-
-               xreadfield;
-
-               if (xfieldType='url')   then n:=n_url
-               else                          v.tmp1.clear;
-
-               break;
-
-               end
-
-            else if (nv='pard')        then
-               begin
-
-               n             :=n_pard;
-               xpardStart    :=true;
-
-               end
-            else if (strcopy1(nv,1,9)='highlight') then
-               begin
-
-               v32:=strint32(strcopy1(nv,10,low__len32(nv)));
-
-               case (v32>=1) of
-               true:n:=n_h;
-               else n:=n_h0;
-               end;//case
-
-               end;
-
-
-            case xpardStart and (v0(p)=ssSpace) of
-            true:begin
-
-               xpos    :=p+1;
-               xpardON :=true;
-
-               end;
-            else xpos:=p;
-            end;//case
-
-            break;
-
-            end;//begin
-
-         end;//case
-
-         end;//p
-
-         end;//if
-
-
-      //else inc
-      if not xdone then inc(xpos);
-
-      end;//begin
-
-   //text char
-   else begin
-
-      case c of
-      9,32..255:if xpardON then
-         begin
-
-         n      :=n_char;
-         v32    :=c;
-
-         end;
-      end;//case
-
-      //inc
-      inc(xpos);
-
-      end;//begin
-
-   end;//case
-
-   end;
+   etmp               :string;
 
 begin
 
-//defaults
-a                     :=nil;
-
-try
-
-//init
-l32                   :=blen32(v.iostream);
-xpos                  :=0;
-xbracketDepth         :=0;
-xpardStart            :=false;
-xpardON               :=false;
-n                     :=n_nil;
-v32                   :=0;
-xname                 :=idefFontname;
-xsize                 :=idefFontsize;
-xcolor                :=idefFontcolor;
-xbold                 :=false;
-xitalic               :=false;
-xunderline            :=false;
-xstrikeout            :=false;
-xhighlight            :=false;
-xalign                :=wcaLeft;
-xlastid               :=-1;
-
-v.data.floatsize      :=5000;
-v.data2.floatsize     :=5000;
-v.data3.floatsize     :=5000;
-
-//get
-while xpull do
-begin
-
-case n of
-n_char     :a1( v32 );
-n_b        :xbold               :=true;
-n_b0       :xbold               :=false;
-n_i        :xitalic             :=true;
-n_i0       :xitalic             :=false;
-n_u        :xunderline          :=true;
-n_u0       :xunderline          :=false;
-n_s        :xstrikeout          :=true;
-n_s0       :xstrikeout          :=false;
-n_9        :a1( 9  );
-n_10       :a1( 10 );
-n_left     :xalign              :=wcaLeft;
-n_center   :xalign              :=wcaCenter;
-n_right    :xalign              :=wcaRight;
-n_h        :xhighlight          :=true;
-n_h0       :xhighlight          :=false;
-n_pard     :begin
-
-   xalign                       :=wcaLeft;
-
-   end;
-n_pic      :begin
-
-   //add image
-   if (a=nil) then a:=misimg32(1,1);
-
-   if mis__fromdata(a,@v.tmp1,e) then
-      begin
-
-      wrd2.val :=xmakeimage2(v.tmp1,-1);
-
-      v.data .addbyt1( 0 );
-      v.data2.addbyt1( wrd2.bytes[0] );
-      v.data3.addbyt1( wrd2.bytes[1] );
-
-      end;
-
-   //clear
-   v.tmp1.clear;
-   missize(a,1,1);
-
-   end;
-n_url      :begin
-
-   for p:=1 to v.tmp1.len32 do a1( v.tmp1.pbytes[p-1] );
-
-   end;
-
-end;//case
-
-end;//loop
-
-except;end;
-
-//free
-freeobj(@a);
+doc__fromdata( v.udata ,@v.iostream ,etmp );
 
 end;
 
@@ -7776,28 +7553,30 @@ function ttextcore.xmakeIOhandler(xfrom,xto:longint;xout:tstr8):ttextio;
 begin
 
 //xfrom...xto
-xfrom            :=frcrange32(xfrom ,1     ,xlen32 );
-xto              :=frcrange32(xto   ,xfrom ,xlen32 );
+xfrom                 :=frcrange32(xfrom ,1     ,xlen32 );
+xto                   :=frcrange32(xto   ,xfrom ,xlen32 );
 
 //init
-result           :=ttextio.create;
-result.iostream  :=xout;
-result.wfrom     :=xfrom;
-result.wto       :=xto;
-result.wsize     :=xto-xfrom+1;
+result                :=ttextio.create;
+result.iostream       :=xout;
+result.wfrom          :=xfrom;
+result.wto            :=xto;
+result.wsize          :=xto-xfrom+1;
+result.wtranslateCount:=0;//02nov2026
 
 end;
 
 function ttextcore.xgetdata(xout:tstr8;dformat:string;xfrom,xto:longint32):boolean;
 label
    skipend;
+
 var
-   v:ttextio;
+   v                  :ttextio;
 begin
 
 //defaults
-result      :=false;
-v           :=nil;
+result                :=false;
+v                     :=nil;
 
 //check
 case str__lock(@xout) of
@@ -7807,29 +7586,33 @@ end;
 
 try
 
-
 //init
-v           :=xmakeIOhandler(xfrom,xto,xout);
-
+v                     :=xmakeIOhandler(xfrom,xto,xout);
 
 //range
-dformat:=strlow(dformat);
-if not supportsFormat(dformat) then dformat:='txt';
+dformat               :=strlow(dformat);
 
+if not supportsFormat(dformat) then
+   begin
+
+   dformat            :=fetxt;
+
+   end;
 
 //get data
-if      (dformat='txt' ) then xwrite__txt(v)
-else if (dformat='bwd' ) then xwrite__bwd(v)
-else if (dformat='bwp' ) then xwrite__bwp(v)
-else if (dformat='dic')  then xwrite__dic(v)
-else if (dformat='rtf' ) then xwrite__rtf(v)
+if      (dformat=fetxt ) then xwrite__txt(v)//utf-8
+else if (dformat=febwd ) then xwrite__bwd(v)
+else if (dformat=febwp ) then xwrite__bwp(v)
+else if (dformat=fedic)  then xwrite__dic(v)//utf-8
+else if (dformat=fertf ) then xwrite__rtf(v)//utf-8
+else if (dformat=feudoc) then xwrite__udoc(v)//07nov2026
 
-else if (dformat='htm') or (dformat='html')  then
+else if (dformat=fehtm) or (dformat=fehtml)  then
    begin
 
    case icaneditHTML of
    true:xwrite__htm(v);
-   else xwrite__txt(v);
+   else xwrite__txt(v);//utf-8
    end;//case
 
    end
@@ -7839,15 +7622,16 @@ else if (dformat='md') then
 
    case icaneditMD of
    true:xwrite__md(v);
-   else xwrite__txt(v);
+   else xwrite__txt(v);//utf-8
    end;//case
 
    end
 
-else xwrite__txt(v);
+else xwrite__txt(v);//utf-8
 
 //set
-result:=(blen32(xout)>=1);
+result                :=(blen32(xout)>=1);
+otranslateCount       :=v.wtranslateCount;//track number of characters translated - 10nov2026
 
 except;end;
 
@@ -7859,37 +7643,136 @@ str__uaf(@xout);
 
 end;
 
-procedure ttextcore.xwrite__txt(const v:ttextio);//28feb2026, 14feb2026
-var
-   dlen,p:longint;
-   fc:tfastchar;
+function ttextcore.r_8(const s:tstr8):boolean;
 begin
 
+result                :=r_82( s ,0 ,pred(xlen32) );
+
+end;
+
+function ttextcore.r_82(const s:tstr8;const xfrom0,xto0:longint32):boolean;
+label
+   skipend;
+
+var
+   p                  :longint32;
+   fc                 :tfastchar;
+   slen               :longint32;
+   dfrom0             :longint32;
+   dto0               :longint32;
+
+begin
+
+//defaults
+result                :=false;
+
+try
+
+//check
+if not str__lock(@s) then goto skipend;
+
 //init
-dlen        :=0;
-v.iostream.setlen(v.wsize);//pre-size for max speed
+dfrom0                :=frcrange32(xfrom0 ,0            ,pred(xlen32) );
+dto0                  :=frcrange32(xto0   ,pred(dfrom0) ,pred(xlen32) );
+
+s.clear;
+
+//check
+if (dto0<dfrom0) then
+   begin
+
+   result             :=true;
+
+   goto skipend;
+
+   end;
+
+//get
+slen                  :=0;
+
+s.setlen( succ(dto0 - dfrom0) );//pre-size for max speed
+
+for p:=succ(dfrom0) to succ(dto0) do if xslowchar(p,1,fc) and (fc.cs=wc_t) then
+   begin
+
+   s.pbytes[slen]     :=fc.c;
+
+   inc(slen);
+
+   end;//p
+
+//set
+if (slen<s.len32) then s.setlen(slen);
+
+//successful
+result                :=true;
+
+skipend:
+
+except;end;
+
+//free
+str__uaf(@s);
+
+end;
+
+function ttextcore.r_83(const s:tstr8;const xfrom0,xlen:longint32):boolean;
+begin
+
+result                :=r_82( s, xfrom0 ,pred(xfrom0+xlen) );
+
+end;
+
+procedure ttextcore.xwrite__txt(const v:ttextio);//28feb2026, 14feb2026
+var
+   s                  :tstr8;
+   slen               :longint32;
+   p                  :longint32;
+   fc                 :tfastchar;
+
+begin
+
+//defaults
+s                     :=nil;
+
+try
+
+//init
+slen                  :=0;
+s                     :=faststr__new8;
+s.setlen(v.wsize);//pre-size for max speed
+v.iostream.clear;
 
 //get
 for p:=v.wfrom to v.wto do if xslowchar(p,1,fc) and (fc.cs=wc_t) then
    begin
 
-   inc(dlen);
-   v.iostream.pbytes[dlen-1]:=fc.c;
+   inc(slen);
+
+   s.pbytes[pred(slen)]   :=fc.c;
 
    end;//p
 
 //.if no text then return a single return code to prevent calling proc from assuming an error
-if (dlen<=0) then
+if (slen<=0) then
    begin
 
-   inc(dlen);
-   v.iostream.pbytes[dlen-1]:=10;
+   inc(slen);
+
+   s.pbytes[pred(slen)]   :=10;
 
    end;
 
+//.size
+if (slen<s.len32) then s.setlen(slen);
 
-//.finalise
-if (dlen<v.iostream.len32) then v.iostream.setlen(dlen);
+//convert windows-1252 data stream -> utf-8 data stream
+u8__from8( @s ,@v.iostream );//25oct2026
+
+except;end;
+
+//free
+if (s<>nil) then faststr__free(@s);
 
 end;
 
@@ -7906,7 +7789,8 @@ end;
 
 procedure ttextcore.xmodify__dic(const x:pobject);
 var
-   a:tspell;
+   a                  :tspell;
+
 begin
 
 //defaults
@@ -7918,15 +7802,16 @@ if not str__lock(x) then exit;
 try
 
 a           :=tspell.create(true,'');
-a.setclean( str__text(x) ,true );
 
-str__settext(x,a.text);
+a.setclean( u8__to8strb(str__text(x)) ,true );//from utf-8
+
+str__settext( x ,u8__from8strb(a.text) );//to utf-8
 
 except;end;
 
 //free
-freeobj(@a);
-str__uaf(x);
+if (a<>nil) then freeobj(@a);
+if (x<>nil) then faststr__uaf(x);
 
 end;
 
@@ -8773,378 +8658,21 @@ end;
 
 procedure ttextcore.xwrite__rtf(const v:ttextio);//basic RTF
 var
-   a:tbasicimage;
-   b:tstr8;
-   xalign,fmapCount,xlastc,xlastid,p:longint;
-   ff:tfastfont;
-   fc:tfastchar;
-   fmap:array[0..textcore_listmax] of longint;//map used font to rtf font (f0..n)
-   xfirstChar,xbold,xitalic,xunderline,xstrikeout,xhighlight:boolean;
-   xformat,e:string;
-
-   function tv2(const xindex:longint):ptextinfo;
-   begin
-
-   case (xindex>=0) and (xindex<=textcore_listmax) of
-   true:result:=@tlist[xindex];
-   else result:=@tlist[0];
-   end;//case
-
-   end;
-
-   function tv:ptextinfo;
-   begin
-   result:=@tlist[fc.wid];
-   end;
-
-   function iv:pimageinfo;
-   begin
-   result:=@ilist[fc.wid];
-   end;
-
-   function xmuststyle(const xid:longint):boolean;
-   begin
-
-   result:=(xid>=0) and (xid<=textcore_listmax) and (v.tmp1.pbytes[xid]=0);
-   if result then v.tmp1.pbytes[xid]:=1;//mark as done
-
-   end;
-
-   procedure a1(const x1:byte);
-   begin
-
-   v.iostream.addbyt1(x1);
-
-   end;
-
-   procedure a2(const x1,x2:byte);
-   begin
-
-   v.iostream.addbyt1(x1);
-   v.iostream.addbyt1(x2);
-
-   end;
-
-   procedure sa(const x:string);
-   begin
-   v.iostream.sadd(x);
-   end;
-
-   procedure la(const x:string);
-   begin
-   v.iostream.sadd(x+rcode);
-   end;
-
-   function xsafeval(const x:string):string;
-   var
-      v,p:longint;
-   begin
-
-   //defaults
-   result   :='';
-   b.clear;
-
-   try
-
-   //scan
-   for p:=1 to low__len32(x) do
-   begin
-
-   v:=ord( x[p-1+stroffset] );
-
-   case v of
-   ssbackslash      :b.sadd('\\');
-   ssLCurlyBracket  :b.sadd('\{');
-   ssRCurlyBracket  :b.sadd('\}');
-   else              b.addbyt1(v);
-   end;//case
-
-   end;//p
-
-   //get
-   result:=b.text;
-
-   except;end;
-
-   //clear
-   b.clear;
-
-   end;
-
-   procedure xStyleChange(const xAllow:boolean);
-   begin
-
-   //bold
-   if low__setbol( xbold ,tv.bold and xAllow ) then
-      begin
-
-      case xbold of
-      true:sa('\b ');//on
-      else sa('\b0 ');//off
-      end;//case
-
-      end;
-
-   //italic
-   if low__setbol( xitalic ,tv.italic and xAllow) then
-      begin
-
-      case xitalic of
-      true:sa('\i ');//on
-      else sa('\i0 ');//off
-      end;//case
-
-      end;
-
-   //underline
-   if low__setbol( xunderline ,tv.underline and xAllow) then
-      begin
-
-      case xunderline of
-      true:sa('\ul ');//on
-      else sa('\ulnone ');//off
-      end;//case
-
-      end;
-
-   //strikeout
-   if low__setbol( xstrikeout ,tv.strikeout and xAllow) then
-      begin
-
-      case xstrikeout of
-      true:sa('\strike ');//on
-      else sa('\strike0 ');//off
-      end;//case
-
-      end;
-
-   //highlight
-   if low__setbol( xhighlight ,(tv.bgcolor<>clnone) and xAllow) then
-      begin
-
-      case xhighlight of
-      true:sa('\highlight1 ');//on -> refers to 1st color table entry
-      else sa('\highlight0 ');//off
-      end;//case
-
-      end;
-
-   end;
-
-   function xalignStr:string;
-   begin
-
-   case xalign of
-   wcaCenter :result:='\qc';
-   wcaRight  :result:='\qr';
-   else       result:='';
-   end;//case
-
-   end;
-
-   function xfontsize:string;
-   begin
-   result:=intstr32( tv.size*2 );
-   end;
-
-   function xpicWH(const xpx:longint):string;
-   begin
-   result:=intstr32(round32( (xpx / 96) * 2540));
-   end;
-
-   function xpicWHgoal(const xpx:longint):string;
-   begin
-   result:=intstr32(round32( (xpx / 96) * 1440));
-   end;
+   etmp               :string;
 
 begin
 
-//defaults
-a           :=nil;
-b           :=nil;
+doc__todata2( self ,@v.iostream ,fertf ,v.wfrom ,v.wto ,etmp );
 
-try
+end;
 
-//init
-b           :=str__new8;
-b.floatsize :=5000;
-xbold       :=false;
-xitalic     :=false;
-xunderline  :=false;
-xstrikeout  :=false;
-xhighlight  :=false;
-xalign      :=xfastfindalign(v.wfrom);
-xfirstChar  :=true;
-fmapCount   :=0;
-low__cls(@fmap,0);
+procedure ttextcore.xwrite__udoc(const v:ttextio);
+var
+   etmp               :string;
 
-v.tmp1.setlen(textcore_listmax+1);
-v.tmp1.fill(0,v.tmp1.len32-1,0);
-
-xfastcharinit(ff);
-xfastchar(ff,v.wfrom,1,fc);
-
-xlastc      :=-1;
-xlastid     :=-1;
-
-
-//map used fonts to fmap -------------------------------------------------------
-for p:=v.wfrom to v.wto do if xfastchar(ff,p,1,fc) and (fc.cs=wc_t) and xmuststyle(fc.wid) then
-   begin
-
-   fmap[ fmapCount ]:=fc.wid;
-   inc( fmapCount );
-
-   end;
-
-//header + used fonts ----------------------------------------------------------
-
-sa('{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang2057{\fonttbl{\f0\fnil\fcharset0 '+xsafeval( font__realname(tv2( fmap[0] ).name) )+';}');//root font
-
-//for p:=1 to (fmapCount-1) do sa('{\f'+intstr32(p)+'\fnil\fcharset0 '+xsafeval( font__realname(tv2( fmap[p] ).name) )+';}');//additional fonts - not required, as this writer generates basic RTF
-
-sa('{\colortbl ;\red168\green168\blue168;}');//for highlight or font usage -> a light grey highlight background - 19feb2026
-
-sa('}'+rcode);
-
-//.comment
-la('{\*\generator TextCore 2.00.6621}\viewkind4\uc1');
-
-//.first par
-sa('\pard\sl240\slmult1\f0\fs'+xfontsize+'\lang9'+xalignStr);//240=single line spacing, 480=double line spacing
-
-
-//text -------------------------------------------------------------------------
-
-for p:=v.wfrom to v.wto do
 begin
 
-if xfirstChar then
-   begin
-
-   case fc.c of
-   ssbackslash,ssLCurlyBracket, ssRCurlyBracket:;//special char can be encoded as first char of pard
-   else a1(32);//insert a space if first char is NOT a specially encoded char
-   end;
-
-   xfirstchar:=false;
-
-   end;
-
-if xfastchar(ff,p,1,fc) then
-   begin
-
-   //style change
-   xStyleChange(true);
-
-   //text
-   if (fc.cs=wc_t) then
-      begin
-
-      case fc.c of
-      ssbackslash      :a2(ssbackslash,fc.c);
-      ssLCurlyBracket  :a2(ssbackslash,fc.c);
-      ssRCurlyBracket  :a2(ssbackslash,fc.c);
-
-      9:sa('\tab ');//19feb2026
-      10:begin
-
-         sa('\par'+rcode);
-
-         if low__setint(xalign,xfastfindalign(p+1)) and (p<v.wto) then
-            begin
-
-            sa('\pard\sl240\slmult1\fs'+xfontsize+xalignStr+#32);
-
-            end;
-
-         end;
-
-      13               :;
-      else              a1(fc.c);
-      end;//case
-
-      end
-
-   else if (fc.cs=wc_i) then
-      begin
-
-      if (iv.orgdata.len32>=1) then
-         begin
-
-
-         //sa('{\pict\pngblip\picw2037\pich1905\picwgoal1155\pichgoal1080 ...hex.data...} *** for a 77w x 72h image
-         xformat:=strlow(io__anyformatb(@iv.orgdata));
-
-
-         //.use existing image data stream if "png" or "jpg"
-         if (xformat='jpg') or (xformat='png') then
-            begin
-
-            low__tohex(iv.orgdata,v.tmp3,800);
-
-            sa('{\pict\' + low__aorbstr('png','jpeg',xformat='jpg') + 'blip' +
-
-            '\picw'+xpicWH(iv.w)+
-            '\pich'+xpicWH(iv.h)+
-            '\picwgoal'+xpicWHgoal(iv.w)+
-            '\pichgoal'+xpicWHgoal(iv.h)+
-            #32+ v.tmp3.text +
-
-            '}');
-
-            //reduce ram
-            v.tmp3.clear;
-
-            end
-
-         //.convert image data stream to "png"
-         else
-            begin
-
-            //init
-            if (a=nil) then a:=misimg32(1,1);
-
-            //make png
-            mis__fromdata(a,@iv.orgdata,e);
-            png__todata(a,@v.tmp2,e);
-
-            low__tohex(v.tmp2,v.tmp3,800);
-            v.tmp2.clear;//reduce ram
-
-            //get
-            sa('{\pict\pngblip'+
-
-            '\picw'+xpicWH(misw(a))+
-            '\pich'+xpicWH(mish(a))+
-            '\picwgoal'+xpicWHgoal(misw(a))+
-            '\pichgoal'+xpicWHgoal(mish(a))+
-            #32+ v.tmp3.text +
-
-            '}');
-
-            //reduce ram
-            v.tmp3.clear;
-
-            end;
-
-         end;
-
-      end;
-
-   end;
-
-end;//p
-
-
-//finish document --------------------------------------------------------------
-la('}');
-
-except;end;
-
-//free
-freeobj(@a);
-str__free(@b);
+doc__todata2( self ,@v.iostream ,feudoc ,v.wfrom ,v.wto ,etmp );
 
 end;
 
@@ -9285,16 +8813,17 @@ if clip__openedAndclear(xopened) then
 
    //bwp -----------------------------------------------------------------------
    a.makeglobal;
-   if not xgetdata(a,'bwp',xfrom,xto) then goto skipend;
+   if not xgetdata(a,febwp,xfrom,xto) then goto skipend;
    //.copy
    if (0=win____setclipboarddata(cf_bwp,a.handle)) then goto skipend;
    a.ejectcore;
 
 
    //txt -----------------------------------------------------------------------
-   //txt -> Important: CF_TEXT expects a null terminated string - 26sep2022
+   //txt -> Important: CF_TEXT expects a null terminated string - 15nov2026, 26sep2022
    a.makeglobal;
-   if not xgetdata(a,'txt',xfrom,xto) then goto skipend;
+
+   if not r_82( a ,pred(xfrom) ,pred(xto) ) then goto skipend;//8-bit ascii
    a.aadd([0]);//null terminated string
 
    //.copy
@@ -9304,7 +8833,7 @@ if clip__openedAndclear(xopened) then
 
    //rtf -----------------------------------------------------------------------
    a.makeglobal;
-   if not xgetdata(a,'rtf',xfrom,xto) then goto skipend;
+   if not xgetdata(a,fertf,xfrom,xto) then goto skipend;
    a.aadd([0]);//null terminated string
 
    //.take a copy for below repeat procs
@@ -9363,7 +8892,7 @@ begin
 if candeleteall then
    begin
 
-   xbackup('deleteall');
+   backup('deleteall');
 
    //flush redo list - 02may2023
    mredoflush;
@@ -9378,6 +8907,24 @@ if candeleteall then
    end;
 
 end;
+
+procedure ttextcore.redoFlush;
+begin
+
+//flush redo list - 02may2023
+mredoflush;
+
+{
+mstore1;//previous
+icursorpos:=1;
+icursorpos2:=xlen32;
+iundoinfo.style:=musSel;
+mstore1;
+cdefault;
+{}//????????????????
+
+end;
+
 
 function ttextcore.cancut:boolean;
 begin
@@ -9394,7 +8941,7 @@ if cancut then
    knoidle;
 
    copy;
-   xbackup('cut');
+   backup('cut');
 
    //flush redo list - 02may2023
    mredoflush;
@@ -9420,7 +8967,7 @@ result:=canpaste;
 if result then
    begin
 
-   xbackup('paste');
+   backup('paste');
    result:=xpaste(false);
 
    end;
@@ -9440,7 +8987,7 @@ result:=canpaste;
 if result then
    begin
 
-   xbackup('pastereplace');
+   backup('pastereplace');
    result:=xpaste(true);
 
    end;
@@ -9468,16 +9015,88 @@ end;
 function ttextcore.xpaste(xreplace:boolean):boolean;//22apr2026, 01may2025
 label
    skipend;
+
 var
-   a:trawimage;
-   xformat,e:string;
-   adata,adata2:tstr8;
-   c1,c2,v1,v2:longint;
-   xbase64:boolean;
+   a                  :trawimage;
+   xformat            :string;
+   e                  :string;
+   adata              :tstr8;
+   adata2             :tstr8;
+   c1                 :longint32;
+   c2                 :longint32;
+   v1                 :longint32;
+   v2                 :longint32;
+   xbase64            :boolean;
 
    procedure creplace;
    begin
+
    if xreplace then clear2;
+
+   end;
+
+   function needA:boolean;
+   begin
+
+   result   :=true;//pass-thru
+
+   if (adata=nil) then adata :=str__new8
+   else                adata .clear;
+
+   end;
+
+   function needA2:boolean;
+   var
+      e     :string;
+
+   begin
+
+   result   :=true;//pass-thru
+
+   if (adata2=nil) then adata2:=str__new8
+   else                 adata2.clear;
+
+   end;
+
+   function makeJPG1:boolean;
+   var
+      e     :string;
+
+   begin
+
+   //init
+   needA;
+
+   //get -> jif data
+   mis__todata( a ,@adata ,'jif' ,e );
+
+   //.improve image quality for small image sizes - 16feb2026
+   if (adata.len32<30000) then mis__todata2( a ,@adata ,'jif' ,ia_highquality ,e );//bmp -> jif
+   if (adata.len32<30000) then mis__todata2( a ,@adata ,'jif' ,ia_bestquality ,e );//bmp -> jif
+
+   v1       :=adata.len32;
+
+   result   :=(v1>=1);
+
+   if (v1<=0) then v1:=max32;
+
+   end;
+
+   function makePNG2:boolean;
+   begin
+
+   //init
+   needA2;
+
+   //get -> png data
+   mis__todata( a ,@adata2 ,'png' ,e );
+
+   v2       :=adata2.len32;
+
+   result   :=(v2>=1);
+
+   if (v2<=0) then v2:=max32;
+
    end;
 
 begin
@@ -9497,99 +9116,74 @@ try
 
 //bwp --------------------------------------------------------------------------
 
-if clip__hasformat(cf_bwp) then
+if clip__hasformat(cf_bwp) and needA and clip__pasteformat(cf_bwp,@adata) then
    begin
 
-   adata    :=str__new8;
+   //ins
+   creplace;
 
-   if clip__pasteformat(cf_bwp,@adata) then
-      begin
+   case misformat(adata,xformat,xbase64) of
 
-      //ins
-      creplace;
+   true:xinsimg(adata);//text is an image
+   else xioins(adata);//text is text
 
-      case misformat(adata,xformat,xbase64) of
-      true:xinsimg(adata);//text is an image
-      else xioins(adata);//text is text
-      end;//case
+   end;//case
 
-      //successful
-      result:=true;
-      goto skipend;
-
-      end;
+   //successful
+   result:=true;
+   goto skipend;
 
    end;
 
 
 //rtf --------------------------------------------------------------------------
 
-if clip__hasformat(cf_rtf) then
+if clip__hasformat(cf_rtf) and needA and clip__pasteformat(cf_rtf,@adata) then
    begin
-   adata    :=str__new8;
 
-   if clip__pasteformat(cf_rtf,@adata) then
-      begin
+   //ins
+   creplace;
+   xioins(adata);//text is text
 
-      //ins
-      creplace;
-      xioins(adata);//text is text
-
-      //successful
-      result:=true;
-      goto skipend;
-
-      end;
+   //successful
+   result:=true;
+   goto skipend;
 
    end;
 
 
 //cf_rtf__RTFasText ------------------------------------------------------------
 
-if clip__hasformat(cf_rtf__RTFasText) then
+if clip__hasformat(cf_rtf__RTFasText) and needA and clip__pasteformat(cf_rtf__RTFasText,@adata) then
    begin
 
-   adata    :=str__new8;
+   //ins
+   creplace;
+   xioins(adata);//text is text
 
-   if clip__pasteformat(cf_rtf__RTFasText,@adata) then
-      begin
-
-      //ins
-      creplace;
-      xioins(adata);//text is text
-
-      //successful
-      result:=true;
-      goto skipend;
-
-      end;
+   //successful
+   result:=true;
+   goto skipend;
 
    end;
 
 
 //bwd --------------------------------------------------------------------------
 
-if clip__hasformat(cf_bwd) then
+if clip__hasformat(cf_bwd) and needA and clip__pasteformat(cf_bwd,@adata) then
    begin
 
-   adata    :=str__new8;
+   //ins
+   creplace;
 
-   if clip__pasteformat(cf_bwd,@adata) then
-      begin
+   case misformat(adata,xformat,xbase64) of
+   true:xinsimg(adata);//text is an image
+   else xioins(adata);//text is text
+   end;//case
 
-      //ins
-      creplace;
-
-      case misformat(adata,xformat,xbase64) of
-      true:xinsimg(adata);//text is an image
-      else xioins(adata);//text is text
-      end;//case
-
-      //successful
-      result:=true;
-      goto skipend;
-
-      end;
+   //successful
+   result:=true;
+   goto skipend;
 
    end;
 
@@ -9603,39 +9197,49 @@ if clip__canpasteimage(true) then
    //init
    a        :=misraw32(1,1);
 
+   //get
    if clip__pasteimage(a,true) then //upon failure assume clipboard content is text and fallback to next paste handler below - 22apr2026, 18mar2026, 21dec2021, was fixed via "xinfo" - 18jun2021
       begin
 
-      //init
-      adata    :=str__new8;
-      adata2   :=str__new8;
+      //make PNG always
+      makePNG2;
 
-      //jif
-      mis__todata(a,@adata,'jif',e);//bmp -> jif
+      //transparent image
+      if mask__hasTransparency32(a) then
+         begin
 
-      //.improve image quality for small image sizes - 16feb2026
-      if (adata.len32<30000) then mis__todata2(a,@adata,'jif',ia_highquality,e);//bmp -> jif
-      if (adata.len32<30000) then mis__todata2(a,@adata,'jif',ia_bestquality,e);//bmp -> jif
+         //ins
+         creplace;
 
-      v1       :=adata.len32;
-      if (v1<=0) then v1:=max32;
+         xinsimg(adata2);//png
 
-      //png
-      mis__todata(a,@adata2,'png',e);
-      v2       :=adata2.len32;
-      if (v2<=0) then v2:=max32;
+         //successful
+         result:=true;
+         goto skipend;
 
-      //ins
-      creplace;
+         end
 
-      case (v1<v2) of
-      true:xinsimg(adata);//jif
-      else xinsimg(adata2);//png
-      end;//case
+      //png or jpg -> solid image -> use smallest image size
+      else begin
 
-      //successful
-      result:=true;
-      goto skipend;
+         //make JPG image
+         makeJPG1;
+
+         //ins
+         creplace;
+
+         case (v1<v2) of
+
+         true:xinsimg(adata);//jif
+         else xinsimg(adata2);//png
+
+         end;//case
+
+         //successful
+         result:=true;
+         goto skipend;
+
+         end;
 
       end;
 
@@ -9647,27 +9251,22 @@ if clip__canpasteimage(true) then
 //Note: Do "text" last as some enhanced image formats can be presented
 //      in Clipboard as plain text, e.g. base64 or Pascal array
 
-if clip__hasformat(cf_text) then
+if clip__hasformat(cf_text) and needA and clip__pastetext2(@adata) then
    begin
 
-   adata    :=str__new8;
+   //ins
+   creplace;
 
-   if clip__pastetext2(@adata) then
-      begin
+   case misformat(adata,xformat,xbase64) of
 
-      //ins
-      creplace;
+   true:xinsimg(adata);//text is an image
+   else xioins(adata);//text is text
 
-      case misformat(adata,xformat,xbase64) of
-      true:xinsimg(adata);//text is an image
-      else xioins(adata);//text is text
-      end;//case
+   end;//case
 
-      //successful
-      result:=true;
-      goto skipend;
-
-      end;
+   //successful
+   result:=true;
+   goto skipend;
 
    end;
 
@@ -10188,12 +9787,14 @@ if not result then sysfind_cmd:='find.finished';
 
 end;
 
-procedure ttextcore.xbackup(const xcap:string);
+procedure ttextcore.backup(const xcap:string);//22oct2026
 var
-   e,dname,dext:string;
-   xdata:tstr8;
+   e        :string;
+   dname    :string;
+   dext     :string;
+   xdata    :tstr8;
+
 begin
-try
 
 //defaults
 xdata       :=nil;
@@ -10201,18 +9802,20 @@ xdata       :=nil;
 //check
 if not ibackup then exit;
 
+try
+
 //init
 case xfindformatlevel of//0=txt (plaintext), 1=bwd, 2=bwp
-fmlTXT :dext:='txt';
-fmlBWD :dext:='bwd';
-fmlBWP :dext:='bwp';
-else    dext:='bwp';
+fmlTXT :dext:=fetxt;
+fmlBWD :dext:=febwd;
+fmlBWP :dext:=febwp;
+else    dext:=febwp;
 end;//case
 
 //get
-xdata:=str__new8;
+xdata       :=faststr__new8;
 
-if xgetdata( xdata ,strdefb(dext,'txt') ,1 ,xlen32 ) then
+if xgetdata( xdata ,strdefb(dext,fetxt) ,1 ,xlen32 ) then
    begin
 
    //init
@@ -10220,6 +9823,7 @@ if xgetdata( xdata ,strdefb(dext,'txt') ,1 ,xlen32 ) then
 
    //get
    io__tofile(io__backupfilename(dname+'.'+dext),@xdata,e);//25feb2023
+
    low__iroll(systrack_backupcount,1);//12feb2023
 
    end;
@@ -10227,7 +9831,7 @@ if xgetdata( xdata ,strdefb(dext,'txt') ,1 ,xlen32 ) then
 except;end;
 
 //free
-str__free(@xdata);
+if (xdata<>nil) then faststr__free(@xdata);
 
 end;
 
@@ -11966,7 +11570,7 @@ knoidle;
 xselstart   :=selstart;
 xselcount   :=selcount;
 
-if (xselcount>=2) then xbackup('delr');
+if (xselcount>=2) then backup('delr');
 
 //flush redo list - 02may2023
 mredoflush;
@@ -12027,7 +11631,10 @@ end;
 
 procedure ttextcore.xdell;
 var
-   int1,xselstart,xselcount:longint;
+   int1               :longint32;
+   xselstart          :longint32;
+   xselcount          :longint32;
+
 begin
 
 //check
@@ -12036,16 +11643,22 @@ if ireadonly then exit;
 //init
 xnoidle;
 knoidle;
-xselstart   :=selstart;
-xselcount   :=selcount;
 
-if (xselcount>=2) then xbackup('dell');
+xselstart             :=selstart;
+xselcount             :=selcount;
+
+if (xselcount>=2) then backup('dell');
 
 //flush redo list - 02may2023
 mredoflush;
 
 //check
-if (iundoinfo.style<>musDelL) or (xselstart<>iundoinfo.from1) then mstore1;
+if (iundoinfo.style<>musDelL) or (xselstart<>iundoinfo.from1) then
+   begin
+
+   mstore1;
+
+   end;
 
 //get
 if (xselcount>=1) then
@@ -12055,10 +11668,11 @@ if (xselcount>=1) then
    mstore1;
 
    end
+
 else if (icursorpos>=2) then
    begin
 
-   int1               :=xselstart-1;//x.cursorpos-1;
+   int1               :=pred(xselstart);//x.cursorpos-1;
 
    if iundoinfo.enabled and mdok and (int1>=1) and (int1<xlen32) then
       begin
@@ -12072,9 +11686,9 @@ else if (icursorpos>=2) then
 
          end;
 
-      iundoinfo.d1.ains([idata .pbytes[int1-1]],0);
-      iundoinfo.d2.ains([idata2.pbytes[int1-1]],0);
-      iundoinfo.d3.ains([idata3.pbytes[int1-1]],0);
+      iundoinfo.d1.ains( [idata .pbytes[pred(int1)]] ,0 );
+      iundoinfo.d2.ains( [idata2.pbytes[pred(int1)]] ,0 );
+      iundoinfo.d3.ains( [idata3.pbytes[pred(int1)]] ,0 );
 
       end;
 
@@ -12094,7 +11708,7 @@ else if (icursorpos>=2) then
    xchanged;
    xincdata3;
 
-   iundoinfo.from1           :=xselstart;
+   iundoinfo.from1           :=int1;//fixed undo/redo misalignment - 29oct2026
 
    end;
 
@@ -13035,5 +12649,207 @@ function ttextcore.docExtb(const xindex:longint):string;//16feb2026
 begin
 result:=textcore__docExtb(xindex);
 end;
+
+function ttextcore.any__touni(const dd:tobject):boolean;//07nov2026 - TextCore -> uniDoc
+begin
+
+result                          :=any__touni2( dd ,0 ,max32 );
+
+end;
+
+function ttextcore.any__touni2(const dd:tobject;const sfrom0,sto0:longint32):boolean;//07nov2026 - TextCore -> uniDoc
+var
+   etmp                         :string;
+
+begin
+
+result                          :=(dd is tunidoc) and tunidoc(dd).any__fromcore2( self ,sfrom0 ,sto0 ,etmp );
+
+end;
+
+function ttextcore.any__fromuni(const ss:tobject):boolean;//07nov2026 - uniDoc -> TextCore
+begin
+
+result                          :=any__fromuni3( ss ,0 ,pred(max32) ,true );
+
+end;
+
+function ttextcore.any__fromuni2(const ss:tobject;const xfrom0,xto0:longint32):boolean;//07nov2026 - uniDoc -> TextCore
+begin
+
+result                          :=any__fromuni3( ss ,xfrom0 ,xto0 ,true );
+
+end;
+
+function ttextcore.any__fromuni3(const ss:tobject;const xfrom0,xto0:longint32;const xflush:boolean):boolean;//15nov2026, 07nov2026 - uniDoc -> TextCore
+var
+   t                            :tunidoc;
+   p                            :longint32;
+   tcount                       :longint32;
+   a8                           :longint32;//windows-1252 8-bit ascii character
+   s                            :tslotStyle;
+   vslotIndex                   :longint32;
+   int1                         :longint32;
+   ltid                         :longint32;
+   liid                         :longint32;
+   tslot                        :twrd2;
+   islot                        :twrd2;
+   m                            :punidoc_misc;
+   f                            :punidoc_font;
+   dfrom                        :longint32;
+   dto                          :longint32;
+   dcount                       :longint32;
+   dcharTranslated              :boolean;
+
+   function dtextrange(const v:longint32):boolean;
+   begin
+
+   case v of
+
+   9,10,32..255       :result:=true;
+   else                result:=false;
+
+   end;//case
+
+   end;
+
+   procedure dnone;
+   begin
+
+   idata .pbytes[p-dfrom]          :=1;//mark as "wc_n"
+   idata2.pbytes[p-dfrom]          :=0;
+   idata3.pbytes[p-dfrom]          :=0;
+
+   end;
+
+begin
+
+//defaults
+result                          :=false;
+
+//check
+if (ss is tunidoc) then t        :=tunidoc(ss)
+else                    exit;
+
+//init
+tcount                          :=t.count;
+ltid                            :=-1;
+liid                            :=-1;
+m                               :=t.misc__find;
+dfrom                           :=frcrange32( xfrom0 ,0  ,pred(tcount) );
+dto                             :=frcrange32( xto0   ,-1 ,pred(tcount) );
+dcount                          :=frcmin32( dto - dfrom + 1 ,0 );
+
+//flush
+if xflush then clearAll
+else           clear2;//retain undo
+
+//pre-size
+idata .setlen( dcount );
+idata2.setlen( dcount );
+idata3.setlen( dcount );
+
+//misc
+ilandscape                      :=(m.orientation=1);
+
+if not iwrapreadonly then
+   begin
+
+   iwrapstyle                   :=frcrange32( m.wrapstyle ,0 ,wwsMax );
+
+   end;
+
+ipagecolor                      :=m.bgcolor;
+
+//text and images
+for p:=dfrom to dto do
+begin
+
+if t.g_83( p ,a8 ,s ,vslotIndex ,dcharTranslated ) then
+   begin
+
+   //text slot -> text character
+   if (s=s_t) then
+      begin
+
+      //translate count
+      if dcharTranslated and (otranslateCount<max32) then inc(otranslateCount);//10nov2026
+
+      //.add char
+      if dtextrange(a8) then
+         begin
+
+         //sync font
+         if (ltid<>vslotIndex) then
+            begin
+
+            ltid                   :=vslotIndex;
+            f                      :=t.font__findslot( p );
+            tslot.val              :=xmakefont2( true ,f.name ,f.size ,uni__toCoreColor(f.color) ,uni__toCoreColor(f.bgcolor) ,uni__toCoreColor(f.brcolor) ,f.bold ,f.italic ,f.underline ,f.strikeout ,f.align );
+
+            end;
+
+         //get
+         idata .pbytes[p-dfrom]          :=a8;
+         idata2.pbytes[p-dfrom]          :=tslot.bytes[0];
+         idata3.pbytes[p-dfrom]          :=tslot.bytes[1];
+
+         end
+
+      else dnone;
+
+      end
+
+   //image slot -> image
+   else if (s=s_i) then
+      begin
+
+      //sync image
+      if (liid<>vslotIndex) then
+         begin
+
+         liid                   :=vslotIndex;
+         islot.val              :=xmakeimage2( t.image__finddata8(p) ,-1 );
+
+         end;
+
+      //get
+      idata .pbytes[p-dfrom]          :=0;//mark as "wc_i"
+      idata2.pbytes[p-dfrom]          :=islot.bytes[0];
+      idata3.pbytes[p-dfrom]          :=islot.bytes[1];
+
+      end
+
+   //unknown -> none
+   else dnone;
+
+   end;
+
+end;//p
+
+//size check
+xmincheck;
+
+//trim trailing second #10 -> prevents continuous appending of a single #10 each time "ioset" is called - 29feb2020
+if (xlen32>=2) and idata.asame3(xlen32-2,[10,10],false) then
+   begin       //32
+
+   int1         :=xlen32;
+   bdel1(idata  ,int1,1);
+   bdel1(idata2 ,int1,1);
+   bdel1(idata3 ,int1,1);
+
+   end;
+
+//finalise
+xpagewidth;
+xpageheight;
+xwrap_hvsync_changed;
+
+//successful
+result                          :=true;
+
+end;
+
 
 end.
